@@ -14,7 +14,7 @@ export const licensePublicRoutes = new Elysia({
     async ({ body, set }) => {
       const result = await activateLicense(
         body as {
-          appName?: string;
+          appName: string;
           licenseKey: string;
           machineId: string;
           appVersion: string;
@@ -35,7 +35,7 @@ export const licensePublicRoutes = new Elysia({
     },
     {
       body: t.Object({
-        appName: t.Optional(t.String({ minLength: 2, maxLength: 120 })),
+        appName: t.String({ minLength: 2, maxLength: 120 }),
         licenseKey: t.String({ minLength: 10, maxLength: 128 }),
         machineId: t.String({ minLength: 6, maxLength: 256 }),
         appVersion: t.String({ minLength: 1, maxLength: 64 }),
@@ -48,7 +48,7 @@ export const licensePublicRoutes = new Elysia({
     async ({ body }) => {
       const result = await validateActivation(
         body as {
-          appName?: string;
+          appName: string;
           machineId: string;
           activationToken: string;
         },
@@ -57,7 +57,7 @@ export const licensePublicRoutes = new Elysia({
     },
     {
       body: t.Object({
-        appName: t.Optional(t.String({ minLength: 2, maxLength: 120 })),
+        appName: t.String({ minLength: 2, maxLength: 120 }),
         machineId: t.String({ minLength: 6, maxLength: 256 }),
         activationToken: t.String({ minLength: 20 }),
       }),
@@ -68,7 +68,7 @@ export const licensePublicRoutes = new Elysia({
     async ({ body, set }) => {
       const result = await deactivateActivation(
         body as {
-          appName?: string;
+          appName: string;
           machineId: string;
           activationToken: string;
         },
@@ -83,7 +83,7 @@ export const licensePublicRoutes = new Elysia({
     },
     {
       body: t.Object({
-        appName: t.Optional(t.String({ minLength: 2, maxLength: 120 })),
+        appName: t.String({ minLength: 2, maxLength: 120 }),
         machineId: t.String({ minLength: 6, maxLength: 256 }),
         activationToken: t.String({ minLength: 20 }),
       }),

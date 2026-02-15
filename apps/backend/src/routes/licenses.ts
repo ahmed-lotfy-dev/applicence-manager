@@ -29,7 +29,7 @@ export const licenseAdminRoutes = new Elysia({
     "/",
     async ({ body, set }) => {
       const { appName, maxActivations, metadata } = body as {
-        appName?: string;
+        appName: string;
         maxActivations?: number;
         metadata?: unknown;
       };
@@ -53,7 +53,7 @@ export const licenseAdminRoutes = new Elysia({
     },
     {
       body: t.Object({
-        appName: t.Optional(t.String({ minLength: 2, maxLength: 120 })),
+        appName: t.String({ minLength: 2, maxLength: 120 }),
         maxActivations: t.Optional(t.Number({ minimum: 1, maximum: 10000 })),
         metadata: t.Optional(t.Any()),
       }),

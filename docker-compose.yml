@@ -14,7 +14,6 @@ services:
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       LICENSE_TOKEN_SECRET: ${LICENSE_TOKEN_SECRET:?LICENSE_TOKEN_SECRET is required}
-      ACTIVATION_APP_NAME: ${ACTIVATION_APP_NAME:-com.ahmedlotfy.mobilemanagement}
       DB_SSL_MODE: ${DB_SSL_MODE:-require}
     ports:
       - "8000:8000"

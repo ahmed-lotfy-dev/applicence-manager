@@ -2,7 +2,7 @@ import { and, count, eq, ilike, inArray } from "drizzle-orm";
 import { randomBytes, randomInt } from "node:crypto";
 import { db } from "../db/db";
 import { activationLogs, activations, licenses } from "../db/auth-schema";
-import { activationAppName, activationTokenTtlDays } from "../lib/env";
+import { activationTokenTtlDays } from "../lib/env";
 import {
   signLicenseActivationToken,
   verifyLicenseActivationToken,
@@ -11,18 +11,12 @@ import { getAppByIdentifier, getOrCreateAppByName } from "./apps";
 
 const DEFAULT_TOKEN_TTL_DAYS = activationTokenTtlDays;
 
-function normalizeAppName(appName: string): string {
-  return appName.trim();
-}
-
-function resolveRequestedAppName(appName?: string): string {
-  // Prefer client-provided appName if available (multi-tenant support)
-  const clientAppName = appName?.trim();
-  if (clientAppName) {
-    return clientAppName;
+function normalizeRequestedAppName(appName: string): string {
+  const normalized = appName.trim();
+  if (!normalized) {
+    throw new Error("APP_NAME_REQUIRED");
   }
-  // Fall back to env var default
-  return activationAppName;
+  return normalized;
 }
 
 function randomGroup(length: number): string {
@@ -56,11 +50,11 @@ async function createUniqueLicenseKey(appName: string): Promise<string> {
 }
 
 export async function issueLicense(input: {
-  appName?: string;
+  appName: string;
   maxActivations?: number;
   metadata?: unknown;
 }) {
-  const requestedAppName = resolveRequestedAppName(input.appName);
+  const requestedAppName = normalizeRequestedAppName(input.appName);
   const app = await getAppByIdentifier(requestedAppName);
   const ensuredApp = app || (await getOrCreateAppByName(requestedAppName));
   if (!ensuredApp) throw new Error("APP_NOT_FOUND");
@@ -223,13 +217,13 @@ export async function deleteLicenseById(licenseId: string) {
 }
 
 export async function activateLicense(input: {
-  appName?: string;
+  appName: string;
   licenseKey: string;
   machineId: string;
   appVersion: string;
   metadata?: unknown;
 }) {
-  const requestedAppName = resolveRequestedAppName(input.appName);
+  const requestedAppName = normalizeRequestedAppName(input.appName);
   const resolvedApp = await getAppByIdentifier(requestedAppName);
   const appName = resolvedApp?.name || requestedAppName;
 
@@ -364,10 +358,13 @@ export async function activateLicense(input: {
 }
 
 export async function validateActivation(input: {
-  appName?: string;
+  appName: string;
   machineId: string;
   activationToken: string;
 }) {
+  const requestedAppName = normalizeRequestedAppName(input.appName);
+  const resolvedApp = await getAppByIdentifier(requestedAppName);
+  const appName = resolvedApp?.name || requestedAppName;
   const payload = verifyLicenseActivationToken(input.activationToken);
   if (!payload) {
     return {
@@ -376,10 +373,7 @@ export async function validateActivation(input: {
     };
   }
 
-  if (
-    payload.appName !== resolveRequestedAppName(input.appName) ||
-    payload.machineId !== input.machineId
-  ) {
+  if (payload.appName !== appName || payload.machineId !== input.machineId) {
     return {
       valid: false as const,
       reason: "Activation token does not match app or machine",
@@ -429,20 +423,20 @@ export async function validateActivation(input: {
 }
 
 export async function deactivateActivation(input: {
-  appName?: string;
+  appName: string;
   machineId: string;
   activationToken: string;
 }) {
+  const requestedAppName = normalizeRequestedAppName(input.appName);
+  const resolvedApp = await getAppByIdentifier(requestedAppName);
+  const appName = resolvedApp?.name || requestedAppName;
   const payload = verifyLicenseActivationToken(input.activationToken);
   if (!payload)
     return {
       ok: false as const,
       reason: "Invalid or expired activation token",
     };
-  if (
-    payload.appName !== resolveRequestedAppName(input.appName) ||
-    payload.machineId !== input.machineId
-  ) {
+  if (payload.appName !== appName || payload.machineId !== input.machineId) {
     return {
       ok: false as const,
       reason: "Activation token does not match app or machine",
@@ -461,9 +455,9 @@ export async function deactivateActivation(input: {
       status: "revoked",
       updatedAt: new Date(),
     })
-    .where(
+      .where(
       and(
-        eq(activations.appName, resolveRequestedAppName(input.appName)),
+        eq(activations.appName, appName),
         eq(activations.licenseKey, license.licenseKey),
         eq(activations.machineId, input.machineId),
       ),
