@@ -6,7 +6,7 @@ import { csrfProtection } from "./middleware/csrf";
 import { securityHeaders } from "./middleware/security-headers";
 import { authMiddleware } from "./middleware/auth";
 import { createRateLimiter } from "./middleware/rate-limit";
-import { trustedOrigins } from "./lib/env";
+import { isProduction, trustedOrigins } from "./lib/env";
 import { initializeDatabase } from "./bootstrap/database";
 import { authRoutes } from "./routes/auth";
 import { healthRoutes } from "./routes/health";
@@ -29,6 +29,11 @@ const app = new Elysia()
       origin: (request) => {
         const origin = request.headers.get("origin");
         if (!origin) return true;
+        if (!isProduction) {
+          // In development, allow browser origins broadly to support localhost/LAN testing.
+          if (origin.startsWith("http://") || origin.startsWith("https://")) return true;
+          return trustedOrigins.includes(origin);
+        }
         return trustedOrigins.includes(origin);
       },
       credentials: true,

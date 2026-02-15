@@ -22,6 +22,7 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
 
 const frontendOriginsEnv = process.env.FRONTEND_URL || process.env.FRONTEND_ORIGIN;
 export const trustedOrigins = parseList(frontendOriginsEnv);
+export const isProduction = process.env.NODE_ENV === "production";
 export const hasConfiguredActivationAppName = !!process.env.ACTIVATION_APP_NAME?.trim();
 export const activationAppName =
   process.env.ACTIVATION_APP_NAME?.trim() || "com.ahmedlotfy.mobilemanagement";
