@@ -178,7 +178,12 @@ export function LicensesPanel({
               className="bg-white/5 border-white/10"
               required
             />
-            <Button type="submit" variant="secondary" disabled={isCreatingApp} className="rounded-xl px-6">
+            <Button
+              type="submit"
+              variant="secondary"
+              disabled={isCreatingApp}
+              className="rounded-xl px-6 bg-success !text-white hover:bg-success/90"
+            >
               {isCreatingApp ? 'Adding...' : 'Add App'}
             </Button>
           </form>
@@ -193,25 +198,25 @@ export function LicensesPanel({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 w-7 p-0 rounded-lg text-slate-400 hover:bg-indigo-500/10 hover:text-indigo-400"
+                  className="h-10 w-10 p-0 rounded-xl bg-indigo-500/20 text-indigo-100 ring-1 ring-indigo-300/30 hover:bg-indigo-500/30 hover:text-white"
                   disabled={appActionLoadingId === app.id}
                   onClick={() => setEditingApp({ id: app.id, name: app.name, status: app.status })}
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 w-7 p-0 rounded-lg text-slate-400 hover:bg-rose-500/10 hover:text-rose-400"
+                  className="h-10 w-10 p-0 rounded-xl bg-rose-500/20 text-rose-100 ring-1 ring-rose-300/30 hover:bg-rose-500/30 hover:text-white"
                   disabled={appActionLoadingId === app.id}
                   onClick={() => {
                     void onRemoveApp(app.id);
                   }}
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </Button>
               </div>
@@ -355,12 +360,19 @@ export function LicensesPanel({
               id="create-license-app"
               value={createLicenseAppId}
               onChange={(e) => setCreateLicenseAppId(e.target.value)}
-              className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/60"
+              className="h-10 w-full appearance-none rounded-lg border border-white/10 !bg-bg-card px-3 pr-10 text-sm text-white [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-primary/60"
+              style={{
+                backgroundImage:
+                  'url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27%3E%3Cpath d=%27M6 8l4 4 4-4%27 stroke=%27%23CBD5E1%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E")',
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 0.75rem center",
+                backgroundSize: "1rem",
+              }}
               required
             >
-              <option value="">Select app</option>
+              <option value="" className="bg-bg-card text-white">Select app</option>
               {apps.map((app) => (
-                <option key={app.id} value={app.id}>
+                <option key={app.id} value={app.id} className="bg-bg-card text-white">
                   {app.name}
                 </option>
               ))}
@@ -411,10 +423,17 @@ export function LicensesPanel({
                 onChange={(e) =>
                   setEditingApp((prev) => (prev ? { ...prev, status: e.target.value as 'active' | 'inactive' } : prev))
                 }
-                className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/60"
+                className="h-10 w-full appearance-none rounded-lg border border-white/10 !bg-bg-card px-3 pr-10 text-sm text-white [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-primary/60"
+                style={{
+                  backgroundImage:
+                    'url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27%3E%3Cpath d=%27M6 8l4 4 4-4%27 stroke=%27%23CBD5E1%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E")',
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 0.75rem center",
+                  backgroundSize: "1rem",
+                }}
               >
-                <option value="active">active</option>
-                <option value="inactive">inactive</option>
+                <option value="active" className="bg-bg-card text-white">active</option>
+                <option value="inactive" className="bg-bg-card text-white">inactive</option>
               </select>
             </div>
 
@@ -459,10 +478,17 @@ export function LicensesPanel({
                 onChange={(e) =>
                   setEditingLicense((prev) => (prev ? { ...prev, status: e.target.value as 'active' | 'revoked' } : prev))
                 }
-                className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/60"
+                className="h-10 w-full appearance-none rounded-lg border border-white/10 !bg-bg-card px-3 pr-10 text-sm text-white [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-primary/60"
+                style={{
+                  backgroundImage:
+                    'url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27%3E%3Cpath d=%27M6 8l4 4 4-4%27 stroke=%27%23CBD5E1%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E")',
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 0.75rem center",
+                  backgroundSize: "1rem",
+                }}
               >
-                <option value="active">active</option>
-                <option value="revoked">revoked</option>
+                <option value="active" className="bg-bg-card text-white">active</option>
+                <option value="revoked" className="bg-bg-card text-white">revoked</option>
               </select>
             </div>
 
