@@ -94,3 +94,7 @@ sudo systemctl reload nginx
 
 Note: The backend now uses secure cookie sessions (`HttpOnly`, `SameSite=Strict`, and `Secure` in production HTTPS). The frontend no longer stores auth tokens in `localStorage`.
 # AppLicence-Manager
+
+## Portfolio Assets
+- `docs/portfolio/applicence-manager-project.md` (project entry data for portfolio form)
+- `docs/portfolio/applicence-manager-case-study.md` (full case study)
