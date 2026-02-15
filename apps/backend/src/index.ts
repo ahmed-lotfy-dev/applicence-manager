@@ -34,7 +34,17 @@ const app = new Elysia()
           if (origin.startsWith("http://") || origin.startsWith("https://")) return true;
           return trustedOrigins.includes(origin);
         }
-        return trustedOrigins.includes(origin);
+        if (trustedOrigins.includes(origin)) return true;
+
+        // In production, also allow same-origin requests when proxied by the frontend host.
+        const host = request.headers.get("host");
+        if (!host) return false;
+        try {
+          const originHost = new URL(origin).host;
+          return originHost === host;
+        } catch {
+          return false;
+        }
       },
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
