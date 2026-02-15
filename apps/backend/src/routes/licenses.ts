@@ -28,9 +28,10 @@ export const licenseAdminRoutes = new Elysia({
   .post(
     "/",
     async ({ body, set }) => {
-      const { appName, maxActivations, metadata } = body as {
+      const { appName, maxActivations, lockedMachineId, metadata } = body as {
         appName: string;
         maxActivations?: number;
+        lockedMachineId?: string;
         metadata?: unknown;
       };
 
@@ -39,6 +40,7 @@ export const licenseAdminRoutes = new Elysia({
         license = await issueLicense({
           appName,
           maxActivations,
+          lockedMachineId,
           metadata,
         });
       } catch (error) {
@@ -55,6 +57,7 @@ export const licenseAdminRoutes = new Elysia({
       body: t.Object({
         appName: t.String({ minLength: 2, maxLength: 120 }),
         maxActivations: t.Optional(t.Number({ minimum: 1, maximum: 10000 })),
+        lockedMachineId: t.Optional(t.String({ minLength: 6, maxLength: 256 })),
         metadata: t.Optional(t.Any()),
       }),
     },

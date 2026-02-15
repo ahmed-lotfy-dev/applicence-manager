@@ -52,6 +52,7 @@ async function createUniqueLicenseKey(appName: string): Promise<string> {
 export async function issueLicense(input: {
   appName: string;
   maxActivations?: number;
+  lockedMachineId?: string;
   metadata?: unknown;
 }) {
   const requestedAppName = normalizeRequestedAppName(input.appName);
@@ -65,6 +66,12 @@ export async function issueLicense(input: {
   const licenseKey = await createUniqueLicenseKey(appName);
   const id = crypto.randomUUID();
 
+  const lockedMachineId = input.lockedMachineId?.trim() || undefined;
+  const mergedMetadata = {
+    ...(input.metadata && typeof input.metadata === "object" ? (input.metadata as Record<string, unknown>) : {}),
+    ...(lockedMachineId ? { lockedMachineId } : {}),
+  };
+
   await db.insert(licenses).values({
     id,
     appName,
@@ -72,7 +79,7 @@ export async function issueLicense(input: {
     status: "active",
     maxActivations,
     expiresAt,
-    metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+    metadata: Object.keys(mergedMetadata).length ? JSON.stringify(mergedMetadata) : null,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -251,6 +258,24 @@ export async function activateLicense(input: {
   }
   if (license.expiresAt && license.expiresAt.getTime() < Date.now()) {
     return { ok: false as const, status: 403, error: "License expired" };
+  }
+
+  let lockedMachineId: string | undefined;
+  if (license.metadata) {
+    try {
+      const parsed = JSON.parse(license.metadata) as { lockedMachineId?: string };
+      lockedMachineId = parsed.lockedMachineId?.trim();
+    } catch {
+      lockedMachineId = undefined;
+    }
+  }
+
+  if (lockedMachineId && lockedMachineId !== input.machineId) {
+    return {
+      ok: false as const,
+      status: 403,
+      error: "License is locked to another machine",
+    };
   }
 
   const [existingActivation] = await db

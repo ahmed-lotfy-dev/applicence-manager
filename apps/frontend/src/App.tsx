@@ -1,29 +1,40 @@
-import { useEffect, useMemo, useState } from 'react';
-import './styles.css';
-import { ActivationsTable } from './components/dashboard/ActivationsTable';
-import { FilterTabs } from './components/dashboard/FilterTabs';
-import { LicensesPanel } from './components/dashboard/LicensesPanel';
-import { StatsCards } from './components/dashboard/StatsCards';
-import { LoginPage } from './components/LoginPage';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { Button } from './components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
-import { useDashboardData } from './hooks/use-dashboard-data';
-import { authClient } from './lib/auth-client';
-import type { ActivationFilter } from './types/dashboard';
+import { useEffect, useMemo, useState } from "react";
+import "./styles.css";
+import { ActivationsTable } from "./components/dashboard/ActivationsTable";
+import { FilterTabs } from "./components/dashboard/FilterTabs";
+import { LicensesPanel } from "./components/dashboard/LicensesPanel";
+import { StatsCards } from "./components/dashboard/StatsCards";
+import { LoginPage } from "./components/LoginPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Button } from "./components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
+import { useDashboardData } from "./hooks/use-dashboard-data";
+import { authClient } from "./lib/auth-client";
+import type { ActivationFilter } from "./types/dashboard";
 
 interface DashboardProps {
   onLogout: () => void;
 }
 
-function DashboardHeader({ userEmail, onLogout }: { userEmail: string; onLogout: () => void }) {
+function DashboardHeader({
+  userEmail,
+  onLogout,
+}: {
+  userEmail: string;
+  onLogout: () => void;
+}) {
   return (
     <div className="px-4 py-4 sm:px-6 lg:px-8">
       <header className="mx-auto max-w-7xl rounded-3xl border border-white/5 bg-white/5 backdrop-blur-md shadow-soft ring-1 ring-white/5">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 shadow-[inset_0_2px_4px_rgba(255,255,255,0.02)]">
-              <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 120 120" stroke="currentColor">
+              <svg
+                className="h-6 w-6 text-primary"
+                fill="none"
+                viewBox="0 0 120 120"
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -33,14 +44,25 @@ function DashboardHeader({ userEmail, onLogout }: { userEmail: string; onLogout:
               </svg>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/80">AppLicence</p>
-              <h1 className="text-lg font-bold text-white leading-none">Manager</h1>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/80">
+                AppLicence
+              </p>
+              <h1 className="text-lg font-bold text-white leading-none">
+                Manager
+              </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="hidden text-sm font-medium text-slate-400 sm:block">{userEmail}</span>
-            <Button variant="outline" size="sm" onClick={onLogout} className="rounded-full px-5 border-white/10 text-white shadow-none hover:bg-white/10 hover:border-white/20">
+            <span className="hidden text-sm font-medium text-slate-400 sm:block">
+              {userEmail}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onLogout}
+              className="rounded-full px-5 border-white/10 text-white shadow-none hover:bg-white/10 hover:border-white/20"
+            >
               Logout
             </Button>
           </div>
@@ -51,7 +73,7 @@ function DashboardHeader({ userEmail, onLogout }: { userEmail: string; onLogout:
 }
 
 function Dashboard({ onLogout }: DashboardProps) {
-  const [selectedTab, setSelectedTab] = useState<ActivationFilter>('all');
+  const [selectedTab, setSelectedTab] = useState<ActivationFilter>("all");
   const {
     activations,
     licenses,
@@ -78,8 +100,10 @@ function Dashboard({ onLogout }: DashboardProps) {
   } = useDashboardData(onLogout);
 
   const filteredActivations = useMemo(() => {
-    if (selectedTab === 'all') return activations;
-    return activations.filter((activation) => activation.status === selectedTab);
+    if (selectedTab === "all") return activations;
+    return activations.filter(
+      (activation) => activation.status === selectedTab,
+    );
   }, [activations, selectedTab]);
 
   const handleLogout = async () => {
@@ -118,10 +142,16 @@ function Dashboard({ onLogout }: DashboardProps) {
 
         <Card className="bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
           <CardHeader className="space-y-2 border-b border-white/5 pb-6">
-            <CardTitle className="text-xl text-white">Activation Requests</CardTitle>
-            <p className="text-sm text-slate-400">Review pending machines and enforce license compliance.</p>
+            <CardTitle className="text-xl text-white">
+              Activation Requests
+            </CardTitle>
+            <p className="text-sm text-slate-400">
+              Review pending machines and enforce license compliance.
+            </p>
             {error && (
-              <div className="rounded-lg border border-danger/30 bg-danger/20 p-3 text-sm text-danger">{error}</div>
+              <div className="rounded-lg border border-danger/30 bg-danger/20 p-3 text-sm text-danger">
+                {error}
+              </div>
             )}
           </CardHeader>
 
@@ -132,10 +162,10 @@ function Dashboard({ onLogout }: DashboardProps) {
               loading={loading}
               actionLoadingId={actionLoadingId}
               onApprove={(id) => {
-                void changeStatus(id, 'approve');
+                void changeStatus(id, "approve");
               }}
               onRevoke={(id) => {
-                void changeStatus(id, 'revoke');
+                void changeStatus(id, "revoke");
               }}
             />
           </CardContent>
@@ -162,7 +192,9 @@ function App() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#060816]">
-        <div className="text-slate-500 font-medium tracking-widest uppercase text-xs animate-pulse">Loading Manager...</div>
+        <div className="text-slate-500 font-medium tracking-widest uppercase text-xs animate-pulse">
+          Loading Manager...
+        </div>
       </div>
     );
   }

@@ -105,18 +105,23 @@ export async function fetchLicenses(appName?: string): Promise<License[] | null>
 export async function createLicense(input: {
   appName: string;
   maxActivations: number;
-}): Promise<boolean> {
+  lockedMachineId?: string;
+}): Promise<License | null> {
   const response = await apiRequest('/licenses', {
     method: 'POST',
     body: JSON.stringify(input),
   });
 
-  if (response.status === 401) return false;
+  if (response.status === 401) return null;
   if (!response.ok) {
     throw new Error('Failed to create license');
   }
 
-  return true;
+  const data = await parseJsonResponse<{ license?: License }>(response);
+  if (!data?.license) {
+    throw new Error('License payload missing');
+  }
+  return data.license;
 }
 
 export async function setLicenseStatus(

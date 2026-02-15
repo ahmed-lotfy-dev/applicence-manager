@@ -36,7 +36,8 @@ interface UseDashboardDataResult {
   createNewLicense: (input: {
     appName: string;
     maxActivations: number;
-  }) => Promise<boolean>;
+    lockedMachineId?: string;
+  }) => Promise<License | null>;
   createNewApp: (name: string) => Promise<boolean>;
   updateApp: (id: string, input: { name?: string; status?: 'active' | 'inactive' }) => Promise<void>;
   removeApp: (id: string) => Promise<void>;
@@ -141,22 +142,22 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
   );
 
   const createNewLicense = useCallback(
-    async (input: { appName: string; maxActivations: number }) => {
+    async (input: { appName: string; maxActivations: number; lockedMachineId?: string }) => {
       setIsCreatingLicense(true);
       setError('');
 
       try {
-        const ok = await createLicense(input);
-        if (!ok) {
+        const created = await createLicense(input);
+        if (!created) {
           onUnauthorized();
-          return false;
+          return null;
         }
 
         await refreshLicenses();
-        return true;
+        return created;
       } catch {
         setError('Could not create license right now.');
-        return false;
+        return null;
       } finally {
         setIsCreatingLicense(false);
       }
