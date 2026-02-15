@@ -1,0 +1,25 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+      <feOffset dx="0" dy="2" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Background Shield Shape -->
+  <path d="M60 10C35 15 20 30 20 55C20 85 45 105 60 110C75 105 100 85 100 55C100 30 85 15 60 10Z" fill="url(#gradient)" filter="url(#shadow)" />
+  <!-- Inner White Detail -->
+  <path d="M60 25C43 28 32 38 32 55C32 75 50 90 60 94C70 90 88 75 88 55C88 38 77 28 60 25Z" fill="white" fill-opacity="0.15" />
+  <!-- Checkmark / Key element -->
+  <path d="M45 60L55 70L75 50" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
