@@ -1,38 +1,39 @@
-# Desktop Activation Platform
+# App Licence Manager
 
-Unified platform to manage activation for multiple desktop apps.
+Unified platform for licensing and activation of desktop applications.
 
-## What this includes
-- `apps/backend`: Activation server + admin APIs + PostgreSQL schema bootstrap
-- `apps/frontend`: Web admin UI for apps, users, subscriptions, licenses, and activation logs
+## Monorepo structure
+- `apps/backend`: Activation API, admin APIs, security middleware, and PostgreSQL access.
+- `apps/frontend`: Admin web app for apps, users, subscriptions, licenses, and activation logs.
+- `docs/`: Portfolio and screenshots for project documentation.
 
-Each app can have its own policy:
+Supported licensing policies per app:
 - `license_device_binding` (recommended default)
 - `license_only`
 
-## Local setup
-1. Create PostgreSQL database
-2. Copy `apps/backend/.env.example` to `apps/backend/.env`
-3. Install dependencies
+## Quick start
+1. Create a PostgreSQL database.
+2. Copy `apps/backend/.env.example` to `apps/backend/.env`.
+3. Install dependencies:
 
 ```bash
 bun install
 ```
 
-4. Run backend and frontend
+4. Start backend and frontend:
 
 ```bash
 bun run dev
 ```
 
-Run one app only:
+Run a single app:
 
 ```bash
 bun run dev:backend
 bun run dev:frontend
 ```
 
-Build:
+Build commands:
 
 ```bash
 bun run build
@@ -40,10 +41,10 @@ bun run build:backend
 bun run build:frontend
 ```
 
-## Admin protection (required)
-Admin routes are protected and require secure admin sign-in.
+## Required security configuration
+Admin routes require secure credentials and token secrets.
 
-Set these in `apps/backend/.env`:
+Set these values in `apps/backend/.env`:
 
 ```env
 ADMIN_EMAIL=admin@example.com
@@ -56,34 +57,35 @@ ACTIVATION_TOKEN_TTL_DAYS=30
 DB_SSL_MODE=require
 ```
 
-## Deployment under one domain (frontend + backend)
-Use one host and proxy backend inside frontend domain:
-- `https://activation.ahmedlotfy.site/` => frontend SPA
-- `https://activation.ahmedlotfy.site/api/*` => backend API (proxied)
+Backend sessions use secure cookies (`HttpOnly`, `SameSite=Strict`, and `Secure` in production HTTPS). The frontend does not store auth tokens in `localStorage`.
 
-Included ready Nginx config:
-- `deploy/nginx.activation.conf`
+## Deployment under one domain
+Recommended setup:
+- `https://activation.ahmedlotfy.site/` serves the frontend SPA.
+- `https://activation.ahmedlotfy.site/api/*` proxies to backend APIs.
 
-### Deploy steps
-1. Build frontend and place files in `/var/www/activation/frontend`:
+Nginx config is included at `deploy/nginx.activation.conf`.
+
+Deployment flow:
+1. Build frontend assets and place them in `/var/www/activation/frontend`:
 
 ```bash
 bun run build:frontend
 ```
 
-2. Run backend on port `8000`:
+2. Start backend on port `8000`:
 
 ```bash
 bun run start:backend
 ```
 
-3. Set backend env (`apps/backend/.env`) to same domain:
+3. Configure backend origin in `apps/backend/.env`:
 
 ```env
 FRONTEND_ORIGIN=https://activation.ahmedlotfy.site
 ```
 
-4. Copy Nginx file and enable it:
+4. Install and enable Nginx site:
 
 ```bash
 sudo cp deploy/nginx.activation.conf /etc/nginx/sites-available/activation.ahmedlotfy.site
@@ -92,9 +94,7 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-Note: The backend now uses secure cookie sessions (`HttpOnly`, `SameSite=Strict`, and `Secure` in production HTTPS). The frontend no longer stores auth tokens in `localStorage`.
-# AppLicence-Manager
-
-## Portfolio Assets
-- `docs/portfolio/applicence-manager-project.md` (project entry data for portfolio form)
-- `docs/portfolio/applicence-manager-case-study.md` (full case study)
+## Portfolio assets
+- `docs/portfolio/applicence-manager-project.md`: Project entry data for portfolio forms.
+- `docs/portfolio/applicence-manager-case-study.md`: Full case study.
+- `docs/screenshots/`: UI and deployment screenshots.
