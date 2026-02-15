@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    container_name: applicense-backend
     environment:
       NODE_ENV: production
       PORT: 8000
@@ -15,17 +14,16 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       LICENSE_TOKEN_SECRET: ${LICENSE_TOKEN_SECRET:?LICENSE_TOKEN_SECRET is required}
       DB_SSL_MODE: ${DB_SSL_MODE:-require}
-    ports:
-      - "${BACKEND_PORT:-8000}:8000"
+    expose:
+      - "8000"
     restart: unless-stopped
 
   frontend:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
-    container_name: applicense-frontend
     depends_on:
       - backend
-    ports:
-      - "${FRONTEND_PORT:-8080}:80"
+    expose:
+      - "80"
     restart: unless-stopped
