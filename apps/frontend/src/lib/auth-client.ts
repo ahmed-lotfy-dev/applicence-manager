@@ -1,4 +1,21 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const RAW_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
+const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, '');
+
+function apiUrl(path: string): string {
+  if (!API_BASE_URL) return `/api${path}`;
+  if (API_BASE_URL.endsWith('/api')) return `${API_BASE_URL}${path}`;
+  return `${API_BASE_URL}/api${path}`;
+}
+
+function getCsrfEndpoints(): string[] {
+  if (!API_BASE_URL) {
+    return ['/api/csrf'];
+  }
+  if (API_BASE_URL.endsWith('/api')) {
+    return [`${API_BASE_URL}/csrf`];
+  }
+  return [`${API_BASE_URL}/api/csrf`, `${API_BASE_URL}/csrf`];
+}
 
 export interface AuthResponse {
   success: boolean;
@@ -38,18 +55,23 @@ class AuthClient {
   async getCsrfToken(): Promise<string | null> {
     if (this.csrfToken) return this.csrfToken;
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/csrf`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-      const data = await this.parseResponse<{ csrfToken?: string }>(response);
-      if (!response.ok || !data?.csrfToken) return null;
-      this.csrfToken = data.csrfToken;
-      return this.csrfToken;
-    } catch {
-      return null;
+    const endpoints = getCsrfEndpoints();
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        const data = await this.parseResponse<{ csrfToken?: string }>(response);
+        if (!response.ok || !data?.csrfToken) continue;
+        this.csrfToken = data.csrfToken;
+        return this.csrfToken;
+      } catch {
+        continue;
+      }
     }
+
+    return null;
   }
 
   async signIn(email: string, password: string): Promise<AuthResponse> {
@@ -59,7 +81,7 @@ class AuthClient {
         return { success: false, error: 'Failed to initialize secure session' };
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(apiUrl('/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +116,7 @@ class AuthClient {
   async signOut(): Promise<void> {
     try {
       const csrfToken = await this.getCsrfToken();
-      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+      await fetch(apiUrl('/auth/logout'), {
         method: 'POST',
         headers: {
           ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
@@ -108,7 +130,7 @@ class AuthClient {
 
   async getSession(): Promise<MeResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      const response = await fetch(apiUrl('/auth/me'), {
         credentials: 'include',
       });
       const data = await this.parseResponse<MeResponse>(response);

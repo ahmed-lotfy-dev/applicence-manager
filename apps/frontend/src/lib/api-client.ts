@@ -1,7 +1,14 @@
 import { authClient } from './auth-client';
 import type { Activation, License, ManagedApp, Stats } from '../types/dashboard';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const RAW_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
+const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, '');
+
+function apiUrl(path: string): string {
+  if (!API_BASE_URL) return `/api${path}`;
+  if (API_BASE_URL.endsWith('/api')) return `${API_BASE_URL}${path}`;
+  return `${API_BASE_URL}/api${path}`;
+}
 
 async function parseJsonResponse<T>(response: Response): Promise<T | null> {
   const contentType = response.headers.get('content-type') || '';
@@ -25,7 +32,7 @@ async function apiRequest(path: string, init?: RequestInit): Promise<Response> {
   const method = (init?.method || 'GET').toUpperCase();
   const csrfToken = isStateChangingMethod(method) ? await authClient.getCsrfToken() : null;
 
-  return fetch(`${API_BASE_URL}${path}`, {
+  return fetch(apiUrl(path), {
     ...init,
     method,
     credentials: 'include',
@@ -38,7 +45,7 @@ async function apiRequest(path: string, init?: RequestInit): Promise<Response> {
 }
 
 export async function fetchActivations(): Promise<Activation[] | null> {
-  const response = await apiRequest('/api/activations');
+  const response = await apiRequest('/activations');
   if (response.status === 401) return null;
   if (!response.ok) throw new Error('Failed to fetch activations');
 
@@ -47,7 +54,7 @@ export async function fetchActivations(): Promise<Activation[] | null> {
 }
 
 export async function fetchStats(): Promise<Stats | null> {
-  const response = await apiRequest('/api/activations/stats');
+  const response = await apiRequest('/activations/stats');
   if (response.status === 401) return null;
   if (!response.ok) throw new Error('Failed to fetch stats');
 
@@ -59,7 +66,7 @@ export async function updateActivationStatus(
   id: string,
   nextAction: 'approve' | 'revoke',
 ): Promise<boolean> {
-  const response = await apiRequest(`/api/activations/${id}/${nextAction}`, {
+  const response = await apiRequest(`/activations/${id}/${nextAction}`, {
     method: 'PATCH',
   });
 
@@ -86,7 +93,7 @@ export async function fetchLicenses(appName?: string): Promise<License[] | null>
     params.set('appName', appName.trim());
   }
 
-  const path = params.size ? `/api/licenses?${params.toString()}` : '/api/licenses';
+  const path = params.size ? `/licenses?${params.toString()}` : '/licenses';
   const response = await apiRequest(path);
   if (response.status === 401) return null;
   if (!response.ok) throw new Error('Failed to fetch licenses');
@@ -99,7 +106,7 @@ export async function createLicense(input: {
   appName: string;
   maxActivations: number;
 }): Promise<boolean> {
-  const response = await apiRequest('/api/licenses', {
+  const response = await apiRequest('/licenses', {
     method: 'POST',
     body: JSON.stringify(input),
   });
@@ -117,7 +124,7 @@ export async function setLicenseStatus(
   nextStatus: 'active' | 'revoked',
 ): Promise<boolean> {
   const endpoint = nextStatus === 'active' ? 'activate' : 'revoke';
-  const response = await apiRequest(`/api/licenses/${id}/${endpoint}`, {
+  const response = await apiRequest(`/licenses/${id}/${endpoint}`, {
     method: 'PATCH',
   });
 
@@ -130,7 +137,7 @@ export async function setLicenseStatus(
 }
 
 export async function fetchApps(): Promise<ManagedApp[] | null> {
-  const response = await apiRequest('/api/apps');
+  const response = await apiRequest('/apps');
   if (response.status === 401) return null;
   if (!response.ok) throw new Error('Failed to fetch apps');
 
@@ -139,7 +146,7 @@ export async function fetchApps(): Promise<ManagedApp[] | null> {
 }
 
 export async function createManagedApp(name: string): Promise<boolean> {
-  const response = await apiRequest("/api/apps", {
+  const response = await apiRequest("/apps", {
     method: "POST",
     body: JSON.stringify({ name }),
   });
@@ -156,7 +163,7 @@ export async function updateManagedApp(
   id: string,
   input: { name?: string; status?: 'active' | 'inactive' },
 ): Promise<boolean> {
-  const response = await apiRequest(`/api/apps/${id}`, {
+  const response = await apiRequest(`/apps/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });
@@ -170,7 +177,7 @@ export async function updateManagedApp(
 }
 
 export async function deleteManagedApp(id: string): Promise<boolean> {
-  const response = await apiRequest(`/api/apps/${id}`, {
+  const response = await apiRequest(`/apps/${id}`, {
     method: 'DELETE',
   });
 
@@ -186,7 +193,7 @@ export async function updateLicense(
   id: string,
   input: { maxActivations?: number; status?: 'active' | 'revoked' },
 ): Promise<boolean> {
-  const response = await apiRequest(`/api/licenses/${id}`, {
+  const response = await apiRequest(`/licenses/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });
@@ -200,7 +207,7 @@ export async function updateLicense(
 }
 
 export async function deleteLicense(id: string): Promise<boolean> {
-  const response = await apiRequest(`/api/licenses/${id}`, {
+  const response = await apiRequest(`/licenses/${id}`, {
     method: 'DELETE',
   });
 
