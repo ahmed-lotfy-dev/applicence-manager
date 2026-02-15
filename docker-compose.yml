@@ -16,7 +16,7 @@ services:
       LICENSE_TOKEN_SECRET: ${LICENSE_TOKEN_SECRET:?LICENSE_TOKEN_SECRET is required}
       DB_SSL_MODE: ${DB_SSL_MODE:-require}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     restart: unless-stopped
 
   frontend:
@@ -27,5 +27,5 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:80"
+      - "${FRONTEND_PORT:-8080}:80"
     restart: unless-stopped
