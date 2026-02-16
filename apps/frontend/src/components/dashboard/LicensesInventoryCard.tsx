@@ -50,6 +50,7 @@ export function LicensesInventoryCard({
               <tr>
                 <Th>App</Th>
                 <Th>License Key</Th>
+                <Th>Type</Th>
                 <Th>Status</Th>
                 <Th>Usage</Th>
                 <Th>Remaining</Th>
@@ -59,7 +60,7 @@ export function LicensesInventoryCard({
             <tbody className="divide-y divide-border">
               {licenses.length === 0 ? (
                 <tr>
-                  <Td colSpan={6} className="py-8 text-center text-text-muted">
+                  <Td colSpan={7} className="py-8 text-center text-text-muted">
                     No licenses found.
                   </Td>
                 </tr>
@@ -68,6 +69,11 @@ export function LicensesInventoryCard({
                   <tr key={license.id} className="hover:bg-bg-light/30">
                     <Td className="text-base font-bold tracking-tight text-text">{license.appName}</Td>
                     <Td className="font-mono text-primary-light">{license.licenseKey}</Td>
+                    <Td>
+                      <Badge variant={license.licenseType === "machine_id_bound" ? "warning" : "muted"}>
+                        {license.licenseType === "machine_id_bound" ? "Machine ID" : "Dynamic"}
+                      </Badge>
+                    </Td>
                     <Td>
                       <Badge variant={license.status === "active" ? "success" : "danger"}>{license.status}</Badge>
                     </Td>

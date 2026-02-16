@@ -25,6 +25,7 @@ export interface License {
   id: string;
   appName: string;
   licenseKey: string;
+  licenseType?: "machine_id_bound" | "pre_generated";
   status: "active" | "revoked";
   maxActivations: number;
   activeActivations: number;

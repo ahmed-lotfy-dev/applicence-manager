@@ -28,6 +28,46 @@ function isStateChangingMethod(method?: string): boolean {
   return normalized === 'POST' || normalized === 'PUT' || normalized === 'PATCH' || normalized === 'DELETE';
 }
 
+function deriveLicenseType(raw: Record<string, unknown>): "machine_id_bound" | "pre_generated" {
+  const directType = raw.licenseType;
+  if (directType === "machine_id_bound" || directType === "pre_generated") {
+    return directType;
+  }
+
+  const metadataRaw = raw.metadata;
+  if (typeof metadataRaw === "string" && metadataRaw.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(metadataRaw) as { lockedMachineId?: string };
+      if (parsed.lockedMachineId?.trim()) return "machine_id_bound";
+    } catch {
+      // Ignore malformed metadata and fallback below.
+    }
+  } else if (metadataRaw && typeof metadataRaw === "object") {
+    const maybeLocked = (metadataRaw as { lockedMachineId?: string }).lockedMachineId;
+    if (typeof maybeLocked === "string" && maybeLocked.trim().length > 0) {
+      return "machine_id_bound";
+    }
+  }
+
+  return "pre_generated";
+}
+
+function normalizeLicense(raw: Record<string, unknown>): License {
+  return {
+    id: String(raw.id || ""),
+    appName: String(raw.appName || ""),
+    licenseKey: String(raw.licenseKey || ""),
+    status: raw.status === "revoked" ? "revoked" : "active",
+    maxActivations: Number(raw.maxActivations || 0),
+    activeActivations: Number(raw.activeActivations || 0),
+    remainingActivations: Number(raw.remainingActivations || 0),
+    expiresAt: (raw.expiresAt as string | null | undefined) ?? null,
+    createdAt: String(raw.createdAt || ""),
+    updatedAt: String(raw.updatedAt || ""),
+    licenseType: deriveLicenseType(raw),
+  };
+}
+
 async function apiRequest(path: string, init?: RequestInit): Promise<Response> {
   const method = (init?.method || 'GET').toUpperCase();
   const csrfToken = isStateChangingMethod(method) ? await authClient.getCsrfToken() : null;
@@ -98,8 +138,8 @@ export async function fetchLicenses(appName?: string): Promise<License[] | null>
   if (response.status === 401) return null;
   if (!response.ok) throw new Error('Failed to fetch licenses');
 
-  const data = await parseJsonResponse<{ licenses?: License[] }>(response);
-  return data?.licenses || [];
+  const data = await parseJsonResponse<{ licenses?: Record<string, unknown>[] }>(response);
+  return (data?.licenses || []).map((license) => normalizeLicense(license));
 }
 
 export async function createLicense(input: {
@@ -117,11 +157,11 @@ export async function createLicense(input: {
     throw new Error('Failed to create license');
   }
 
-  const data = await parseJsonResponse<{ license?: License }>(response);
+  const data = await parseJsonResponse<{ license?: Record<string, unknown> }>(response);
   if (!data?.license) {
     throw new Error('License payload missing');
   }
-  return data.license;
+  return normalizeLicense(data.license);
 }
 
 export async function setLicenseStatus(
