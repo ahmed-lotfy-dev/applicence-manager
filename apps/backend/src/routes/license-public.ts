@@ -53,7 +53,18 @@ export const licensePublicRoutes = new Elysia({
           activationToken: string;
         },
       );
-      return result;
+      if (!result.valid) {
+        return {
+          success: false,
+          isValid: false,
+          error: result.reason || "Validation failed",
+        };
+      }
+      return {
+        success: true,
+        isValid: true,
+        ...result,
+      };
     },
     {
       body: t.Object({
@@ -79,7 +90,7 @@ export const licensePublicRoutes = new Elysia({
         return { success: false, error: result.reason };
       }
 
-      return { success: true };
+      return { success: true, ...(result.data || {}) };
     },
     {
       body: t.Object({

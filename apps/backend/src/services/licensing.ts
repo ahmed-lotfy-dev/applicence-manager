@@ -10,6 +10,7 @@ import {
 import { getAppByIdentifier, getOrCreateAppByName } from "./apps";
 
 const DEFAULT_TOKEN_TTL_DAYS = activationTokenTtlDays;
+type ActivationType = "machine_id_bound" | "pre_generated";
 
 function normalizeRequestedAppName(appName: string): string {
   const normalized = appName.trim();
@@ -277,6 +278,9 @@ export async function activateLicense(input: {
       error: "License is locked to another machine",
     };
   }
+  const activationType: ActivationType = lockedMachineId
+    ? "machine_id_bound"
+    : "pre_generated";
 
   const [existingActivation] = await db
     .select()
@@ -360,6 +364,17 @@ export async function activateLicense(input: {
     machineId: input.machineId,
     expiresAt: tokenExpiry,
   });
+  const postActivationCount = await db
+    .select({ count: count() })
+    .from(activations)
+    .where(
+      and(
+        eq(activations.appName, appName),
+        eq(activations.licenseKey, input.licenseKey),
+        eq(activations.status, "active"),
+      ),
+    );
+  const usedActivations = postActivationCount[0]?.count || 0;
 
   return {
     ok: true as const,
@@ -378,6 +393,10 @@ export async function activateLicense(input: {
         maxActivations: license.maxActivations,
         expiresAt: license.expiresAt?.toISOString() || null,
       },
+      activationType,
+      maxActivations: license.maxActivations,
+      usedActivations,
+      remainingActivations: Math.max(license.maxActivations - usedActivations, 0),
     },
   };
 }
@@ -412,6 +431,18 @@ export async function validateActivation(input: {
   if (!license || license.status !== "active") {
     return { valid: false as const, reason: "License is not active" };
   }
+  let lockedMachineId: string | undefined;
+  if (license.metadata) {
+    try {
+      const parsed = JSON.parse(license.metadata) as { lockedMachineId?: string };
+      lockedMachineId = parsed.lockedMachineId?.trim();
+    } catch {
+      lockedMachineId = undefined;
+    }
+  }
+  const activationType: ActivationType = lockedMachineId
+    ? "machine_id_bound"
+    : "pre_generated";
 
   if (license.expiresAt && license.expiresAt.getTime() < Date.now()) {
     return { valid: false as const, reason: "License expired" };
@@ -431,6 +462,17 @@ export async function validateActivation(input: {
   if (!activation || activation.status !== "active") {
     return { valid: false as const, reason: "Activation not active" };
   }
+  const activeCountRows = await db
+    .select({ count: count() })
+    .from(activations)
+    .where(
+      and(
+        eq(activations.appName, payload.appName),
+        eq(activations.licenseKey, license.licenseKey),
+        eq(activations.status, "active"),
+      ),
+    );
+  const usedActivations = activeCountRows[0]?.count || 0;
 
   return {
     valid: true as const,
@@ -444,6 +486,10 @@ export async function validateActivation(input: {
       status: activation.status,
       expiresAt: activation.expiresAt?.toISOString() || null,
     },
+    activationType,
+    maxActivations: license.maxActivations,
+    usedActivations,
+    remainingActivations: Math.max(license.maxActivations - usedActivations, 0),
   };
 }
 
@@ -473,6 +519,18 @@ export async function deactivateActivation(input: {
     .from(licenses)
     .where(eq(licenses.id, payload.licenseId));
   if (!license) return { ok: false as const, reason: "License not found" };
+  let lockedMachineId: string | undefined;
+  if (license.metadata) {
+    try {
+      const parsed = JSON.parse(license.metadata) as { lockedMachineId?: string };
+      lockedMachineId = parsed.lockedMachineId?.trim();
+    } catch {
+      lockedMachineId = undefined;
+    }
+  }
+  const activationType: ActivationType = lockedMachineId
+    ? "machine_id_bound"
+    : "pre_generated";
 
   await db
     .update(activations)
@@ -487,6 +545,24 @@ export async function deactivateActivation(input: {
         eq(activations.machineId, input.machineId),
       ),
     );
-
-  return { ok: true as const };
+  const activeCountRows = await db
+    .select({ count: count() })
+    .from(activations)
+    .where(
+      and(
+        eq(activations.appName, appName),
+        eq(activations.licenseKey, license.licenseKey),
+        eq(activations.status, "active"),
+      ),
+    );
+  const usedActivations = activeCountRows[0]?.count || 0;
+  return {
+    ok: true as const,
+    data: {
+      activationType,
+      maxActivations: license.maxActivations,
+      usedActivations,
+      remainingActivations: Math.max(license.maxActivations - usedActivations, 0),
+    },
+  };
 }
