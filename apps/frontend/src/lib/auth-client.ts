@@ -3,12 +3,6 @@ import { createAuthClient } from "better-auth/react";
 const RAW_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").trim();
 const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, "");
 
-function apiUrl(path: string): string {
-  if (!API_BASE_URL) return `/api${path}`;
-  if (API_BASE_URL.endsWith("/api")) return `${API_BASE_URL}${path}`;
-  return `${API_BASE_URL}/api${path}`;
-}
-
 const AUTH_BASE_URL = !API_BASE_URL
   ? undefined
   : API_BASE_URL.endsWith("/api")
