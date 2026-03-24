@@ -4,7 +4,13 @@ import { Button } from "../../../shared/ui/button";
 import { Dialog } from "../../../shared/ui/dialog";
 import { Input } from "../../../shared/ui/input";
 import { Label } from "../../../shared/ui/label";
-import { selectChevronStyle, selectClassName } from "./LicensesPanel.selectStyle";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../shared/ui/select";
 
 interface LicensesEditLicenseDialogProps {
   license: EditLicenseState | null;
@@ -39,20 +45,22 @@ export function LicensesEditLicenseDialog({
 
           <div className="space-y-2">
             <Label htmlFor="edit-license-status">Status</Label>
-            <select
-              id="edit-license-status"
+            <Select
               value={license.status}
-              onChange={(event) => onLicenseChange({ ...license, status: event.target.value as "active" | "revoked" })}
-              className={selectClassName}
-              style={selectChevronStyle}
+              onValueChange={(value) => onLicenseChange({ ...license, status: value as "active" | "revoked" })}
             >
-              <option value="active" className="bg-bg-card text-white">
+              <SelectTrigger id="edit-license-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+              <SelectItem value="active">
                 active
-              </option>
-              <option value="revoked" className="bg-bg-card text-white">
+              </SelectItem>
+              <SelectItem value="revoked">
                 revoked
-              </option>
-            </select>
+              </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end gap-2">
