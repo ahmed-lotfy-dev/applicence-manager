@@ -4,7 +4,13 @@ import { Button } from "../../../shared/ui/button";
 import { Dialog } from "../../../shared/ui/dialog";
 import { Input } from "../../../shared/ui/input";
 import { Label } from "../../../shared/ui/label";
-import { selectChevronStyle, selectClassName } from "./LicensesPanel.selectStyle";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../shared/ui/select";
 
 interface LicensesCreateLockedDialogProps {
   open: boolean;
@@ -40,23 +46,18 @@ export function LicensesCreateLockedDialog({
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="create-locked-license-app">App</Label>
-          <select
-            id="create-locked-license-app"
-            value={appId}
-            onChange={(event) => onAppIdChange(event.target.value)}
-            className={selectClassName}
-            style={selectChevronStyle}
-            required
-          >
-            <option value="" className="bg-bg-card text-white">
-              Select app
-            </option>
+          <Select value={appId} onValueChange={onAppIdChange}>
+            <SelectTrigger id="create-locked-license-app">
+              <SelectValue placeholder="Select app" />
+            </SelectTrigger>
+            <SelectContent>
             {apps.map((app) => (
-              <option key={app.id} value={app.id} className="bg-bg-card text-white">
+              <SelectItem key={app.id} value={app.id}>
                 {app.name}
-              </option>
+              </SelectItem>
             ))}
-          </select>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
