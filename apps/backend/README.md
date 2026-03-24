@@ -21,6 +21,7 @@ LICENSE_TOKEN_SECRET=at-least-32-char-random-secret
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=strong-password
 FRONTEND_URL=http://localhost:3000
+ACTIVATION_APP_NAME=business-manager
 ```
 
 This project was created using `bun init` in bun v1.3.3. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
