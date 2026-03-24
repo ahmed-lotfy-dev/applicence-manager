@@ -1,19 +1,27 @@
-const RAW_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
-const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, '');
+import { createAuthClient } from "better-auth/react";
+
+const RAW_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").trim();
+const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, "");
 
 function apiUrl(path: string): string {
   if (!API_BASE_URL) return `/api${path}`;
-  if (API_BASE_URL.endsWith('/api')) return `${API_BASE_URL}${path}`;
+  if (API_BASE_URL.endsWith("/api")) return `${API_BASE_URL}${path}`;
   return `${API_BASE_URL}/api${path}`;
 }
 
+const AUTH_BASE_URL = !API_BASE_URL
+  ? undefined
+  : API_BASE_URL.endsWith("/api")
+    ? API_BASE_URL.slice(0, -4) || undefined
+    : API_BASE_URL;
+
+const betterAuthClient = createAuthClient({
+  baseURL: AUTH_BASE_URL,
+});
+
 function getCsrfEndpoints(): string[] {
-  if (!API_BASE_URL) {
-    return ['/api/csrf'];
-  }
-  if (API_BASE_URL.endsWith('/api')) {
-    return [`${API_BASE_URL}/csrf`];
-  }
+  if (!API_BASE_URL) return ["/api/csrf"];
+  if (API_BASE_URL.endsWith("/api")) return [`${API_BASE_URL}/csrf`];
   return [`${API_BASE_URL}/api/csrf`, `${API_BASE_URL}/csrf`];
 }
 
@@ -76,35 +84,23 @@ class AuthClient {
 
   async signIn(email: string, password: string): Promise<AuthResponse> {
     try {
-      const csrfToken = await this.getCsrfToken();
-      if (!csrfToken) {
-        return { success: false, error: 'Failed to initialize secure session' };
-      }
-
-      const response = await fetch(apiUrl('/auth/login'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': csrfToken,
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
+      const { data, error } = await betterAuthClient.signIn.email({
+        email,
+        password,
       });
-
-      const data = await this.parseResponse<AuthResponse>(response);
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data?.error || `Login failed (${response.status})`,
-        };
+      if (error) {
+        return { success: false, error: error.message || "Login failed" };
       }
-
-      if (!data) {
-        return { success: false, error: 'Login failed: invalid server response' };
-      }
-
-      return data;
+      return {
+        success: true,
+        user: data?.user
+          ? {
+              id: data.user.id,
+              email: data.user.email,
+              name: data.user.name ?? null,
+            }
+          : undefined,
+      };
     } catch (error) {
       return { 
         success: false, 
@@ -113,16 +109,23 @@ class AuthClient {
     }
   }
 
+  async signInSocial(provider: "google" | "github"): Promise<{ error?: string }> {
+    try {
+      const { error } = await betterAuthClient.signIn.social({
+        provider,
+        callbackURL: "/overview",
+      });
+      return error ? { error: error.message || "Social login failed" } : {};
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : "Social login failed",
+      };
+    }
+  }
+
   async signOut(): Promise<void> {
     try {
-      const csrfToken = await this.getCsrfToken();
-      await fetch(apiUrl('/auth/logout'), {
-        method: 'POST',
-        headers: {
-          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
-        },
-        credentials: 'include',
-      });
+      await betterAuthClient.signOut();
     } finally {
       this.csrfToken = null;
     }
@@ -130,14 +133,19 @@ class AuthClient {
 
   async getSession(): Promise<MeResponse> {
     try {
-      const response = await fetch(apiUrl('/auth/me'), {
-        credentials: 'include',
-      });
-      const data = await this.parseResponse<MeResponse>(response);
-      if (!response.ok || !data) {
+      const { data } = await betterAuthClient.getSession();
+      if (!data?.user) {
         return { authenticated: false };
       }
-      return data;
+
+      return {
+        authenticated: true,
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name ?? null,
+        },
+      };
     } catch {
       return { authenticated: false };
     }
