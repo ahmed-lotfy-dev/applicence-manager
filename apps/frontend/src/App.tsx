@@ -46,7 +46,7 @@ function App() {
         <Route path="/clients" element={<DashboardPage onLogout={() => setIsAuthenticated(false)} />} />
         <Route path="/invoices" element={<DashboardPage onLogout={() => setIsAuthenticated(false)} />} />
         <Route path="/licensing" element={<DashboardPage onLogout={() => setIsAuthenticated(false)} />} />
-        <Route path="/activations" element={<DashboardPage onLogout={() => setIsAuthenticated(false)} />} />
+        <Route path="/activations" element={<Navigate to="/licensing" replace />} />
         <Route path="*" element={<Navigate to="/overview" replace />} />
       </Routes>
     </ProtectedRoute>
