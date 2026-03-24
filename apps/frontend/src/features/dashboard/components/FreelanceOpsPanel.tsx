@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/ui/car
 import { DatePicker } from '../../../shared/ui/date-picker';
 import { Dialog } from '../../../shared/ui/dialog';
 import { Input } from '../../../shared/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/ui/select';
 import { Table, TableWrapper, Td, Th } from '../../../shared/ui/table';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import type { BillingStats, Client, FreelancerProfile, Invoice, InvoicePdfJob } from '../types/dashboard';
@@ -527,15 +528,18 @@ export function FreelanceOpsPanel({
             </form>
 
             <div className="flex justify-end">
-              <select
-                className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white"
-                value={clientFilter}
-                onChange={(event) => setClientFilter(event.target.value as ClientFilter)}
-              >
-                <option value="all">{t("clients.filter.all")}</option>
-                <option value="active">{t("clients.filter.active")}</option>
-                <option value="archived">{t("clients.filter.archived")}</option>
-              </select>
+              <div className="w-40">
+                <Select value={clientFilter} onValueChange={(value) => setClientFilter(value as ClientFilter)}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("clients.filter.all")}</SelectItem>
+                    <SelectItem value="active">{t("clients.filter.active")}</SelectItem>
+                    <SelectItem value="archived">{t("clients.filter.archived")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {clientStatus && (
@@ -618,18 +622,18 @@ export function FreelanceOpsPanel({
           <CardContent className="space-y-4">
             <form className="space-y-4" onSubmit={handleCreateInvoiceSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
-                <select
-                  className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white"
-                  value={invoiceClientId}
-                  onChange={(event) => setInvoiceClientId(event.target.value)}
-                >
-                  <option value="">Client</option>
+                <Select value={invoiceClientId} onValueChange={setInvoiceClientId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Client" />
+                  </SelectTrigger>
+                  <SelectContent>
                   {activeClients.map((client) => (
-                    <option key={client.id} value={client.id}>
+                    <SelectItem key={client.id} value={client.id}>
                       {client.name}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
+                  </SelectContent>
+                </Select>
                 <Input
                   placeholder="Auto invoice number"
                   value={nextInvoiceNo}
@@ -648,14 +652,15 @@ export function FreelanceOpsPanel({
                   value={invoicePaid}
                   onChange={(event) => setInvoicePaid(event.target.value)}
                 />
-                <select
-                  className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white"
-                  value={invoiceLanguage}
-                  onChange={(event) => setInvoiceLanguage(event.target.value as "en" | "ar")}
-                >
-                  <option value="en">{t("invoice.lang.en")}</option>
-                  <option value="ar">{t("invoice.lang.ar")}</option>
-                </select>
+                <Select value={invoiceLanguage} onValueChange={(value) => setInvoiceLanguage(value as "en" | "ar")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">{t("invoice.lang.en")}</SelectItem>
+                    <SelectItem value="ar">{t("invoice.lang.ar")}</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button
                   type="submit"
                   disabled={isCreatingInvoice || !hasClients}
@@ -736,22 +741,26 @@ export function FreelanceOpsPanel({
                         />
                       </Td>
                       <Td>
-                        <select
-                          className="h-9 rounded-lg border border-white/10 bg-white/5 px-2 text-sm text-white"
+                        <Select
                           value={invoiceStatusMap[invoice.id] ?? invoice.status}
-                          onChange={(event) =>
+                          onValueChange={(value) =>
                             setInvoiceStatusMap((prev) => ({
                               ...prev,
-                              [invoice.id]: event.target.value as Invoice['status'],
+                              [invoice.id]: value as Invoice['status'],
                             }))
                           }
                         >
-                          <option value="draft">draft</option>
-                          <option value="sent">sent</option>
-                          <option value="partially_paid">partially_paid</option>
-                          <option value="paid">paid</option>
-                          <option value="overdue">overdue</option>
-                        </select>
+                          <SelectTrigger className="h-9 rounded-lg px-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="draft">draft</SelectItem>
+                            <SelectItem value="sent">sent</SelectItem>
+                            <SelectItem value="partially_paid">partially_paid</SelectItem>
+                            <SelectItem value="paid">paid</SelectItem>
+                            <SelectItem value="overdue">overdue</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </Td>
                       <Td>
                         <div className="flex flex-col gap-1">
