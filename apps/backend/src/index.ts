@@ -68,7 +68,12 @@ const app = new Elysia()
       maxRequests: 10,
       match: (request) => {
         const path = new URL(request.url).pathname;
-        return path === "/api/auth/login" && request.method === "POST";
+        return (
+          request.method === "POST" &&
+          (path === "/api/auth/sign-in/email" ||
+            path === "/api/auth/sign-up/email" ||
+            path === "/api/auth/sign-in/social")
+        );
       },
     }),
   )
