@@ -53,6 +53,12 @@ ADMIN_PASSWORD=your-very-strong-password
 # ADMIN_PASSWORD_HASH=$2b$12$your-bcrypt-hash
 JWT_SECRET=long-random-secret-at-least-32-chars
 LICENSE_TOKEN_SECRET=another-long-random-secret-at-least-32-chars
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=another-long-random-secret-at-least-32-chars
+GOOGLE_CLIENT_ID=google-oauth-client-id
+GOOGLE_CLIENT_SECRET=google-oauth-client-secret
+GITHUB_CLIENT_ID=github-oauth-client-id
+GITHUB_CLIENT_SECRET=github-oauth-client-secret
 ACTIVATION_TOKEN_TTL_DAYS=30
 DB_SSL_MODE=require
 ```
