@@ -6,8 +6,7 @@ export type DashboardPage =
   | "branding"
   | "clients"
   | "invoices"
-  | "licensing"
-  | "activations";
+  | "licensing";
 
 interface DashboardNavProps {
   page: DashboardPage;
@@ -19,7 +18,6 @@ const ITEMS: Array<{ id: DashboardPage; key: string; to: string }> = [
   { id: "clients", key: "nav.clients", to: "/clients" },
   { id: "invoices", key: "nav.invoices", to: "/invoices" },
   { id: "licensing", key: "nav.licensing", to: "/licensing" },
-  { id: "activations", key: "nav.activations", to: "/activations" },
 ];
 
 export function DashboardNav({ page }: DashboardNavProps) {
@@ -27,7 +25,7 @@ export function DashboardNav({ page }: DashboardNavProps) {
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <nav className="mx-auto max-w-7xl rounded-2xl border border-white/10 bg-white/5 p-2 backdrop-blur-md">
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
           {ITEMS.map((item) => {
             const active = page === item.id;
             return (
