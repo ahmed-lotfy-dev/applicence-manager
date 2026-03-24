@@ -24,4 +24,5 @@ const pool = new Pool({
       : { rejectUnauthorized: effectiveSslMode !== "insecure" },
 });
 
+export { pool };
 export const db = drizzle(pool);
