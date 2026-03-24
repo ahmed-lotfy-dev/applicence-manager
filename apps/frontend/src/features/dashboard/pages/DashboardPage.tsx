@@ -11,11 +11,6 @@ const OverviewPage = lazy(async () => {
   return { default: module.OverviewPage };
 });
 
-const ActivationsPage = lazy(async () => {
-  const module = await import("./ActivationsPage");
-  return { default: module.ActivationsPage };
-});
-
 const FreelanceOpsPanel = lazy(async () => {
   const module = await import("../components/FreelanceOpsPanel");
   return { default: module.FreelanceOpsPanel };
@@ -38,7 +33,6 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     if (location.pathname.startsWith("/invoices")) return "invoices";
     if (location.pathname.startsWith("/freelance")) return "branding";
     if (location.pathname.startsWith("/licensing")) return "licensing";
-    if (location.pathname.startsWith("/activations")) return "activations";
     return "overview";
   }, [location.pathname]);
   const [selectedTab, setSelectedTab] = useState<ActivationFilter>("all");
@@ -148,9 +142,12 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
           {page === "licensing" && (
             <LicensesPanel
               licenses={licenses}
+              activations={filteredActivations}
               apps={apps}
               filterValue={licenseFilter}
               onFilterChange={setLicenseFilter}
+              activationFilter={selectedTab}
+              onActivationFilterChange={setSelectedTab}
               onCreateApp={createNewApp}
               onUpdateApp={updateApp}
               onRemoveApp={removeApp}
@@ -162,22 +159,14 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
               isCreatingApp={isCreatingApp}
               appActionLoadingId={appActionLoadingId}
               licenseActionLoadingId={licenseActionLoadingId}
-            />
-          )}
-
-          {page === "activations" && (
-            <ActivationsPage
-              selectedTab={selectedTab}
-              onSelectTab={setSelectedTab}
-              error={error}
-              filteredActivations={filteredActivations}
-              loading={loading}
-              actionLoadingId={actionLoadingId}
-              onApprove={(id) => {
-                void changeStatus(id, "approve");
+              activationActionLoadingId={actionLoadingId}
+              loadingActivations={loading}
+              activationError={error}
+              onApproveActivation={async (id) => {
+                await changeStatus(id, "approve");
               }}
-              onRevoke={(id) => {
-                void changeStatus(id, "revoke");
+              onRevokeActivation={async (id) => {
+                await changeStatus(id, "revoke");
               }}
             />
           )}
