@@ -33,14 +33,18 @@ function generateLicenseKey(): string {
   return `${randomGroup(5)}-${randomGroup(5)}-${randomGroup(5)}-${randomGroup(5)}-${randomGroup(5)}`;
 }
 
-async function createUniqueLicenseKey(appName: string): Promise<string> {
+async function createUniqueLicenseKey(userId: string, appName: string): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const candidate = generateLicenseKey();
     const existing = await db
       .select({ id: licenses.id })
       .from(licenses)
       .where(
-        and(eq(licenses.appName, appName), eq(licenses.licenseKey, candidate)),
+        and(
+          eq(licenses.userId, userId),
+          eq(licenses.appName, appName),
+          eq(licenses.licenseKey, candidate),
+        ),
       );
     if (existing.length === 0) {
       return candidate;
@@ -50,31 +54,70 @@ async function createUniqueLicenseKey(appName: string): Promise<string> {
   return `${generateLicenseKey()}-${randomBytes(2).toString("hex").toUpperCase()}`;
 }
 
-export async function issueLicense(input: {
-  appName: string;
-  maxActivations?: number;
-  lockedMachineId?: string;
-  metadata?: unknown;
-}) {
+async function findPublicLicense(appName: string, licenseKey: string) {
+  const exactRows = await db
+    .select()
+    .from(licenses)
+    .where(and(eq(licenses.appName, appName), eq(licenses.licenseKey, licenseKey)));
+
+  if (exactRows.length === 1) {
+    return exactRows[0] ?? null;
+  }
+  if (exactRows.length > 1) {
+    return null;
+  }
+
+  const keyOnlyRows = await db
+    .select()
+    .from(licenses)
+    .where(eq(licenses.licenseKey, licenseKey));
+
+  if (keyOnlyRows.length === 1) {
+    return keyOnlyRows[0] ?? null;
+  }
+
+  const normalized = appName.toLowerCase();
+  const matched = keyOnlyRows.filter(
+    (row) => row.appName.toLowerCase() === normalized,
+  );
+  if (matched.length === 1) {
+    return matched[0] ?? null;
+  }
+
+  return null;
+}
+
+export async function issueLicense(
+  userId: string,
+  input: {
+    appName: string;
+    maxActivations?: number;
+    lockedMachineId?: string;
+    metadata?: unknown;
+  },
+) {
   const requestedAppName = normalizeRequestedAppName(input.appName);
-  const app = await getAppByIdentifier(requestedAppName);
-  const ensuredApp = app || (await getOrCreateAppByName(requestedAppName));
+  const app = await getAppByIdentifier(requestedAppName, userId);
+  const ensuredApp = app || (await getOrCreateAppByName(requestedAppName, userId));
   if (!ensuredApp) throw new Error("APP_NOT_FOUND");
   const appName = ensuredApp.name;
   const maxActivations = Math.max(1, input.maxActivations || 1);
   const expiresAt = null;
 
-  const licenseKey = await createUniqueLicenseKey(appName);
+  const licenseKey = await createUniqueLicenseKey(userId, appName);
   const id = crypto.randomUUID();
 
   const lockedMachineId = input.lockedMachineId?.trim() || undefined;
   const mergedMetadata = {
-    ...(input.metadata && typeof input.metadata === "object" ? (input.metadata as Record<string, unknown>) : {}),
+    ...(input.metadata && typeof input.metadata === "object"
+      ? (input.metadata as Record<string, unknown>)
+      : {}),
     ...(lockedMachineId ? { lockedMachineId } : {}),
   };
 
   await db.insert(licenses).values({
     id,
+    userId,
     appName,
     licenseKey,
     status: "active",
@@ -95,14 +138,14 @@ export async function issueLicense(input: {
   };
 }
 
-export async function listLicenses(appName?: string) {
+export async function listLicenses(userId: string, appName?: string) {
   const normalizedAppName = appName?.trim();
   const rows = normalizedAppName
     ? await db
         .select()
         .from(licenses)
-        .where(ilike(licenses.appName, `%${normalizedAppName}%`))
-    : await db.select().from(licenses);
+        .where(and(eq(licenses.userId, userId), ilike(licenses.appName, `%${normalizedAppName}%`)))
+    : await db.select().from(licenses).where(eq(licenses.userId, userId));
 
   if (rows.length === 0) {
     return [];
@@ -115,6 +158,7 @@ export async function listLicenses(appName?: string) {
         .from(activations)
         .where(
           and(
+            eq(activations.userId, userId),
             eq(activations.appName, license.appName),
             eq(activations.licenseKey, license.licenseKey),
             eq(activations.status, "active"),
@@ -136,6 +180,7 @@ export async function listLicenses(appName?: string) {
 }
 
 export async function setLicenseStatus(
+  userId: string,
   licenseId: string,
   status: "active" | "revoked",
 ) {
@@ -145,30 +190,28 @@ export async function setLicenseStatus(
       status,
       updatedAt: new Date(),
     })
-    .where(eq(licenses.id, licenseId));
+    .where(and(eq(licenses.id, licenseId), eq(licenses.userId, userId)));
 }
 
-export async function getLicenseById(licenseId: string) {
+export async function getLicenseById(userId: string, licenseId: string) {
   const [license] = await db
     .select()
     .from(licenses)
-    .where(eq(licenses.id, licenseId));
+    .where(and(eq(licenses.id, licenseId), eq(licenses.userId, userId)));
   return license ?? null;
 }
 
 export async function updateLicenseById(
+  userId: string,
   licenseId: string,
   input: { maxActivations?: number; status?: "active" | "revoked" },
 ) {
-  const existing = await getLicenseById(licenseId);
+  const existing = await getLicenseById(userId, licenseId);
   if (!existing) {
     return { ok: false as const, error: "License not found" };
   }
 
-  const nextMaxActivations = Math.max(
-    1,
-    input.maxActivations || existing.maxActivations,
-  );
+  const nextMaxActivations = Math.max(1, input.maxActivations || existing.maxActivations);
   const nextStatus = input.status || (existing.status as "active" | "revoked");
 
   await db
@@ -178,9 +221,9 @@ export async function updateLicenseById(
       status: nextStatus,
       updatedAt: new Date(),
     })
-    .where(eq(licenses.id, licenseId));
+    .where(and(eq(licenses.id, licenseId), eq(licenses.userId, userId)));
 
-  const updated = await getLicenseById(licenseId);
+  const updated = await getLicenseById(userId, licenseId);
   if (!updated) {
     return { ok: false as const, error: "Failed to update license" };
   }
@@ -188,8 +231,8 @@ export async function updateLicenseById(
   return { ok: true as const, license: updated };
 }
 
-export async function deleteLicenseById(licenseId: string) {
-  const existing = await getLicenseById(licenseId);
+export async function deleteLicenseById(userId: string, licenseId: string) {
+  const existing = await getLicenseById(userId, licenseId);
   if (!existing) {
     return { ok: false as const, error: "License not found" };
   }
@@ -199,6 +242,7 @@ export async function deleteLicenseById(licenseId: string) {
     .from(activations)
     .where(
       and(
+        eq(activations.userId, userId),
         eq(activations.appName, existing.appName),
         eq(activations.licenseKey, existing.licenseKey),
       ),
@@ -206,21 +250,22 @@ export async function deleteLicenseById(licenseId: string) {
 
   if (relatedActivations.length > 0) {
     const activationIds = relatedActivations.map((row) => row.id);
-    await db
-      .delete(activationLogs)
-      .where(inArray(activationLogs.activationId, activationIds));
+    await db.delete(activationLogs).where(inArray(activationLogs.activationId, activationIds));
   }
 
   await db
     .delete(activations)
     .where(
       and(
+        eq(activations.userId, userId),
         eq(activations.appName, existing.appName),
         eq(activations.licenseKey, existing.licenseKey),
       ),
     );
 
-  await db.delete(licenses).where(eq(licenses.id, licenseId));
+  await db
+    .delete(licenses)
+    .where(and(eq(licenses.id, licenseId), eq(licenses.userId, userId)));
   return { ok: true as const };
 }
 
@@ -232,26 +277,14 @@ export async function activateLicense(input: {
   metadata?: unknown;
 }) {
   const requestedAppName = normalizeRequestedAppName(input.appName);
-  const resolvedApp = await getAppByIdentifier(requestedAppName);
-  const appName = resolvedApp?.name || requestedAppName;
+  const license = await findPublicLicense(requestedAppName, input.licenseKey);
 
-  // Extract shopName from metadata if present
   const metadata = input.metadata as
     | { shopName?: string; platform?: string; userAgent?: string }
     | undefined;
   const shopName = metadata?.shopName || null;
 
-  const [license] = await db
-    .select()
-    .from(licenses)
-    .where(
-      and(
-        eq(licenses.appName, appName),
-        eq(licenses.licenseKey, input.licenseKey),
-      ),
-    );
-
-  if (!license) {
+  if (!license || !license.userId) {
     return { ok: false as const, status: 404, error: "License not found" };
   }
   if (license.status !== "active") {
@@ -287,7 +320,8 @@ export async function activateLicense(input: {
     .from(activations)
     .where(
       and(
-        eq(activations.appName, appName),
+        eq(activations.userId, license.userId),
+        eq(activations.appName, license.appName),
         eq(activations.licenseKey, input.licenseKey),
         eq(activations.machineId, input.machineId),
       ),
@@ -298,7 +332,8 @@ export async function activateLicense(input: {
     .from(activations)
     .where(
       and(
-        eq(activations.appName, appName),
+        eq(activations.userId, license.userId),
+        eq(activations.appName, license.appName),
         eq(activations.licenseKey, input.licenseKey),
         eq(activations.status, "active"),
       ),
@@ -314,7 +349,7 @@ export async function activateLicense(input: {
     };
   }
 
-  let activationId = existingActivation?.id || crypto.randomUUID();
+  const activationId = existingActivation?.id || crypto.randomUUID();
   if (existingActivation) {
     await db
       .update(activations)
@@ -322,9 +357,7 @@ export async function activateLicense(input: {
         appVersion: input.appVersion,
         shopName,
         status: "active",
-        metadata: input.metadata
-          ? JSON.stringify(input.metadata)
-          : existingActivation.metadata,
+        metadata: input.metadata ? JSON.stringify(input.metadata) : existingActivation.metadata,
         activatedAt: new Date(),
         expiresAt: license.expiresAt,
         updatedAt: new Date(),
@@ -333,7 +366,8 @@ export async function activateLicense(input: {
   } else {
     await db.insert(activations).values({
       id: activationId,
-      appName,
+      userId: license.userId,
+      appName: license.appName,
       appVersion: input.appVersion,
       licenseKey: input.licenseKey,
       machineId: input.machineId,
@@ -349,6 +383,7 @@ export async function activateLicense(input: {
 
   await db.insert(activationLogs).values({
     id: crypto.randomUUID(),
+    userId: license.userId,
     activationId,
     action: existingActivation ? "reactivated" : "activated",
     metadata: JSON.stringify({ appVersion: input.appVersion }),
@@ -360,7 +395,7 @@ export async function activateLicense(input: {
     new Date(Date.now() + DEFAULT_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000);
   const activationToken = signLicenseActivationToken({
     licenseId: license.id,
-    appName,
+    appName: license.appName,
     machineId: input.machineId,
     expiresAt: tokenExpiry,
   });
@@ -369,7 +404,8 @@ export async function activateLicense(input: {
     .from(activations)
     .where(
       and(
-        eq(activations.appName, appName),
+        eq(activations.userId, license.userId),
+        eq(activations.appName, license.appName),
         eq(activations.licenseKey, input.licenseKey),
         eq(activations.status, "active"),
       ),
@@ -383,7 +419,7 @@ export async function activateLicense(input: {
       tokenExpiresAt: tokenExpiry.toISOString(),
       activation: {
         id: activationId,
-        appName,
+        appName: license.appName,
         machineId: input.machineId,
         status: "active",
       },
@@ -407,8 +443,6 @@ export async function validateActivation(input: {
   activationToken: string;
 }) {
   const requestedAppName = normalizeRequestedAppName(input.appName);
-  const resolvedApp = await getAppByIdentifier(requestedAppName);
-  const appName = resolvedApp?.name || requestedAppName;
   const payload = verifyLicenseActivationToken(input.activationToken);
   if (!payload) {
     return {
@@ -417,7 +451,10 @@ export async function validateActivation(input: {
     };
   }
 
-  if (payload.appName !== appName || payload.machineId !== input.machineId) {
+  if (
+    payload.appName.toLowerCase() !== requestedAppName.toLowerCase() ||
+    payload.machineId !== input.machineId
+  ) {
     return {
       valid: false as const,
       reason: "Activation token does not match app or machine",
@@ -428,7 +465,7 @@ export async function validateActivation(input: {
     .select()
     .from(licenses)
     .where(eq(licenses.id, payload.licenseId));
-  if (!license || license.status !== "active") {
+  if (!license || !license.userId || license.status !== "active") {
     return { valid: false as const, reason: "License is not active" };
   }
   let lockedMachineId: string | undefined;
@@ -453,6 +490,7 @@ export async function validateActivation(input: {
     .from(activations)
     .where(
       and(
+        eq(activations.userId, license.userId),
         eq(activations.appName, payload.appName),
         eq(activations.licenseKey, license.licenseKey),
         eq(activations.machineId, payload.machineId),
@@ -467,6 +505,7 @@ export async function validateActivation(input: {
     .from(activations)
     .where(
       and(
+        eq(activations.userId, license.userId),
         eq(activations.appName, payload.appName),
         eq(activations.licenseKey, license.licenseKey),
         eq(activations.status, "active"),
@@ -499,15 +538,16 @@ export async function deactivateActivation(input: {
   activationToken: string;
 }) {
   const requestedAppName = normalizeRequestedAppName(input.appName);
-  const resolvedApp = await getAppByIdentifier(requestedAppName);
-  const appName = resolvedApp?.name || requestedAppName;
   const payload = verifyLicenseActivationToken(input.activationToken);
   if (!payload)
     return {
       ok: false as const,
       reason: "Invalid or expired activation token",
     };
-  if (payload.appName !== appName || payload.machineId !== input.machineId) {
+  if (
+    payload.appName.toLowerCase() !== requestedAppName.toLowerCase() ||
+    payload.machineId !== input.machineId
+  ) {
     return {
       ok: false as const,
       reason: "Activation token does not match app or machine",
@@ -518,7 +558,7 @@ export async function deactivateActivation(input: {
     .select()
     .from(licenses)
     .where(eq(licenses.id, payload.licenseId));
-  if (!license) return { ok: false as const, reason: "License not found" };
+  if (!license || !license.userId) return { ok: false as const, reason: "License not found" };
   let lockedMachineId: string | undefined;
   if (license.metadata) {
     try {
@@ -538,9 +578,10 @@ export async function deactivateActivation(input: {
       status: "revoked",
       updatedAt: new Date(),
     })
-      .where(
+    .where(
       and(
-        eq(activations.appName, appName),
+        eq(activations.userId, license.userId),
+        eq(activations.appName, license.appName),
         eq(activations.licenseKey, license.licenseKey),
         eq(activations.machineId, input.machineId),
       ),
@@ -550,7 +591,8 @@ export async function deactivateActivation(input: {
     .from(activations)
     .where(
       and(
-        eq(activations.appName, appName),
+        eq(activations.userId, license.userId),
+        eq(activations.appName, license.appName),
         eq(activations.licenseKey, license.licenseKey),
         eq(activations.status, "active"),
       ),

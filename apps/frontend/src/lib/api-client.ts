@@ -1,5 +1,15 @@
 import { authClient } from './auth-client';
-import type { Activation, License, ManagedApp, Stats } from '../types/dashboard';
+import type {
+  Activation,
+  BillingStats,
+  Client,
+  FreelancerProfile,
+  Invoice,
+  InvoicePdfJob,
+  License,
+  ManagedApp,
+  Stats,
+} from '../features/dashboard/types/dashboard';
 
 const RAW_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
 const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, '');
@@ -21,6 +31,11 @@ async function parseJsonResponse<T>(response: Response): Promise<T | null> {
   } catch {
     return null;
   }
+}
+
+async function getErrorMessage(response: Response, fallback: string): Promise<string> {
+  const data = await parseJsonResponse<{ error?: string }>(response);
+  return data?.error?.trim() || fallback;
 }
 
 function isStateChangingMethod(method?: string): boolean {
@@ -71,13 +86,14 @@ function normalizeLicense(raw: Record<string, unknown>): License {
 async function apiRequest(path: string, init?: RequestInit): Promise<Response> {
   const method = (init?.method || 'GET').toUpperCase();
   const csrfToken = isStateChangingMethod(method) ? await authClient.getCsrfToken() : null;
+  const hasFormDataBody = typeof FormData !== 'undefined' && init?.body instanceof FormData;
 
   return fetch(apiUrl(path), {
     ...init,
     method,
     credentials: 'include',
     headers: {
-      ...(method !== 'GET' ? { 'Content-Type': 'application/json' } : {}),
+      ...(method !== 'GET' && !hasFormDataBody ? { 'Content-Type': 'application/json' } : {}),
       ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
       ...(init?.headers || {}),
     },
@@ -262,6 +278,203 @@ export async function deleteLicense(id: string): Promise<boolean> {
   }
 
   return true;
+}
+
+export async function fetchClients(): Promise<Client[] | null> {
+  const response = await apiRequest('/clients');
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error('Failed to fetch clients');
+
+  const data = await parseJsonResponse<{ clients?: Client[] }>(response);
+  return data?.clients || [];
+}
+
+export async function createClient(input: {
+  name: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+}): Promise<Client | null> {
+  const response = await apiRequest('/clients', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error('Failed to create client');
+
+  const data = await parseJsonResponse<{ client?: Client }>(response);
+  return data?.client || null;
+}
+
+export async function deleteClient(id: string): Promise<boolean> {
+  const response = await apiRequest(`/clients/${id}`, {
+    method: 'DELETE',
+  });
+  if (response.status === 401) return false;
+  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to archive client'));
+  return true;
+}
+
+export async function fetchInvoices(): Promise<Invoice[] | null> {
+  const response = await apiRequest('/invoices');
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error('Failed to fetch invoices');
+
+  const data = await parseJsonResponse<{ invoices?: Invoice[] }>(response);
+  return data?.invoices || [];
+}
+
+export async function createInvoice(input: {
+  clientId: string;
+  invoiceNo?: string;
+  totalAmount: number;
+  paidAmount?: number;
+  currency?: string;
+  invoiceLanguage?: 'en' | 'ar';
+  status?: 'draft' | 'sent' | 'partially_paid' | 'paid' | 'overdue';
+  dueDate?: string;
+  notes?: string;
+}): Promise<Invoice | null> {
+  const response = await apiRequest('/invoices', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error('Failed to create invoice');
+
+  const data = await parseJsonResponse<{ invoice?: Invoice }>(response);
+  return data?.invoice || null;
+}
+
+export async function fetchNextInvoiceNo(): Promise<string | null> {
+  const response = await apiRequest('/invoices/next-number');
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error('Failed to fetch next invoice number');
+
+  const data = await parseJsonResponse<{ invoiceNo?: string }>(response);
+  return data?.invoiceNo || null;
+}
+
+export async function updateInvoice(
+  id: string,
+  input: {
+    status?: 'draft' | 'sent' | 'partially_paid' | 'paid' | 'overdue';
+    totalAmount?: number;
+    paidAmount?: number;
+    invoiceLanguage?: 'en' | 'ar';
+  },
+): Promise<boolean> {
+  const response = await apiRequest(`/invoices/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+  if (response.status === 401) return false;
+  if (!response.ok) throw new Error('Failed to update invoice');
+  return true;
+}
+
+export async function deleteInvoice(id: string): Promise<boolean> {
+  const response = await apiRequest(`/invoices/${id}`, {
+    method: 'DELETE',
+  });
+  if (response.status === 401) return false;
+  if (!response.ok) throw new Error('Failed to delete invoice');
+  return true;
+}
+
+export async function fetchBillingStats(): Promise<BillingStats | null> {
+  const response = await apiRequest('/invoices/stats');
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error('Failed to fetch billing stats');
+
+  const data = await parseJsonResponse<{ stats?: BillingStats }>(response);
+  return (
+    data?.stats || {
+      totalInvoiced: 0,
+      totalPaid: 0,
+      totalOutstanding: 0,
+      totalCount: 0,
+    }
+  );
+}
+
+export async function fetchFreelancerProfile(): Promise<FreelancerProfile | null> {
+  const response = await apiRequest('/freelancer-profile');
+  if (response.status === 401) return null;
+  if (!response.ok) {
+    const errorPayload = await parseJsonResponse<{ error?: string }>(response);
+    // Keep the dashboard usable even if profile storage is temporarily unavailable.
+    if (response.status >= 500) return null;
+    throw new Error(errorPayload?.error || 'Failed to fetch freelancer profile');
+  }
+
+  const data = await parseJsonResponse<{ profile?: FreelancerProfile | null }>(response);
+  return data?.profile || null;
+}
+
+export async function updateFreelancerProfile(input: {
+  businessName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  taxId?: string;
+}): Promise<FreelancerProfile | null> {
+  const response = await apiRequest('/freelancer-profile', {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+  if (response.status === 401) return null;
+  if (!response.ok) {
+    const errorPayload = await parseJsonResponse<{ error?: string }>(response);
+    throw new Error(errorPayload?.error || 'Failed to update freelancer profile');
+  }
+
+  const data = await parseJsonResponse<{ profile?: FreelancerProfile }>(response);
+  return data?.profile || null;
+}
+
+export async function uploadFreelancerLogo(file: File): Promise<FreelancerProfile | null> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await apiRequest('/freelancer-profile/logo', {
+    method: 'POST',
+    body: formData,
+  });
+  if (response.status === 401) return null;
+  if (!response.ok) {
+    const errorPayload = await parseJsonResponse<{ error?: string }>(response);
+    throw new Error(errorPayload?.error || 'Failed to upload freelancer logo');
+  }
+
+  const data = await parseJsonResponse<{ profile?: FreelancerProfile }>(response);
+  return data?.profile || null;
+}
+
+export async function queueInvoicePdf(invoiceId: string): Promise<InvoicePdfJob | null> {
+  const response = await apiRequest(`/invoices/${invoiceId}/generate-pdf`, {
+    method: 'POST',
+  });
+  if (response.status === 401) return null;
+  if (!response.ok && response.status !== 202) throw new Error('Failed to queue invoice PDF');
+
+  const data = await parseJsonResponse<{ job?: InvoicePdfJob }>(response);
+  return data?.job || null;
+}
+
+export async function fetchInvoicePdfStatus(invoiceId: string): Promise<InvoicePdfJob | null> {
+  const response = await apiRequest(`/invoices/${invoiceId}/pdf-status`);
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error('Failed to fetch invoice PDF status');
+
+  const data = await parseJsonResponse<{ job?: InvoicePdfJob | null }>(response);
+  return data?.job || null;
+}
+
+export function buildInvoicePdfUrl(invoiceId: string): string {
+  return apiUrl(`/invoices/${invoiceId}/pdf`);
 }
 
 export interface PublicLicenseActivationPayload {

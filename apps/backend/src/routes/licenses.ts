@@ -7,6 +7,7 @@ import {
   setLicenseStatus,
   updateLicenseById,
 } from "../services/licensing";
+import { getAuthenticatedUserId } from "../lib/request-auth";
 
 export const licenseAdminRoutes = new Elysia({
   name: "license-admin-routes",
@@ -14,9 +15,14 @@ export const licenseAdminRoutes = new Elysia({
 })
   .get(
     "/",
-    async ({ query }) => {
+    async ({ query, request, set }) => {
+      const userId = await getAuthenticatedUserId(request);
+      if (!userId) {
+        set.status = 401;
+        return { error: "Unauthorized" };
+      }
       const appName = typeof query.appName === "string" ? query.appName : undefined;
-      const data = await listLicenses(appName);
+      const data = await listLicenses(userId, appName);
       return { licenses: data };
     },
     {
@@ -27,7 +33,12 @@ export const licenseAdminRoutes = new Elysia({
   )
   .post(
     "/",
-    async ({ body, set }) => {
+    async ({ body, request, set }) => {
+      const userId = await getAuthenticatedUserId(request);
+      if (!userId) {
+        set.status = 401;
+        return { success: false, error: "Unauthorized" };
+      }
       const { appName, maxActivations, lockedMachineId, metadata } = body as {
         appName: string;
         maxActivations?: number;
@@ -37,7 +48,7 @@ export const licenseAdminRoutes = new Elysia({
 
       let license;
       try {
-        license = await issueLicense({
+        license = await issueLicense(userId, {
           appName,
           maxActivations,
           lockedMachineId,
@@ -62,8 +73,13 @@ export const licenseAdminRoutes = new Elysia({
       }),
     },
   )
-  .get("/:id", async ({ params, set }) => {
-    const license = await getLicenseById(params.id);
+  .get("/:id", async ({ params, request, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { success: false, error: "Unauthorized" };
+    }
+    const license = await getLicenseById(userId, params.id);
     if (!license) {
       set.status = 404;
       return { success: false, error: "License not found" };
@@ -73,9 +89,14 @@ export const licenseAdminRoutes = new Elysia({
   })
   .patch(
     "/:id",
-    async ({ params, body, set }) => {
+    async ({ params, body, request, set }) => {
+      const userId = await getAuthenticatedUserId(request);
+      if (!userId) {
+        set.status = 401;
+        return { success: false, error: "Unauthorized" };
+      }
       const payload = body as { maxActivations?: number; status?: "active" | "revoked" };
-      const result = await updateLicenseById(params.id, payload);
+      const result = await updateLicenseById(userId, params.id, payload);
       if (!result.ok) {
         set.status = 400;
         return { success: false, error: result.error };
@@ -90,16 +111,31 @@ export const licenseAdminRoutes = new Elysia({
       }),
     },
   )
-  .patch("/:id/revoke", async ({ params: { id } }) => {
-    await setLicenseStatus(id, "revoked");
+  .patch("/:id/revoke", async ({ params: { id }, request, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { success: false, error: "Unauthorized" };
+    }
+    await setLicenseStatus(userId, id, "revoked");
     return { success: true };
   })
-  .patch("/:id/activate", async ({ params: { id } }) => {
-    await setLicenseStatus(id, "active");
+  .patch("/:id/activate", async ({ params: { id }, request, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { success: false, error: "Unauthorized" };
+    }
+    await setLicenseStatus(userId, id, "active");
     return { success: true };
   })
-  .delete("/:id", async ({ params, set }) => {
-    const result = await deleteLicenseById(params.id);
+  .delete("/:id", async ({ params, request, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { success: false, error: "Unauthorized" };
+    }
+    const result = await deleteLicenseById(userId, params.id);
     if (!result.ok) {
       set.status = 400;
       return { success: false, error: result.error };

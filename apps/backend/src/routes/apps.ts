@@ -1,16 +1,28 @@
 import { Elysia, t } from "elysia";
 import { createApp, deleteAppById, getAppById, listApps, updateAppById } from "../services/apps";
+import { getAuthenticatedUserId } from "../lib/request-auth";
 
 export const appCatalogRoutes = new Elysia({
   name: "app-catalog-routes",
   prefix: "/api/apps",
 })
-  .get("/", async () => {
-    const apps = await listApps();
+  .get("/", async ({ request, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
+    const apps = await listApps(userId);
     return { apps };
   })
-  .get("/:id", async ({ params, set }) => {
-    const app = await getAppById(params.id);
+  .get("/:id", async ({ params, request, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
+
+    const app = await getAppById(params.id, userId);
     if (!app) {
       set.status = 404;
       return { success: false, error: "App not found" };
@@ -20,9 +32,14 @@ export const appCatalogRoutes = new Elysia({
   })
   .post(
     "/",
-    async ({ body, set }) => {
+    async ({ body, request, set }) => {
+      const userId = await getAuthenticatedUserId(request);
+      if (!userId) {
+        set.status = 401;
+        return { success: false, error: "Unauthorized" };
+      }
       const { name } = body as { name: string };
-      const result = await createApp(name);
+      const result = await createApp(name, userId);
       if (!result.ok) {
         set.status = 400;
         return { success: false, error: result.error };
@@ -38,9 +55,14 @@ export const appCatalogRoutes = new Elysia({
   )
   .patch(
     "/:id",
-    async ({ params, body, set }) => {
+    async ({ params, body, request, set }) => {
+      const userId = await getAuthenticatedUserId(request);
+      if (!userId) {
+        set.status = 401;
+        return { success: false, error: "Unauthorized" };
+      }
       const payload = body as { name?: string; status?: "active" | "inactive" };
-      const result = await updateAppById(params.id, payload);
+      const result = await updateAppById(params.id, userId, payload);
       if (!result.ok) {
         set.status = 400;
         return { success: false, error: result.error };
@@ -55,8 +77,14 @@ export const appCatalogRoutes = new Elysia({
       }),
     },
   )
-  .delete("/:id", async ({ params, set }) => {
-    const result = await deleteAppById(params.id);
+  .delete("/:id", async ({ params, request, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const result = await deleteAppById(params.id, userId);
     if (!result.ok) {
       set.status = 400;
       return { success: false, error: result.error };

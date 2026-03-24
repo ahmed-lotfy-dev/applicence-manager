@@ -1,4 +1,4 @@
-# App Licence Manager
+# Fawtarly
 
 Unified platform for licensing and activation of desktop applications.
 

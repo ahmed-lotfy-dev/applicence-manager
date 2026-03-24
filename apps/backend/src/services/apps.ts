@@ -1,4 +1,4 @@
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "../db/db";
 import { activationLogs, activations, licenses, managedApps } from "../db/auth-schema";
 
@@ -11,28 +11,40 @@ function slugify(input: string): string {
     .slice(0, 120);
 }
 
-export async function listApps() {
-  return db.select().from(managedApps).orderBy(asc(managedApps.name));
-}
-
-export async function getAppByName(name: string) {
-  const normalizedName = name.trim();
-  const [app] = await db.select().from(managedApps).where(eq(managedApps.name, normalizedName));
-  return app ?? null;
-}
-
 function compactIdentifier(input: string): string {
   return input.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-export async function getAppByIdentifier(identifier: string) {
+export async function listApps(userId: string) {
+  return db
+    .select()
+    .from(managedApps)
+    .where(eq(managedApps.userId, userId))
+    .orderBy(asc(managedApps.name));
+}
+
+export async function getAppByName(name: string, userId: string) {
+  const normalizedName = name.trim();
+  if (!normalizedName) return null;
+  const [app] = await db
+    .select()
+    .from(managedApps)
+    .where(and(eq(managedApps.userId, userId), eq(managedApps.name, normalizedName)));
+  return app ?? null;
+}
+
+export async function getAppByIdentifier(identifier: string, userId: string) {
   const normalized = identifier.trim();
   if (!normalized) return null;
 
   const slugCandidate = slugify(normalized);
   const compact = compactIdentifier(normalized);
 
-  const apps = await db.select().from(managedApps);
+  const apps = await db
+    .select()
+    .from(managedApps)
+    .where(eq(managedApps.userId, userId));
+
   return (
     apps.find((app) => {
       const appName = app.name.trim();
@@ -48,18 +60,21 @@ export async function getAppByIdentifier(identifier: string) {
   );
 }
 
-export async function getAppById(id: string) {
-  const [app] = await db.select().from(managedApps).where(eq(managedApps.id, id));
+export async function getAppById(id: string, userId: string) {
+  const [app] = await db
+    .select()
+    .from(managedApps)
+    .where(and(eq(managedApps.id, id), eq(managedApps.userId, userId)));
   return app ?? null;
 }
 
-export async function createApp(name: string) {
+export async function createApp(name: string, userId: string) {
   const normalizedName = name.trim();
   if (!normalizedName) {
     return { ok: false as const, error: "App name is required" };
   }
 
-  const existing = await getAppByName(normalizedName);
+  const existing = await getAppByName(normalizedName, userId);
   if (existing) {
     return { ok: true as const, app: existing };
   }
@@ -69,6 +84,7 @@ export async function createApp(name: string) {
 
   await db.insert(managedApps).values({
     id,
+    userId,
     name: normalizedName,
     slug,
     status: "active",
@@ -76,7 +92,7 @@ export async function createApp(name: string) {
     updatedAt: new Date(),
   });
 
-  const [created] = await db.select().from(managedApps).where(eq(managedApps.id, id));
+  const created = await getAppById(id, userId);
   if (!created) {
     return { ok: false as const, error: "Failed to create app" };
   }
@@ -84,22 +100,23 @@ export async function createApp(name: string) {
   return { ok: true as const, app: created };
 }
 
-export async function getOrCreateAppByName(name: string) {
+export async function getOrCreateAppByName(name: string, userId: string) {
   const normalizedName = name.trim();
   if (!normalizedName) return null;
-  const existing = await getAppByName(normalizedName);
+  const existing = await getAppByName(normalizedName, userId);
   if (existing) return existing;
 
-  const created = await createApp(normalizedName);
+  const created = await createApp(normalizedName, userId);
   if (!created.ok) return null;
   return created.app;
 }
 
 export async function updateAppById(
   id: string,
+  userId: string,
   input: { name?: string; status?: "active" | "inactive" },
 ) {
-  const existing = await getAppById(id);
+  const existing = await getAppById(id, userId);
   if (!existing) {
     return { ok: false as const, error: "App not found" };
   }
@@ -108,7 +125,7 @@ export async function updateAppById(
   const nextStatus = input.status || (existing.status as "active" | "inactive");
 
   if (nextName !== existing.name) {
-    const duplicate = await getAppByName(nextName);
+    const duplicate = await getAppByName(nextName, userId);
     if (duplicate && duplicate.id !== id) {
       return { ok: false as const, error: "App name already exists" };
     }
@@ -125,7 +142,7 @@ export async function updateAppById(
         status: nextStatus,
         updatedAt: new Date(),
       })
-      .where(eq(managedApps.id, id));
+      .where(and(eq(managedApps.id, id), eq(managedApps.userId, userId)));
 
     if (nextName !== existing.name) {
       await tx
@@ -134,7 +151,7 @@ export async function updateAppById(
           appName: nextName,
           updatedAt: new Date(),
         })
-        .where(eq(licenses.appName, existing.name));
+        .where(and(eq(licenses.userId, userId), eq(licenses.appName, existing.name)));
 
       await tx
         .update(activations)
@@ -142,11 +159,11 @@ export async function updateAppById(
           appName: nextName,
           updatedAt: new Date(),
         })
-        .where(eq(activations.appName, existing.name));
+        .where(and(eq(activations.userId, userId), eq(activations.appName, existing.name)));
     }
   });
 
-  const updated = await getAppById(id);
+  const updated = await getAppById(id, userId);
   if (!updated) {
     return { ok: false as const, error: "Failed to update app" };
   }
@@ -154,8 +171,8 @@ export async function updateAppById(
   return { ok: true as const, app: updated };
 }
 
-export async function deleteAppById(id: string) {
-  const [existing] = await db.select().from(managedApps).where(eq(managedApps.id, id));
+export async function deleteAppById(id: string, userId: string) {
+  const existing = await getAppById(id, userId);
   if (!existing) {
     return { ok: false as const, error: "App not found" };
   }
@@ -163,16 +180,22 @@ export async function deleteAppById(id: string) {
   const relatedActivations = await db
     .select({ id: activations.id })
     .from(activations)
-    .where(eq(activations.appName, existing.name));
+    .where(and(eq(activations.userId, userId), eq(activations.appName, existing.name)));
 
   if (relatedActivations.length > 0) {
     const activationIds = relatedActivations.map((activation) => activation.id);
     await db.delete(activationLogs).where(inArray(activationLogs.activationId, activationIds));
   }
 
-  await db.delete(activations).where(eq(activations.appName, existing.name));
-  await db.delete(licenses).where(eq(licenses.appName, existing.name));
-  await db.delete(managedApps).where(eq(managedApps.id, id));
+  await db
+    .delete(activations)
+    .where(and(eq(activations.userId, userId), eq(activations.appName, existing.name)));
+  await db
+    .delete(licenses)
+    .where(and(eq(licenses.userId, userId), eq(licenses.appName, existing.name)));
+  await db
+    .delete(managedApps)
+    .where(and(eq(managedApps.id, id), eq(managedApps.userId, userId)));
 
   return { ok: true as const };
 }

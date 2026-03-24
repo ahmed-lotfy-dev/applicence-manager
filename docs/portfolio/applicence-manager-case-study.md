@@ -1,7 +1,7 @@
-# AppLicence Manager - Case Study
+# Fawtarly - Case Study
 
 ## Project Snapshot
-- Project: AppLicence Manager
+- Project: Fawtarly
 - Type: Fullstack SaaS-style internal admin platform
 - Stack: React, TypeScript, Vite, Bun, Elysia, PostgreSQL, Drizzle, Docker
 - Role: Product design + architecture + implementation + deployment hardening

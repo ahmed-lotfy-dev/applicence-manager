@@ -18,6 +18,29 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const userLicenseKeys = pgTable(
+  "user_license_keys",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    kid: text("kid").notNull(),
+    keySalt: text("key_salt").notNull(),
+    status: text("status").notNull().default("active"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    userKidUnique: uniqueIndex("user_license_keys_user_kid_uidx").on(
+      table.userId,
+      table.kid,
+    ),
+    userStatusIdx: index("user_license_keys_user_status_idx").on(
+      table.userId,
+      table.status,
+    ),
+  }),
+);
+
 export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(),
   token: text("token").notNull(),
@@ -42,6 +65,7 @@ export const managedApps = pgTable(
   "apps",
   {
     id: text("id").primaryKey(),
+    userId: text("user_id"),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     status: text("status").notNull().default("active"),
@@ -50,8 +74,18 @@ export const managedApps = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
-    appNameUnique: uniqueIndex("apps_name_uidx").on(table.name),
-    appSlugUnique: uniqueIndex("apps_slug_uidx").on(table.slug),
+    appUserNameUnique: uniqueIndex("apps_user_name_uidx").on(
+      table.userId,
+      table.name,
+    ),
+    appUserSlugUnique: uniqueIndex("apps_user_slug_uidx").on(
+      table.userId,
+      table.slug,
+    ),
+    appUserStatusIdx: index("apps_user_status_idx").on(
+      table.userId,
+      table.status,
+    ),
   }),
 );
 
@@ -59,6 +93,7 @@ export const licenses = pgTable(
   "licenses",
   {
     id: text("id").primaryKey(),
+    userId: text("user_id"),
     appName: text("app_name").notNull(),
     licenseKey: text("license_key").notNull(),
     status: text("status").notNull().default("active"),
@@ -69,11 +104,13 @@ export const licenses = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
-    licenseAppKeyUnique: uniqueIndex("licenses_app_key_uidx").on(
+    licenseUserAppKeyUnique: uniqueIndex("licenses_user_app_key_uidx").on(
+      table.userId,
       table.appName,
       table.licenseKey,
     ),
-    licenseAppStatusIdx: index("licenses_app_status_idx").on(
+    licenseUserAppStatusIdx: index("licenses_user_app_status_idx").on(
+      table.userId,
       table.appName,
       table.status,
     ),
@@ -98,22 +135,120 @@ export const activations = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
-    activationAppLicenseMachineUnique: uniqueIndex(
-      "activations_app_license_machine_uidx",
-    ).on(table.appName, table.licenseKey, table.machineId),
-    activationAppStatusIdx: index("activations_app_status_idx").on(
+    activationUserAppLicenseMachineUnique: uniqueIndex(
+      "activations_user_app_license_machine_uidx",
+    ).on(table.userId, table.appName, table.licenseKey, table.machineId),
+    activationUserAppStatusIdx: index("activations_user_app_status_idx").on(
+      table.userId,
       table.appName,
       table.status,
     ),
   }),
 );
 
-export const activationLogs = pgTable("activation_logs", {
-  id: text("id").primaryKey(),
-  activationId: text("activation_id").notNull(),
-  action: text("action").notNull(),
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-  metadata: text("metadata"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const activationLogs = pgTable(
+  "activation_logs",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id"),
+    activationId: text("activation_id").notNull(),
+    action: text("action").notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    metadata: text("metadata"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    activationLogsUserIdx: index("activation_logs_user_idx").on(table.userId),
+  }),
+);
+
+export const clients = pgTable(
+  "clients",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    name: text("name").notNull(),
+    email: text("email"),
+    phone: text("phone"),
+    status: text("status").notNull().default("active"),
+    isDeleted: boolean("is_deleted").notNull().default(false),
+    notes: text("notes"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    clientsUserNameIdx: index("clients_user_name_idx").on(table.userId, table.name),
+    clientsUserStatusIdx: index("clients_user_status_idx").on(table.userId, table.status),
+    clientsUserDeletedIdx: index("clients_user_deleted_idx").on(table.userId, table.isDeleted),
+  }),
+);
+
+export const invoices = pgTable(
+  "invoices",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    clientId: text("client_id").notNull(),
+    invoiceNo: text("invoice_no").notNull(),
+    status: text("status").notNull().default("draft"),
+    currency: text("currency").notNull().default("USD"),
+    invoiceLanguage: text("invoice_language").notNull().default("en"),
+    totalAmount: integer("total_amount").notNull().default(0),
+    paidAmount: integer("paid_amount").notNull().default(0),
+    dueDate: timestamp("due_date"),
+    issuedAt: timestamp("issued_at"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    invoicesUserClientIdx: index("invoices_user_client_idx").on(table.userId, table.clientId),
+    invoicesUserStatusIdx: index("invoices_user_status_idx").on(table.userId, table.status),
+    invoicesUserNoUnique: uniqueIndex("invoices_user_no_uidx").on(table.userId, table.invoiceNo),
+  }),
+);
+
+export const freelancerProfiles = pgTable(
+  "freelancer_profiles",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    businessName: text("business_name"),
+    logoUrl: text("logo_url"),
+    logoObjectKey: text("logo_object_key"),
+    contactEmail: text("contact_email"),
+    contactPhone: text("contact_phone"),
+    addressLine1: text("address_line_1"),
+    addressLine2: text("address_line_2"),
+    taxId: text("tax_id"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    profileUserUnique: uniqueIndex("freelancer_profiles_user_uidx").on(table.userId),
+  }),
+);
+
+export const invoicePdfJobs = pgTable(
+  "invoice_pdf_jobs",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    invoiceId: text("invoice_id").notNull(),
+    status: text("status").notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    errorMessage: text("error_message"),
+    outputPath: text("output_path"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    completedAt: timestamp("completed_at"),
+  },
+  (table) => ({
+    invoicePdfJobsUserInvoiceIdx: index("invoice_pdf_jobs_user_invoice_idx").on(
+      table.userId,
+      table.invoiceId,
+    ),
+    invoicePdfJobsStatusIdx: index("invoice_pdf_jobs_status_idx").on(table.status),
+  }),
+);

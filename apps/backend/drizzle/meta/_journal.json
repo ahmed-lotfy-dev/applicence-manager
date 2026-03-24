@@ -5,29 +5,43 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1771031703275,
-      "tag": "0000_neat_bucky",
+      "when": 1772064000000,
+      "tag": "0000_core_auth_activation",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1771032433037,
-      "tag": "0001_free_skrulls",
+      "when": 1772064001000,
+      "tag": "0001_licensing_user_scope",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
-      "when": 1771033158672,
-      "tag": "0002_furry_roland_deschain",
+      "when": 1772064002000,
+      "tag": "0002_freelancer_billing_pdf",
       "breakpoints": true
     },
     {
       "idx": 3,
       "version": "7",
-      "when": 1771082475972,
-      "tag": "0003_brave_thor_girl",
+      "when": 1772067600000,
+      "tag": "0003_logo_object_key",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1772072400000,
+      "tag": "0004_invoice_language",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774306800000,
+      "tag": "0005_clients_soft_delete",
       "breakpoints": true
     }
   ]

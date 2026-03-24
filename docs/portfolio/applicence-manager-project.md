@@ -1,7 +1,7 @@
-# AppLicence Manager - Portfolio Entry
+# Fawtarly - Portfolio Entry
 
 ## Basic Information
-- Title (English): AppLicence Manager
+- Title (English): Fawtarly
 - Title (Arabic): مدير تراخيص التطبيقات
 - Slug (URL Identifier): applicence-manager
 
@@ -21,7 +21,7 @@ Yes
 
 ## Case Study Content (Markdown) - English
 ```md
-# AppLicence Manager
+# Fawtarly
 
 ## The Challenge
 I needed a production-ready way to manage license activation for multiple desktop apps from one dashboard. The system had to support app-level separation, secure activation flows, and simple operational deployment.
@@ -37,7 +37,7 @@ The result is a deployable, multi-app licensing system with clearer security def
 
 ## Case Study Content (Markdown) - Arabic
 ```md
-# AppLicence Manager
+# Fawtarly
 
 ## التحدي
 كنت أحتاج نظامًا موحدًا لإدارة تفعيل تراخيص عدة تطبيقات سطح مكتب من لوحة تحكم واحدة، مع فصل واضح بين التطبيقات وأمان قوي وسهولة في النشر.

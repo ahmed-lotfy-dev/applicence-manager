@@ -14,6 +14,9 @@ import { activationRoutes } from "./routes/activations";
 import { licenseAdminRoutes } from "./routes/licenses";
 import { licensePublicRoutes } from "./routes/license-public";
 import { appCatalogRoutes } from "./routes/apps";
+import { clientRoutes } from "./routes/clients";
+import { freelancerProfileRoutes } from "./routes/freelancer-profile";
+import { invoiceRoutes } from "./routes/invoices";
 
 const app = new Elysia()
   .use(logger)
@@ -21,7 +24,7 @@ const app = new Elysia()
   .use(
     openapi({
       path: "/docs",
-      documentation: { info: { title: "Activation Dashboard API", version: "1.0.0" } },
+      documentation: { info: { title: "Fawtarly API", version: "1.0.0" } },
     }),
   )
   .use(
@@ -86,6 +89,9 @@ const app = new Elysia()
   .use(authRoutes)
   .use(activationRoutes)
   .use(appCatalogRoutes)
+  .use(clientRoutes)
+  .use(freelancerProfileRoutes)
+  .use(invoiceRoutes)
   .use(licenseAdminRoutes)
   .use(licensePublicRoutes);
 
@@ -94,7 +100,7 @@ async function startServer() {
 
   const port = Number(process.env.PORT || 8000);
   app.listen(port);
-  console.log(`🚀 Activation Dashboard API running at http://localhost:${port}`);
+  console.log(`🚀 Fawtarly API running at http://localhost:${port}`);
 }
 
 startServer().catch((error) => {
