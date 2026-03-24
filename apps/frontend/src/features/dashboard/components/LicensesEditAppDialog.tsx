@@ -4,7 +4,13 @@ import { Button } from "../../../shared/ui/button";
 import { Dialog } from "../../../shared/ui/dialog";
 import { Input } from "../../../shared/ui/input";
 import { Label } from "../../../shared/ui/label";
-import { selectChevronStyle, selectClassName } from "./LicensesPanel.selectStyle";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../shared/ui/select";
 
 interface LicensesEditAppDialogProps {
   app: EditAppState | null;
@@ -37,20 +43,22 @@ export function LicensesEditAppDialog({
 
           <div className="space-y-2">
             <Label htmlFor="edit-app-status">Status</Label>
-            <select
-              id="edit-app-status"
+            <Select
               value={app.status}
-              onChange={(event) => onAppChange({ ...app, status: event.target.value as "active" | "inactive" })}
-              className={selectClassName}
-              style={selectChevronStyle}
+              onValueChange={(value) => onAppChange({ ...app, status: value as "active" | "inactive" })}
             >
-              <option value="active" className="bg-bg-card text-white">
+              <SelectTrigger id="edit-app-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+              <SelectItem value="active">
                 active
-              </option>
-              <option value="inactive" className="bg-bg-card text-white">
+              </SelectItem>
+              <SelectItem value="inactive">
                 inactive
-              </option>
-            </select>
+              </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end gap-2">
