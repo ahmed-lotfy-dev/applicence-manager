@@ -48,6 +48,10 @@ h6 {
     @apply antialiased;
   }
 
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
   /* Remove default scrollbar for cleaner look */
   ::-webkit-scrollbar {
     width: 6px;
