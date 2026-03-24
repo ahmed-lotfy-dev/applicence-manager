@@ -31,7 +31,7 @@ export function Dialog({ open, onOpenChange, title, children, maxWidthClassName 
       >
         <div className="mb-6 flex items-center justify-between">
           <h3 className="text-xl font-bold text-white tracking-tight">{title}</h3>
-          <button className="text-slate-500 hover:text-white transition-colors" onClick={() => onOpenChange(false)} aria-label="Close modal">
+          <button className="cursor-pointer text-slate-500 transition-colors hover:text-white" onClick={() => onOpenChange(false)} aria-label="Close modal">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
