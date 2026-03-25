@@ -13,11 +13,7 @@ import {
   sendInvoiceEmail,
   updateInvoice,
 } from "../../../lib/api-client";
-import type {
-  BillingStats,
-  Invoice,
-  InvoicePdfJob,
-} from "../types/dashboard";
+import type { InvoicePdfJob } from "../types/dashboard";
 
 class UnauthorizedError extends Error {
   constructor() {
