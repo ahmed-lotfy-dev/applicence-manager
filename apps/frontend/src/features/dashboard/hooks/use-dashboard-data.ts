@@ -25,6 +25,7 @@ import {
   queueInvoicePdf,
   restoreClient,
   restoreInvoice,
+  sendInvoiceEmail,
   setLicenseStatus,
   uploadFreelancerLogo,
   updateFreelancerProfile,
@@ -124,6 +125,7 @@ interface UseDashboardDataResult {
   uploadProfileLogo: (file: File) => Promise<FreelancerProfile | null>;
   queueInvoicePdfGeneration: (invoiceId: string) => Promise<void>;
   refreshInvoicePdfJob: (invoiceId: string) => Promise<void>;
+  sendInvoiceToEmail: (invoiceId: string) => Promise<void>;
   updateApp: (id: string, input: { name?: string; status?: "active" | "inactive" }) => Promise<void>;
   removeApp: (id: string) => Promise<void>;
   updateExistingLicense: (
@@ -679,6 +681,20 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
     [onQueryError],
   );
 
+  const sendInvoiceToEmail = useCallback(
+    async (invoiceId: string) => {
+      setError("");
+      try {
+        const ok = await sendInvoiceEmail(invoiceId);
+        if (!ok) throw new UnauthorizedError();
+      } catch (mutationError) {
+        onQueryError(mutationError, "Could not send invoice email.");
+        throw mutationError;
+      }
+    },
+    [onQueryError],
+  );
+
   const updateApp = useCallback(
     async (id: string, input: { name?: string; status?: "active" | "inactive" }) => {
       setAppActionLoadingId(id);
@@ -832,6 +848,7 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
     uploadProfileLogo,
     queueInvoicePdfGeneration,
     refreshInvoicePdfJob,
+    sendInvoiceToEmail,
     updateApp,
     removeApp,
     updateExistingLicense,

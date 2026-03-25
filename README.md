@@ -59,6 +59,10 @@ GOOGLE_CLIENT_ID=google-oauth-client-id
 GOOGLE_CLIENT_SECRET=google-oauth-client-secret
 GITHUB_CLIENT_ID=github-oauth-client-id
 GITHUB_CLIENT_SECRET=github-oauth-client-secret
+RESEND_API_KEY=re_xxxxxxxxx
+RESEND_FROM_EMAIL=billing@example.com
+# Optional:
+# RESEND_REPLY_TO_EMAIL=support@example.com
 ACTIVATION_TOKEN_TTL_DAYS=30
 DB_SSL_MODE=require
 ```

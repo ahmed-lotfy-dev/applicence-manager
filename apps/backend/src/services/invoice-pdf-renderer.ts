@@ -100,7 +100,7 @@ async function resolvePdfFont(language: InvoiceLanguage): Promise<string | null>
     : pickExistingPath(defaultCandidates);
 }
 
-async function loadLogoBuffer(input: {
+export async function loadInvoiceLogoBuffer(input: {
   logoObjectKey?: string | null;
   logoUrl?: string | null;
 }): Promise<Buffer | null> {
@@ -354,7 +354,7 @@ export async function renderInvoicePdfAndSave(input: { userId: string; invoiceId
 
   const language: InvoiceLanguage = data.invoiceLanguage === "ar" ? "ar" : "en";
   const fontPath = await resolvePdfFont(language);
-  const logoBuffer = await loadLogoBuffer({
+  const logoBuffer = await loadInvoiceLogoBuffer({
     logoObjectKey: data.logoObjectKey,
     logoUrl: data.logoUrl,
   });

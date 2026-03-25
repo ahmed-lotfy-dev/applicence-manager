@@ -15,6 +15,7 @@ import {
   getInvoicePdfData,
   getLatestInvoicePdfJob,
 } from "../services/invoice-pdf-jobs";
+import { sendInvoiceEmail } from "../services/invoice-email";
 
 function buildInvoicePdfFilename(input: { invoiceNo?: string | null; issuedAt?: Date | string | null }) {
   const safeNo = (input.invoiceNo || "invoice").trim().replace(/[^a-zA-Z0-9_-]+/g, "-");
@@ -199,6 +200,27 @@ export const invoiceRoutes = new Elysia({
     }
     set.status = 202;
     return { success: true, job: result.job };
+  })
+  .post("/:id/send-email", async ({ request, params, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { success: false, error: "Unauthorized" };
+    }
+    try {
+      const result = await sendInvoiceEmail({ userId, invoiceId: params.id });
+      if (!result.ok) {
+        set.status = 400;
+        return { success: false, error: result.error };
+      }
+      return { success: true, emailId: result.emailId };
+    } catch (error) {
+      set.status = 500;
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to send invoice email",
+      };
+    }
   })
   .get("/:id/pdf-status", async ({ request, params, set }) => {
     const userId = await getAuthenticatedUserId(request);

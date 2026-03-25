@@ -590,6 +590,15 @@ export function buildInvoicePdfUrl(invoiceId: string): string {
   return apiUrl(`/invoices/${invoiceId}/pdf`);
 }
 
+export async function sendInvoiceEmail(invoiceId: string): Promise<boolean> {
+  const response = await apiRequest(`/invoices/${invoiceId}/send-email`, {
+    method: "POST",
+  });
+  if (response.status === 401) return false;
+  if (!response.ok) throw new Error(await getErrorMessage(response, "Failed to send invoice email"));
+  return true;
+}
+
 export interface PublicLicenseActivationPayload {
   appName: string;
   licenseKey: string;

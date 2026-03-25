@@ -100,6 +100,7 @@ interface FreelanceOpsPanelProps {
   onUploadProfileLogo: (file: File) => Promise<FreelancerProfile | null>;
   onQueueInvoicePdf: (invoiceId: string) => Promise<void>;
   onRefreshInvoicePdfJob: (invoiceId: string) => Promise<void>;
+  onSendInvoiceEmail: (invoiceId: string) => Promise<void>;
 }
 
 function formatMoneyCents(cents: number, currency = 'USD'): string {
@@ -145,6 +146,7 @@ export function FreelanceOpsPanel({
   onUploadProfileLogo,
   onQueueInvoicePdf,
   onRefreshInvoicePdfJob,
+  onSendInvoiceEmail,
 }: FreelanceOpsPanelProps) {
   const { t, locale } = useI18n();
   const replaceVars = (template: string, vars: Record<string, string>) =>
@@ -184,6 +186,7 @@ export function FreelanceOpsPanel({
   const [invoicePaid, setInvoicePaid] = useState('0');
   const [invoiceDueDate, setInvoiceDueDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [invoiceLanguage, setInvoiceLanguage] = useState<"en" | "ar">(locale === "ar" ? "ar" : "en");
+  const [sendInvoiceEmailOnCreate, setSendInvoiceEmailOnCreate] = useState(false);
   const [profileBusinessName, setProfileBusinessName] = useState(freelancerProfile?.businessName || '');
   const [profileEmail, setProfileEmail] = useState(freelancerProfile?.contactEmail || '');
   const [profilePhone, setProfilePhone] = useState(freelancerProfile?.contactPhone || '');
@@ -227,11 +230,17 @@ export function FreelanceOpsPanel({
   const [invoiceToArchive, setInvoiceToArchive] = useState<Invoice | null>(null);
   const [invoiceToRestore, setInvoiceToRestore] = useState<Invoice | null>(null);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
+  const [sendingInvoiceEmailId, setSendingInvoiceEmailId] = useState<string | null>(null);
 
   const activeClients = useMemo(
     () => clients.filter((client) => !client.isDeleted && client.status === 'active'),
     [clients],
   );
+  const selectedInvoiceClient = useMemo(
+    () => activeClients.find((client) => client.id === invoiceClientId) ?? null,
+    [activeClients, invoiceClientId],
+  );
+  const canEmailSelectedClient = Boolean(selectedInvoiceClient?.email?.trim());
   const filteredClients = useMemo(() => {
     if (clientFilter === 'archived') return clients.filter((client) => client.isDeleted);
     if (clientFilter === 'active') return clients.filter((client) => !client.isDeleted && client.status === 'active');
@@ -515,11 +524,23 @@ export function FreelanceOpsPanel({
       dueDate: parsed.data.dueDate || undefined,
     });
     if (result) {
+      let nextTone: 'success' | 'error' = 'success';
+      let nextMessage = t('invoice.created');
+      if (sendInvoiceEmailOnCreate && canEmailSelectedClient) {
+        try {
+          await onSendInvoiceEmail(result.id);
+          nextMessage = replaceVars(t('invoice.createdAndSent'), { invoiceNo: result.invoiceNo });
+        } catch (error) {
+          nextTone = 'error';
+          nextMessage = error instanceof Error && error.message ? error.message : t('invoice.emailSendError');
+        }
+      }
       setInvoiceTotal('');
       setInvoicePaid('0');
       setInvoiceClientId('');
       setInvoiceDueDate(new Date().toISOString().slice(0, 10));
-      setInvoiceCreateStatus({ tone: 'success', message: t('invoice.created') });
+      setSendInvoiceEmailOnCreate(false);
+      setInvoiceCreateStatus({ tone: nextTone, message: nextMessage });
     } else {
       setInvoiceCreateStatus({ tone: 'error', message: t('invoice.createError') });
     }
@@ -550,6 +571,25 @@ export function FreelanceOpsPanel({
       paidAmount: parsed.data.paidAmount,
     });
     setInvoiceRowStatus({ tone: 'success', message: replaceVars(t('invoice.updated'), { invoiceNo: invoice.invoiceNo }) });
+  };
+
+  const handleSendInvoiceEmail = async (invoice: Invoice) => {
+    setInvoiceRowStatus(null);
+    setSendingInvoiceEmailId(invoice.id);
+    try {
+      await onSendInvoiceEmail(invoice.id);
+      setInvoiceRowStatus({
+        tone: 'success',
+        message: replaceVars(t('invoice.emailSent'), { invoiceNo: invoice.invoiceNo }),
+      });
+    } catch (error) {
+      setInvoiceRowStatus({
+        tone: 'error',
+        message: error instanceof Error ? error.message : t('invoice.emailSendError'),
+      });
+    } finally {
+      setSendingInvoiceEmailId(null);
+    }
   };
 
   return (
@@ -907,6 +947,20 @@ export function FreelanceOpsPanel({
                 </Button>
               </div>
               <DatePicker value={invoiceDueDate} onChange={setInvoiceDueDate} placeholder={t('invoice.pickDueDate')} />
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  variant={sendInvoiceEmailOnCreate ? "secondary" : "outline"}
+                  size="sm"
+                  className="min-w-[12rem] border-white/10 text-white"
+                  onClick={() => setSendInvoiceEmailOnCreate((prev) => !prev)}
+                >
+                  {sendInvoiceEmailOnCreate ? t('invoice.emailOnCreateEnabled') : t('invoice.emailOnCreate')}
+                </Button>
+                {!canEmailSelectedClient && (
+                  <span className="text-xs text-slate-400">{t('invoice.emailRequiresClientEmail')}</span>
+                )}
+              </div>
             </form>
             <div className="flex justify-end">
               <div className="w-40">
@@ -1026,16 +1080,27 @@ export function FreelanceOpsPanel({
                           )}
                         </div>
                       </Td>
-                      <Td>
-                        <div className="space-y-2">
+                      <Td className="w-[1%] whitespace-nowrap">
+                        <div className="flex items-center gap-2 whitespace-nowrap">
                           <span className="text-xs font-medium uppercase tracking-[0.14em] text-text-muted/80">
                             {invoicePdfJobStatusLabel(invoicePdfJobs[invoice.id]?.status)}
                           </span>
                           {(invoicePdfJobs[invoice.id]?.status === 'pending' ||
                             invoicePdfJobs[invoice.id]?.status === 'processing') && (
-                            <span className="block text-[11px] text-slate-500">{t("invoice.autoChecking")}</span>
+                            <span className="text-[11px] text-slate-500">{t("invoice.autoChecking")}</span>
                           )}
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="min-w-[6.5rem] border-white/10 text-white"
+                              disabled={sendingInvoiceEmailId === invoice.id}
+                              onClick={() => {
+                                void handleSendInvoiceEmail(invoice);
+                              }}
+                            >
+                              {sendingInvoiceEmailId === invoice.id ? t("invoice.sendingEmail") : t("invoice.sendEmail")}
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"
@@ -1074,8 +1139,8 @@ export function FreelanceOpsPanel({
                           </div>
                         </div>
                       </Td>
-                      <Td className="text-right">
-                        <div className="flex flex-wrap justify-end gap-2">
+                      <Td className="w-[1%] whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                           {invoice.isDeleted ? (
                             <>
                               <Button

@@ -77,6 +77,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     uploadProfileLogo,
     queueInvoicePdfGeneration,
     refreshInvoicePdfJob,
+    sendInvoiceToEmail,
     createNewLicense,
     createNewApp,
     updateApp,
@@ -175,6 +176,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 onUploadProfileLogo={uploadProfileLogo}
                 onQueueInvoicePdf={queueInvoicePdfGeneration}
                 onRefreshInvoicePdfJob={refreshInvoicePdfJob}
+                onSendInvoiceEmail={sendInvoiceToEmail}
               />
             )}
 
