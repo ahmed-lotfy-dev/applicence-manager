@@ -2,13 +2,13 @@ import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Button } from "../../../shared/ui/button";
 import { Table, Td, Th } from "../../../shared/ui/table";
 import { Badge } from "../../../shared/ui/badge";
-import { format } from "date-fns";
+
 import { useLicensingPanelContext } from "../hooks/LicensingPanelContext";
 
 export function ActivationsTable() {
   const { t } = useI18n();
   const state = useLicensingPanelContext();
-  const { actionLoadingId, loading } = state.props;
+  const { activationActionLoadingId: actionLoadingId, loadingActivations: loading } = state.props;
 
   if (loading) {
     return (
@@ -57,7 +57,7 @@ export function ActivationsTable() {
               <Td className="px-6 py-4">
                 <Badge 
                   variant={
-                    activation.status === 'approved' ? 'success' : 
+                    activation.status === 'active' ? 'success' : 
                     activation.status === 'pending' ? 'warning' : 'danger'
                   }
                   className="rounded-full px-2 py-0 text-[10px]"
@@ -66,7 +66,7 @@ export function ActivationsTable() {
                 </Badge>
               </Td>
               <Td className="px-6 py-4 text-[11px] text-slate-500">
-                {format(new Date(activation.createdAt), "MMM d, yyyy")}
+                {new Date(activation.createdAt).toLocaleDateString("en", { year: "numeric", month: "short", day: "numeric" })}
               </Td>
               <Td className="px-6 py-4 text-right">
                 <div className="flex justify-end gap-1">
@@ -80,7 +80,7 @@ export function ActivationsTable() {
                       {t("licensing.approve")}
                     </Button>
                   )}
-                  {activation.status === 'approved' && !activation.licenseKey && (
+                  {activation.status === 'active' && !activation.licenseKey && (
                      <Button
                        variant="ghost"
                        size="sm"

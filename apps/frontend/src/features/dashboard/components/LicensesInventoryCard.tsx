@@ -66,7 +66,7 @@ export function LicensesInventoryCard() {
                       </Td>
                       <Td className="px-6 py-4">
                         <span className="text-xs text-slate-300">
-                          {apps.find((a) => a.id === license.appId)?.name || license.appId}
+                          {license.appName}
                         </span>
                       </Td>
                       <Td className="px-6 py-4">
@@ -74,13 +74,13 @@ export function LicensesInventoryCard() {
                           <div className="h-1.5 w-16 overflow-hidden rounded-full bg-white/5">
                             <div 
                               className={`h-full bg-primary transition-all duration-500 ${
-                                (license.activationsCount / (license.maxActivations || 1)) >= 1 ? 'bg-amber-400' : ''
+                                (license.activeActivations / (license.maxActivations || 1)) >= 1 ? 'bg-amber-400' : ''
                               }`}
-                              style={{ width: `${Math.min(100, (license.activationsCount / (license.maxActivations || 1)) * 100)}%` }}
+                              style={{ width: `${Math.min(100, (license.activeActivations / (license.maxActivations || 1)) * 100)}%` }}
                              />
                           </div>
                           <span className="text-[10px] tabular-nums text-slate-400">
-                            {license.activationsCount} / {license.maxActivations}
+                            {license.activeActivations} / {license.maxActivations}
                           </span>
                         </div>
                       </Td>

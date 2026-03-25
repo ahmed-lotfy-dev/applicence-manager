@@ -274,5 +274,6 @@ export function useLicensingPanel(props: LicensesPanelProps) {
     onChangeLicenseStatus,
     onRemoveLicense,
     onDeleteActivation,
+    props,
   };
 }

@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Table, TableWrapper, Td, Th } from "../../../shared/ui/table";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { useFreelanceOpsContext } from "../hooks/FreelanceOpsContext";
+import type { Client } from "../types/dashboard";
 
 export function ClientsSection() {
   const { t } = useI18n();
@@ -54,9 +55,8 @@ export function ClientsSection() {
         </div>
 
         {ops.clientStatus && (
-          <div className={`rounded-lg border p-3 text-sm ${
-            ops.clientStatus.tone === 'success' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : 'border-danger/40 bg-danger/20 text-danger'
-          }`}>
+          <div className={`rounded-lg border p-3 text-sm ${ops.clientStatus.tone === 'success' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : 'border-danger/40 bg-danger/20 text-danger'
+            }`}>
             {ops.clientStatus.message}
           </div>
         )}
@@ -80,7 +80,7 @@ export function ClientsSection() {
                     </Td>
                   </tr>
                 ) : (
-                  ops.filteredClients.map((client) => (
+                  ops.filteredClients.map((client: Client) => (
                     <tr key={client.id} className="hover:bg-white/5 transition-colors">
                       <Td className="font-medium text-white">{client.name}</Td>
                       <Td className="text-slate-400">
@@ -95,11 +95,10 @@ export function ClientsSection() {
                         ) : (
                           <button
                             onClick={() => ops.handleToggleClientStatus(client)}
-                            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium transition-colors ${
-                              client.status === 'active' 
-                                ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30' 
+                            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium transition-colors ${client.status === 'active'
+                                ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
                                 : 'bg-slate-500/20 text-slate-300 hover:bg-slate-500/30'
-                            }`}
+                              }`}
                           >
                             {client.status === 'active' ? t("clients.statusActive") : t("clients.statusInactive")}
                           </button>
