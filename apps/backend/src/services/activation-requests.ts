@@ -1,7 +1,11 @@
 import { db } from "../db/db";
 import { activationRequests } from "../db/auth-schema";
 import { and, eq } from "drizzle-orm";
-import { activateLicense, deactivateActivation, issueLicense } from "./licensing";
+import {
+  activateLicense,
+  deactivateActivation,
+  issueLicense,
+} from "./licensing";
 
 export interface CreateActivationRequestInput {
   userId: string;
@@ -15,7 +19,9 @@ export interface CreateActivationRequestInput {
   userAgent?: string;
 }
 
-export async function createActivationRequest(input: CreateActivationRequestInput) {
+export async function createActivationRequest(
+  input: CreateActivationRequestInput,
+) {
   const userId = String(input.userId).trim();
   const appName = input.appName.trim();
   const machineId = input.machineId.trim();
@@ -60,7 +66,10 @@ export async function createActivationRequest(input: CreateActivationRequestInpu
   } catch (error) {
     return {
       ok: false as const,
-      error: error instanceof Error ? error.message : "Failed to create activation request",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to create activation request",
     };
   }
 
@@ -78,14 +87,23 @@ export async function getActivationRequestStatus(input: {
     .where(eq(activationRequests.id, input.id));
 
   if (!request) {
-    return { ok: false as const, status: 404 as const, error: "Activation request not found" };
+    return {
+      ok: false as const,
+      status: 404 as const,
+      error: "Activation request not found",
+    };
   }
 
   if (
-    request.appName.trim().toLowerCase() !== input.appName.trim().toLowerCase() ||
+    request.appName.trim().toLowerCase() !==
+      input.appName.trim().toLowerCase() ||
     request.machineId.trim() !== input.machineId.trim()
   ) {
-    return { ok: false as const, status: 404 as const, error: "Activation request not found" };
+    return {
+      ok: false as const,
+      status: 404 as const,
+      error: "Activation request not found",
+    };
   }
 
   const normalizedStatus =
@@ -122,7 +140,11 @@ export async function approveActivationRequest(input: {
     );
 
   if (!request) {
-    return { ok: false as const, status: 404 as const, error: "Activation request not found" };
+    return {
+      ok: false as const,
+      status: 404 as const,
+      error: "Activation request not found",
+    };
   }
 
   if (
@@ -226,7 +248,11 @@ export async function revokeActivationRequest(input: {
     );
 
   if (!request) {
-    return { ok: false as const, status: 404 as const, error: "Activation request not found" };
+    return {
+      ok: false as const,
+      status: 404 as const,
+      error: "Activation request not found",
+    };
   }
 
   if (request.activationToken) {
@@ -237,7 +263,11 @@ export async function revokeActivationRequest(input: {
     });
 
     if (!revokeResult.ok) {
-      return { ok: false as const, status: 409 as const, error: revokeResult.reason };
+      return {
+        ok: false as const,
+        status: 409 as const,
+        error: revokeResult.reason,
+      };
     }
   }
 
@@ -247,6 +277,58 @@ export async function revokeActivationRequest(input: {
       status: "dismissed",
       updatedAt: new Date(),
     })
+    .where(
+      and(
+        eq(activationRequests.id, input.id),
+        eq(activationRequests.userId, input.userId),
+      ),
+    );
+
+  return { ok: true as const };
+}
+
+export async function deleteActivationRequest(input: {
+  id: string;
+  userId: string;
+}) {
+  const [request] = await db
+    .select()
+    .from(activationRequests)
+    .where(
+      and(
+        eq(activationRequests.id, input.id),
+        eq(activationRequests.userId, input.userId),
+      ),
+    );
+
+  if (!request) {
+    return {
+      ok: false as const,
+      status: 404 as const,
+      error: "Activation request not found",
+    };
+  }
+
+  // Don't allow deleting active/approved requests (only pending or dismissed)
+  if (request.status === "approved") {
+    return {
+      ok: false as const,
+      status: 409 as const,
+      error: "Cannot delete approved activation requests",
+    };
+  }
+
+  // If there's an active activation, deactivate it first
+  if (request.activationToken) {
+    await deactivateActivation({
+      appName: request.appName,
+      machineId: request.machineId,
+      activationToken: request.activationToken,
+    });
+  }
+
+  await db
+    .delete(activationRequests)
     .where(
       and(
         eq(activationRequests.id, input.id),

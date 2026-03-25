@@ -1,9 +1,17 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { and, count, desc, eq } from "drizzle-orm";
 import { db } from "../db/db";
-import { activationLogs, activationRequests, activations } from "../db/auth-schema";
+import {
+  activationLogs,
+  activationRequests,
+  activations,
+} from "../db/auth-schema";
 import { getAuthenticatedUserId } from "../lib/request-auth";
-import { approveActivationRequest, revokeActivationRequest } from "../services/activation-requests";
+import {
+  approveActivationRequest,
+  revokeActivationRequest,
+  deleteActivationRequest,
+} from "../services/activation-requests";
 
 function mapActivationRequest(request: typeof activationRequests.$inferSelect) {
   return {
@@ -67,23 +75,39 @@ export const activationRoutes = new Elysia({
     const active = await db
       .select({ count: count() })
       .from(activations)
-      .where(and(eq(activations.userId, userId), eq(activations.status, "active")));
+      .where(
+        and(eq(activations.userId, userId), eq(activations.status, "active")),
+      );
     const pending = await db
       .select({ count: count() })
       .from(activations)
-      .where(and(eq(activations.userId, userId), eq(activations.status, "pending")));
+      .where(
+        and(eq(activations.userId, userId), eq(activations.status, "pending")),
+      );
     const revoked = await db
       .select({ count: count() })
       .from(activations)
-      .where(and(eq(activations.userId, userId), eq(activations.status, "revoked")));
+      .where(
+        and(eq(activations.userId, userId), eq(activations.status, "revoked")),
+      );
     const pendingRequests = await db
       .select({ count: count() })
       .from(activationRequests)
-      .where(and(eq(activationRequests.userId, userId), eq(activationRequests.status, "pending")));
+      .where(
+        and(
+          eq(activationRequests.userId, userId),
+          eq(activationRequests.status, "pending"),
+        ),
+      );
     const dismissedRequests = await db
       .select({ count: count() })
       .from(activationRequests)
-      .where(and(eq(activationRequests.userId, userId), eq(activationRequests.status, "dismissed")));
+      .where(
+        and(
+          eq(activationRequests.userId, userId),
+          eq(activationRequests.status, "dismissed"),
+        ),
+      );
 
     return {
       stats: {
@@ -111,8 +135,13 @@ export const activationRoutes = new Elysia({
       .where(eq(activationRequests.userId, userId))
       .orderBy(desc(activationRequests.createdAt));
 
-    const items = [...allActivations.map(mapActivationRecord), ...allRequests.map(mapActivationRequest)]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const items = [
+      ...allActivations.map(mapActivationRecord),
+      ...allRequests.map(mapActivationRequest),
+    ].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 
     return { activations: items };
   })
@@ -137,7 +166,12 @@ export const activationRoutes = new Elysia({
     const logs = await db
       .select()
       .from(activationLogs)
-      .where(and(eq(activationLogs.userId, userId), eq(activationLogs.activationId, id)))
+      .where(
+        and(
+          eq(activationLogs.userId, userId),
+          eq(activationLogs.activationId, id),
+        ),
+      )
       .orderBy(desc(activationLogs.createdAt));
 
     return { activation, logs };
@@ -170,7 +204,14 @@ export const activationRoutes = new Elysia({
 
     return {
       success: true,
-      activation: { id, appName, appVersion, licenseKey, machineId, status: "pending" },
+      activation: {
+        id,
+        appName,
+        appVersion,
+        licenseKey,
+        machineId,
+        status: "pending",
+      },
     };
   })
   .patch("/:id/approve", async ({ params: { id }, request, set }) => {
@@ -183,7 +224,12 @@ export const activationRoutes = new Elysia({
     const [activationRequest] = await db
       .select()
       .from(activationRequests)
-      .where(and(eq(activationRequests.id, id), eq(activationRequests.userId, userId)));
+      .where(
+        and(
+          eq(activationRequests.id, id),
+          eq(activationRequests.userId, userId),
+        ),
+      );
 
     if (activationRequest) {
       const result = await approveActivationRequest({ id, userId });
@@ -224,7 +270,12 @@ export const activationRoutes = new Elysia({
     const [activationRequest] = await db
       .select()
       .from(activationRequests)
-      .where(and(eq(activationRequests.id, id), eq(activationRequests.userId, userId)));
+      .where(
+        and(
+          eq(activationRequests.id, id),
+          eq(activationRequests.userId, userId),
+        ),
+      );
 
     if (activationRequest) {
       const result = await revokeActivationRequest({ id, userId });
@@ -248,4 +299,46 @@ export const activationRoutes = new Elysia({
     });
 
     return { success: true, message: "Activation revoked" };
+  })
+  .delete("/:id", async ({ params: { id }, request, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
+
+    const [activationRequest] = await db
+      .select()
+      .from(activationRequests)
+      .where(
+        and(
+          eq(activationRequests.id, id),
+          eq(activationRequests.userId, userId),
+        ),
+      );
+
+    if (activationRequest) {
+      const result = await deleteActivationRequest({ id, userId });
+      if (!result.ok) {
+        set.status = result.status;
+        return { error: result.error };
+      }
+      return { success: true, message: "Activation request deleted" };
+    }
+
+    // For regular activations, just delete them
+    const [activation] = await db
+      .select()
+      .from(activations)
+      .where(and(eq(activations.id, id), eq(activations.userId, userId)));
+
+    if (!activation) {
+      set.status = 404;
+      return { error: "Activation not found" };
+    }
+
+    await db
+      .delete(activations)
+      .where(and(eq(activations.id, id), eq(activations.userId, userId)));
+    return { success: true, message: "Activation deleted" };
   });

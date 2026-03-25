@@ -1,4 +1,4 @@
-import { authClient } from './auth-client';
+import { authClient } from "./auth-client";
 import type {
   Activation,
   BillingStats,
@@ -9,20 +9,20 @@ import type {
   License,
   ManagedApp,
   Stats,
-} from '../features/dashboard/types/dashboard';
+} from "../features/dashboard/types/dashboard";
 
-const RAW_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
-const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, '');
+const RAW_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").trim();
+const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, "");
 
 function apiUrl(path: string): string {
   if (!API_BASE_URL) return `/api${path}`;
-  if (API_BASE_URL.endsWith('/api')) return `${API_BASE_URL}${path}`;
+  if (API_BASE_URL.endsWith("/api")) return `${API_BASE_URL}${path}`;
   return `${API_BASE_URL}/api${path}`;
 }
 
 async function parseJsonResponse<T>(response: Response): Promise<T | null> {
-  const contentType = response.headers.get('content-type') || '';
-  if (!contentType.includes('application/json')) {
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
     return null;
   }
 
@@ -33,17 +33,27 @@ async function parseJsonResponse<T>(response: Response): Promise<T | null> {
   }
 }
 
-async function getErrorMessage(response: Response, fallback: string): Promise<string> {
+async function getErrorMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
   const data = await parseJsonResponse<{ error?: string }>(response);
   return data?.error?.trim() || fallback;
 }
 
 function isStateChangingMethod(method?: string): boolean {
-  const normalized = (method || 'GET').toUpperCase();
-  return normalized === 'POST' || normalized === 'PUT' || normalized === 'PATCH' || normalized === 'DELETE';
+  const normalized = (method || "GET").toUpperCase();
+  return (
+    normalized === "POST" ||
+    normalized === "PUT" ||
+    normalized === "PATCH" ||
+    normalized === "DELETE"
+  );
 }
 
-function deriveLicenseType(raw: Record<string, unknown>): "machine_id_bound" | "pre_generated" {
+function deriveLicenseType(
+  raw: Record<string, unknown>,
+): "machine_id_bound" | "pre_generated" {
   const directType = raw.licenseType;
   if (directType === "machine_id_bound" || directType === "pre_generated") {
     return directType;
@@ -58,7 +68,8 @@ function deriveLicenseType(raw: Record<string, unknown>): "machine_id_bound" | "
       // Ignore malformed metadata and fallback below.
     }
   } else if (metadataRaw && typeof metadataRaw === "object") {
-    const maybeLocked = (metadataRaw as { lockedMachineId?: string }).lockedMachineId;
+    const maybeLocked = (metadataRaw as { lockedMachineId?: string })
+      .lockedMachineId;
     if (typeof maybeLocked === "string" && maybeLocked.trim().length > 0) {
       return "machine_id_bound";
     }
@@ -109,7 +120,9 @@ function normalizeActivation(raw: Record<string, unknown>): Activation {
   return {
     id: String(raw.id || ""),
     requestType:
-      raw.requestType === "request_only" ? "request_only" : "license_activation",
+      raw.requestType === "request_only"
+        ? "request_only"
+        : "license_activation",
     appName: String(raw.appName || ""),
     appVersion: String(raw.appVersion || ""),
     licenseKey: String(raw.licenseKey || ""),
@@ -118,8 +131,14 @@ function normalizeActivation(raw: Record<string, unknown>): Activation {
       typeof raw.shopName === "string" && raw.shopName.trim().length > 0
         ? raw.shopName
         : null,
-    phone: typeof raw.phone === "string" && raw.phone.trim().length > 0 ? raw.phone : null,
-    notes: typeof raw.notes === "string" && raw.notes.trim().length > 0 ? raw.notes : null,
+    phone:
+      typeof raw.phone === "string" && raw.phone.trim().length > 0
+        ? raw.phone
+        : null,
+    notes:
+      typeof raw.notes === "string" && raw.notes.trim().length > 0
+        ? raw.notes
+        : null,
     status:
       raw.status === "active"
         ? "active"
@@ -132,40 +151,50 @@ function normalizeActivation(raw: Record<string, unknown>): Activation {
     requestPlatform,
     requestSource,
     createdAt: String(raw.createdAt || ""),
-    activatedAt: typeof raw.activatedAt === "string" ? raw.activatedAt : undefined,
+    activatedAt:
+      typeof raw.activatedAt === "string" ? raw.activatedAt : undefined,
   };
 }
 
 async function apiRequest(path: string, init?: RequestInit): Promise<Response> {
-  const method = (init?.method || 'GET').toUpperCase();
-  const csrfToken = isStateChangingMethod(method) ? await authClient.getCsrfToken() : null;
-  const hasFormDataBody = typeof FormData !== 'undefined' && init?.body instanceof FormData;
+  const method = (init?.method || "GET").toUpperCase();
+  const csrfToken = isStateChangingMethod(method)
+    ? await authClient.getCsrfToken()
+    : null;
+  const hasFormDataBody =
+    typeof FormData !== "undefined" && init?.body instanceof FormData;
 
   return fetch(apiUrl(path), {
     ...init,
     method,
-    credentials: 'include',
+    credentials: "include",
     headers: {
-      ...(method !== 'GET' && !hasFormDataBody ? { 'Content-Type': 'application/json' } : {}),
-      ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+      ...(method !== "GET" && !hasFormDataBody
+        ? { "Content-Type": "application/json" }
+        : {}),
+      ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
       ...(init?.headers || {}),
     },
   });
 }
 
 export async function fetchActivations(): Promise<Activation[] | null> {
-  const response = await apiRequest('/activations');
+  const response = await apiRequest("/activations");
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error('Failed to fetch activations');
+  if (!response.ok) throw new Error("Failed to fetch activations");
 
-  const data = await parseJsonResponse<{ activations?: Record<string, unknown>[] }>(response);
-  return (data?.activations || []).map((activation) => normalizeActivation(activation));
+  const data = await parseJsonResponse<{
+    activations?: Record<string, unknown>[];
+  }>(response);
+  return (data?.activations || []).map((activation) =>
+    normalizeActivation(activation),
+  );
 }
 
 export async function fetchStats(): Promise<Stats | null> {
-  const response = await apiRequest('/activations/stats');
+  const response = await apiRequest("/activations/stats");
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error('Failed to fetch stats');
+  if (!response.ok) throw new Error("Failed to fetch stats");
 
   const data = await parseJsonResponse<{ stats?: Stats }>(response);
   return data?.stats || { total: 0, active: 0, pending: 0, revoked: 0 };
@@ -173,15 +202,28 @@ export async function fetchStats(): Promise<Stats | null> {
 
 export async function updateActivationStatus(
   id: string,
-  nextAction: 'approve' | 'revoke',
+  nextAction: "approve" | "revoke",
 ): Promise<boolean> {
   const response = await apiRequest(`/activations/${id}/${nextAction}`, {
-    method: 'PATCH',
+    method: "PATCH",
   });
 
   if (response.status === 401) return false;
   if (!response.ok) {
     throw new Error(`Failed to ${nextAction} activation`);
+  }
+
+  return true;
+}
+
+export async function deleteActivation(id: string): Promise<boolean> {
+  const response = await apiRequest(`/activations/${id}`, {
+    method: "DELETE",
+  });
+
+  if (response.status === 401) return false;
+  if (!response.ok) {
+    throw new Error("Failed to delete activation");
   }
 
   return true;
@@ -196,18 +238,22 @@ export async function fetchUserEmail(): Promise<string | null> {
   return session.user.email;
 }
 
-export async function fetchLicenses(appName?: string): Promise<License[] | null> {
+export async function fetchLicenses(
+  appName?: string,
+): Promise<License[] | null> {
   const params = new URLSearchParams();
   if (appName?.trim()) {
-    params.set('appName', appName.trim());
+    params.set("appName", appName.trim());
   }
 
-  const path = params.size ? `/licenses?${params.toString()}` : '/licenses';
+  const path = params.size ? `/licenses?${params.toString()}` : "/licenses";
   const response = await apiRequest(path);
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error('Failed to fetch licenses');
+  if (!response.ok) throw new Error("Failed to fetch licenses");
 
-  const data = await parseJsonResponse<{ licenses?: Record<string, unknown>[] }>(response);
+  const data = await parseJsonResponse<{
+    licenses?: Record<string, unknown>[];
+  }>(response);
   return (data?.licenses || []).map((license) => normalizeLicense(license));
 }
 
@@ -216,30 +262,32 @@ export async function createLicense(input: {
   maxActivations: number;
   lockedMachineId?: string;
 }): Promise<License | null> {
-  const response = await apiRequest('/licenses', {
-    method: 'POST',
+  const response = await apiRequest("/licenses", {
+    method: "POST",
     body: JSON.stringify(input),
   });
 
   if (response.status === 401) return null;
   if (!response.ok) {
-    throw new Error('Failed to create license');
+    throw new Error("Failed to create license");
   }
 
-  const data = await parseJsonResponse<{ license?: Record<string, unknown> }>(response);
+  const data = await parseJsonResponse<{ license?: Record<string, unknown> }>(
+    response,
+  );
   if (!data?.license) {
-    throw new Error('License payload missing');
+    throw new Error("License payload missing");
   }
   return normalizeLicense(data.license);
 }
 
 export async function setLicenseStatus(
   id: string,
-  nextStatus: 'active' | 'revoked',
+  nextStatus: "active" | "revoked",
 ): Promise<boolean> {
-  const endpoint = nextStatus === 'active' ? 'activate' : 'revoke';
+  const endpoint = nextStatus === "active" ? "activate" : "revoke";
   const response = await apiRequest(`/licenses/${id}/${endpoint}`, {
-    method: 'PATCH',
+    method: "PATCH",
   });
 
   if (response.status === 401) return false;
@@ -251,9 +299,9 @@ export async function setLicenseStatus(
 }
 
 export async function fetchApps(): Promise<ManagedApp[] | null> {
-  const response = await apiRequest('/apps');
+  const response = await apiRequest("/apps");
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error('Failed to fetch apps');
+  if (!response.ok) throw new Error("Failed to fetch apps");
 
   const data = await parseJsonResponse<{ apps?: ManagedApp[] }>(response);
   return data?.apps || [];
@@ -275,16 +323,16 @@ export async function createManagedApp(name: string): Promise<boolean> {
 
 export async function updateManagedApp(
   id: string,
-  input: { name?: string; status?: 'active' | 'inactive' },
+  input: { name?: string; status?: "active" | "inactive" },
 ): Promise<boolean> {
   const response = await apiRequest(`/apps/${id}`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify(input),
   });
 
   if (response.status === 401) return false;
   if (!response.ok) {
-    throw new Error('Failed to update app');
+    throw new Error("Failed to update app");
   }
 
   return true;
@@ -292,12 +340,12 @@ export async function updateManagedApp(
 
 export async function deleteManagedApp(id: string): Promise<boolean> {
   const response = await apiRequest(`/apps/${id}`, {
-    method: 'DELETE',
+    method: "DELETE",
   });
 
   if (response.status === 401) return false;
   if (!response.ok) {
-    throw new Error('Failed to delete app');
+    throw new Error("Failed to delete app");
   }
 
   return true;
@@ -305,16 +353,16 @@ export async function deleteManagedApp(id: string): Promise<boolean> {
 
 export async function updateLicense(
   id: string,
-  input: { maxActivations?: number; status?: 'active' | 'revoked' },
+  input: { maxActivations?: number; status?: "active" | "revoked" },
 ): Promise<boolean> {
   const response = await apiRequest(`/licenses/${id}`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify(input),
   });
 
   if (response.status === 401) return false;
   if (!response.ok) {
-    throw new Error('Failed to update license');
+    throw new Error("Failed to update license");
   }
 
   return true;
@@ -322,21 +370,21 @@ export async function updateLicense(
 
 export async function deleteLicense(id: string): Promise<boolean> {
   const response = await apiRequest(`/licenses/${id}`, {
-    method: 'DELETE',
+    method: "DELETE",
   });
 
   if (response.status === 401) return false;
   if (!response.ok) {
-    throw new Error('Failed to delete license');
+    throw new Error("Failed to delete license");
   }
 
   return true;
 }
 
 export async function fetchClients(): Promise<Client[] | null> {
-  const response = await apiRequest('/clients');
+  const response = await apiRequest("/clients");
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error('Failed to fetch clients');
+  if (!response.ok) throw new Error("Failed to fetch clients");
 
   const data = await parseJsonResponse<{ clients?: Client[] }>(response);
   return data?.clients || [];
@@ -348,13 +396,13 @@ export async function createClient(input: {
   phone?: string;
   notes?: string;
 }): Promise<Client | null> {
-  const response = await apiRequest('/clients', {
-    method: 'POST',
+  const response = await apiRequest("/clients", {
+    method: "POST",
     body: JSON.stringify(input),
   });
 
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error('Failed to create client');
+  if (!response.ok) throw new Error("Failed to create client");
 
   const data = await parseJsonResponse<{ client?: Client }>(response);
   return data?.client || null;
@@ -367,16 +415,17 @@ export async function updateClient(
     email?: string;
     phone?: string;
     notes?: string;
-    status?: 'active' | 'inactive';
+    status?: "active" | "inactive";
   },
 ): Promise<Client | null> {
   const response = await apiRequest(`/clients/${id}`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify(input),
   });
 
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to update client'));
+  if (!response.ok)
+    throw new Error(await getErrorMessage(response, "Failed to update client"));
 
   const data = await parseJsonResponse<{ client?: Client }>(response);
   return data?.client || null;
@@ -384,36 +433,43 @@ export async function updateClient(
 
 export async function archiveClient(id: string): Promise<boolean> {
   const response = await apiRequest(`/clients/${id}/archive`, {
-    method: 'PATCH',
+    method: "PATCH",
   });
   if (response.status === 401) return false;
-  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to archive client'));
+  if (!response.ok)
+    throw new Error(
+      await getErrorMessage(response, "Failed to archive client"),
+    );
   return true;
 }
 
 export async function restoreClient(id: string): Promise<Client | null> {
   const response = await apiRequest(`/clients/${id}/restore`, {
-    method: 'PATCH',
+    method: "PATCH",
   });
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to restore client'));
+  if (!response.ok)
+    throw new Error(
+      await getErrorMessage(response, "Failed to restore client"),
+    );
   const data = await parseJsonResponse<{ client?: Client }>(response);
   return data?.client || null;
 }
 
 export async function deleteClient(id: string): Promise<boolean> {
   const response = await apiRequest(`/clients/${id}`, {
-    method: 'DELETE',
+    method: "DELETE",
   });
   if (response.status === 401) return false;
-  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to delete client'));
+  if (!response.ok)
+    throw new Error(await getErrorMessage(response, "Failed to delete client"));
   return true;
 }
 
 export async function fetchInvoices(): Promise<Invoice[] | null> {
-  const response = await apiRequest('/invoices');
+  const response = await apiRequest("/invoices");
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error('Failed to fetch invoices');
+  if (!response.ok) throw new Error("Failed to fetch invoices");
 
   const data = await parseJsonResponse<{ invoices?: Invoice[] }>(response);
   return data?.invoices || [];
@@ -425,26 +481,26 @@ export async function createInvoice(input: {
   totalAmount: number;
   paidAmount?: number;
   currency?: string;
-  invoiceLanguage?: 'en' | 'ar';
-  status?: 'draft' | 'sent' | 'partially_paid' | 'paid' | 'overdue';
+  invoiceLanguage?: "en" | "ar";
+  status?: "draft" | "sent" | "partially_paid" | "paid" | "overdue";
   dueDate?: string;
   notes?: string;
 }): Promise<Invoice | null> {
-  const response = await apiRequest('/invoices', {
-    method: 'POST',
+  const response = await apiRequest("/invoices", {
+    method: "POST",
     body: JSON.stringify(input),
   });
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error('Failed to create invoice');
+  if (!response.ok) throw new Error("Failed to create invoice");
 
   const data = await parseJsonResponse<{ invoice?: Invoice }>(response);
   return data?.invoice || null;
 }
 
 export async function fetchNextInvoiceNo(): Promise<string | null> {
-  const response = await apiRequest('/invoices/next-number');
+  const response = await apiRequest("/invoices/next-number");
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error('Failed to fetch next invoice number');
+  if (!response.ok) throw new Error("Failed to fetch next invoice number");
 
   const data = await parseJsonResponse<{ invoiceNo?: string }>(response);
   return data?.invoiceNo || null;
@@ -453,53 +509,59 @@ export async function fetchNextInvoiceNo(): Promise<string | null> {
 export async function updateInvoice(
   id: string,
   input: {
-    status?: 'draft' | 'sent' | 'partially_paid' | 'paid' | 'overdue';
+    status?: "draft" | "sent" | "partially_paid" | "paid" | "overdue";
     totalAmount?: number;
     paidAmount?: number;
-    invoiceLanguage?: 'en' | 'ar';
+    invoiceLanguage?: "en" | "ar";
   },
 ): Promise<boolean> {
   const response = await apiRequest(`/invoices/${id}`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify(input),
   });
   if (response.status === 401) return false;
-  if (!response.ok) throw new Error('Failed to update invoice');
+  if (!response.ok) throw new Error("Failed to update invoice");
   return true;
 }
 
 export async function deleteInvoice(id: string): Promise<boolean> {
   const response = await apiRequest(`/invoices/${id}`, {
-    method: 'DELETE',
+    method: "DELETE",
   });
   if (response.status === 401) return false;
-  if (!response.ok) throw new Error('Failed to delete invoice');
+  if (!response.ok) throw new Error("Failed to delete invoice");
   return true;
 }
 
 export async function archiveInvoice(id: string): Promise<boolean> {
   const response = await apiRequest(`/invoices/${id}/archive`, {
-    method: 'PATCH',
+    method: "PATCH",
   });
   if (response.status === 401) return false;
-  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to archive invoice'));
+  if (!response.ok)
+    throw new Error(
+      await getErrorMessage(response, "Failed to archive invoice"),
+    );
   return true;
 }
 
 export async function restoreInvoice(id: string): Promise<Invoice | null> {
   const response = await apiRequest(`/invoices/${id}/restore`, {
-    method: 'PATCH',
+    method: "PATCH",
   });
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to restore invoice'));
+  if (!response.ok)
+    throw new Error(
+      await getErrorMessage(response, "Failed to restore invoice"),
+    );
   const data = await parseJsonResponse<{ invoice?: Invoice }>(response);
   return data?.invoice || null;
 }
 
 export async function fetchBillingStats(): Promise<BillingStats | null> {
-  const response = await apiRequest('/invoices/stats');
+  const response = await apiRequest("/invoices/stats");
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error('Failed to fetch billing stats');
+  if (!response.ok) throw new Error("Failed to fetch billing stats");
 
   const data = await parseJsonResponse<{ stats?: BillingStats }>(response);
   return (
@@ -513,16 +575,20 @@ export async function fetchBillingStats(): Promise<BillingStats | null> {
 }
 
 export async function fetchFreelancerProfile(): Promise<FreelancerProfile | null> {
-  const response = await apiRequest('/freelancer-profile');
+  const response = await apiRequest("/freelancer-profile");
   if (response.status === 401) return null;
   if (!response.ok) {
     const errorPayload = await parseJsonResponse<{ error?: string }>(response);
     // Keep the dashboard usable even if profile storage is temporarily unavailable.
     if (response.status >= 500) return null;
-    throw new Error(errorPayload?.error || 'Failed to fetch freelancer profile');
+    throw new Error(
+      errorPayload?.error || "Failed to fetch freelancer profile",
+    );
   }
 
-  const data = await parseJsonResponse<{ profile?: FreelancerProfile | null }>(response);
+  const data = await parseJsonResponse<{ profile?: FreelancerProfile | null }>(
+    response,
+  );
   return data?.profile || null;
 }
 
@@ -537,55 +603,70 @@ export async function updateFreelancerProfile(input: {
   defaultInvoiceLanguage?: "en" | "ar";
   appLanguage?: "en" | "ar";
 }): Promise<FreelancerProfile | null> {
-  const response = await apiRequest('/freelancer-profile', {
-    method: 'PUT',
+  const response = await apiRequest("/freelancer-profile", {
+    method: "PUT",
     body: JSON.stringify(input),
   });
   if (response.status === 401) return null;
   if (!response.ok) {
     const errorPayload = await parseJsonResponse<{ error?: string }>(response);
-    throw new Error(errorPayload?.error || 'Failed to update freelancer profile');
+    throw new Error(
+      errorPayload?.error || "Failed to update freelancer profile",
+    );
   }
 
-  const data = await parseJsonResponse<{ profile?: FreelancerProfile }>(response);
+  const data = await parseJsonResponse<{ profile?: FreelancerProfile }>(
+    response,
+  );
   return data?.profile || null;
 }
 
-export async function uploadFreelancerLogo(file: File): Promise<FreelancerProfile | null> {
+export async function uploadFreelancerLogo(
+  file: File,
+): Promise<FreelancerProfile | null> {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append("file", file);
 
-  const response = await apiRequest('/freelancer-profile/logo', {
-    method: 'POST',
+  const response = await apiRequest("/freelancer-profile/logo", {
+    method: "POST",
     body: formData,
   });
   if (response.status === 401) return null;
   if (!response.ok) {
     const errorPayload = await parseJsonResponse<{ error?: string }>(response);
-    throw new Error(errorPayload?.error || 'Failed to upload freelancer logo');
+    throw new Error(errorPayload?.error || "Failed to upload freelancer logo");
   }
 
-  const data = await parseJsonResponse<{ profile?: FreelancerProfile }>(response);
+  const data = await parseJsonResponse<{ profile?: FreelancerProfile }>(
+    response,
+  );
   return data?.profile || null;
 }
 
-export async function queueInvoicePdf(invoiceId: string): Promise<InvoicePdfJob | null> {
+export async function queueInvoicePdf(
+  invoiceId: string,
+): Promise<InvoicePdfJob | null> {
   const response = await apiRequest(`/invoices/${invoiceId}/generate-pdf`, {
-    method: 'POST',
+    method: "POST",
   });
   if (response.status === 401) return null;
-  if (!response.ok && response.status !== 202) throw new Error('Failed to queue invoice PDF');
+  if (!response.ok && response.status !== 202)
+    throw new Error("Failed to queue invoice PDF");
 
   const data = await parseJsonResponse<{ job?: InvoicePdfJob }>(response);
   return data?.job || null;
 }
 
-export async function fetchInvoicePdfStatus(invoiceId: string): Promise<InvoicePdfJob | null> {
+export async function fetchInvoicePdfStatus(
+  invoiceId: string,
+): Promise<InvoicePdfJob | null> {
   const response = await apiRequest(`/invoices/${invoiceId}/pdf-status`);
   if (response.status === 401) return null;
-  if (!response.ok) throw new Error('Failed to fetch invoice PDF status');
+  if (!response.ok) throw new Error("Failed to fetch invoice PDF status");
 
-  const data = await parseJsonResponse<{ job?: InvoicePdfJob | null }>(response);
+  const data = await parseJsonResponse<{ job?: InvoicePdfJob | null }>(
+    response,
+  );
   return data?.job || null;
 }
 
@@ -598,7 +679,10 @@ export async function sendInvoiceEmail(invoiceId: string): Promise<boolean> {
     method: "POST",
   });
   if (response.status === 401) return false;
-  if (!response.ok) throw new Error(await getErrorMessage(response, "Failed to send invoice email"));
+  if (!response.ok)
+    throw new Error(
+      await getErrorMessage(response, "Failed to send invoice email"),
+    );
   return true;
 }
 
@@ -616,7 +700,7 @@ export interface PublicLicenseValidationPayload {
   activationToken: string;
 }
 
-export type ActivationType = 'machine_id_bound' | 'pre_generated';
+export type ActivationType = "machine_id_bound" | "pre_generated";
 
 export interface PublicLicenseActivateResponse {
   success: boolean;
@@ -675,14 +759,14 @@ export interface PublicLicenseDeactivateResponse {
 export async function activatePublicLicense(
   input: PublicLicenseActivationPayload,
 ): Promise<PublicLicenseActivateResponse> {
-  const response = await apiRequest('/v1/license/activate', {
-    method: 'POST',
+  const response = await apiRequest("/v1/license/activate", {
+    method: "POST",
     body: JSON.stringify(input),
   });
 
   const data = await parseJsonResponse<PublicLicenseActivateResponse>(response);
   if (!data) {
-    throw new Error('Invalid activation response payload');
+    throw new Error("Invalid activation response payload");
   }
   return data;
 }
@@ -690,14 +774,14 @@ export async function activatePublicLicense(
 export async function validatePublicLicense(
   input: PublicLicenseValidationPayload,
 ): Promise<PublicLicenseValidateResponse> {
-  const response = await apiRequest('/v1/license/validate', {
-    method: 'POST',
+  const response = await apiRequest("/v1/license/validate", {
+    method: "POST",
     body: JSON.stringify(input),
   });
 
   const data = await parseJsonResponse<PublicLicenseValidateResponse>(response);
   if (!data) {
-    throw new Error('Invalid validation response payload');
+    throw new Error("Invalid validation response payload");
   }
   return data;
 }
@@ -705,14 +789,15 @@ export async function validatePublicLicense(
 export async function deactivatePublicLicense(
   input: PublicLicenseValidationPayload,
 ): Promise<PublicLicenseDeactivateResponse> {
-  const response = await apiRequest('/v1/license/deactivate', {
-    method: 'POST',
+  const response = await apiRequest("/v1/license/deactivate", {
+    method: "POST",
     body: JSON.stringify(input),
   });
 
-  const data = await parseJsonResponse<PublicLicenseDeactivateResponse>(response);
+  const data =
+    await parseJsonResponse<PublicLicenseDeactivateResponse>(response);
   if (!data) {
-    throw new Error('Invalid deactivation response payload');
+    throw new Error("Invalid deactivation response payload");
   }
   return data;
 }

@@ -12,6 +12,7 @@ import {
   deleteInvoice,
   deleteLicense,
   deleteManagedApp,
+  deleteActivation,
   fetchActivations,
   fetchApps,
   fetchBillingStats,
@@ -73,6 +74,7 @@ interface UseDashboardDataResult {
   setLicenseFilter: (value: string) => void;
   refreshData: () => Promise<void>;
   changeStatus: (id: string, action: "approve" | "revoke") => Promise<void>;
+  deleteActivation: (id: string) => Promise<void>;
   createNewLicense: (input: {
     appName: string;
     maxActivations: number;
@@ -88,13 +90,16 @@ interface UseDashboardDataResult {
   removeClient: (id: string) => Promise<boolean>;
   restoreExistingClient: (id: string) => Promise<Client | null>;
   hardDeleteClient: (id: string) => Promise<{ ok: boolean; error?: string }>;
-  updateExistingClient: (id: string, input: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    notes?: string;
-    status?: "active" | "inactive";
-  }) => Promise<Client | null>;
+  updateExistingClient: (
+    id: string,
+    input: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      notes?: string;
+      status?: "active" | "inactive";
+    },
+  ) => Promise<Client | null>;
   createNewInvoice: (input: {
     clientId: string;
     invoiceNo: string;
@@ -131,14 +136,20 @@ interface UseDashboardDataResult {
   queueInvoicePdfGeneration: (invoiceId: string) => Promise<void>;
   refreshInvoicePdfJob: (invoiceId: string) => Promise<void>;
   sendInvoiceToEmail: (invoiceId: string) => Promise<void>;
-  updateApp: (id: string, input: { name?: string; status?: "active" | "inactive" }) => Promise<void>;
+  updateApp: (
+    id: string,
+    input: { name?: string; status?: "active" | "inactive" },
+  ) => Promise<void>;
   removeApp: (id: string) => Promise<void>;
   updateExistingLicense: (
     id: string,
     input: { maxActivations?: number; status?: "active" | "revoked" },
   ) => Promise<void>;
   removeLicense: (id: string) => Promise<void>;
-  changeLicenseStatus: (id: string, nextStatus: "active" | "revoked") => Promise<void>;
+  changeLicenseStatus: (
+    id: string,
+    nextStatus: "active" | "revoked",
+  ) => Promise<void>;
 }
 
 class UnauthorizedError extends Error {
@@ -183,14 +194,22 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function useDashboardData(onUnauthorized: () => void): UseDashboardDataResult {
+export function useDashboardData(
+  onUnauthorized: () => void,
+): UseDashboardDataResult {
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
   const [licenseFilter, setLicenseFilter] = useState("");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
-  const [licenseActionLoadingId, setLicenseActionLoadingId] = useState<string | null>(null);
-  const [appActionLoadingId, setAppActionLoadingId] = useState<string | null>(null);
-  const [invoicePdfJobs, setInvoicePdfJobs] = useState<Record<string, InvoicePdfJob | null>>({});
+  const [licenseActionLoadingId, setLicenseActionLoadingId] = useState<
+    string | null
+  >(null);
+  const [appActionLoadingId, setAppActionLoadingId] = useState<string | null>(
+    null,
+  );
+  const [invoicePdfJobs, setInvoicePdfJobs] = useState<
+    Record<string, InvoicePdfJob | null>
+  >({});
   const initializedPdfStatusRef = useRef<Set<string>>(new Set());
 
   const onQueryError = useCallback(
@@ -253,8 +272,12 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
   const createAppMutation = useMutation({ mutationFn: createManagedApp });
   const createClientMutation = useMutation({ mutationFn: createClient });
   const createInvoiceMutation = useMutation({ mutationFn: createInvoice });
-  const uploadProfileLogoMutation = useMutation({ mutationFn: uploadFreelancerLogo });
-  const saveProfileMutation = useMutation({ mutationFn: updateFreelancerProfile });
+  const uploadProfileLogoMutation = useMutation({
+    mutationFn: uploadFreelancerLogo,
+  });
+  const saveProfileMutation = useMutation({
+    mutationFn: updateFreelancerProfile,
+  });
 
   const pollInvoicePdfUntilTerminal = useCallback(
     async (invoiceId: string) => {
@@ -284,7 +307,10 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
         try {
           const job = await fetchInvoicePdfStatus(invoice.id);
           setInvoicePdfJobs((prev) => ({ ...prev, [invoice.id]: job }));
-          if (job && (job.status === "pending" || job.status === "processing")) {
+          if (
+            job &&
+            (job.status === "pending" || job.status === "processing")
+          ) {
             await pollInvoicePdfUntilTerminal(invoice.id);
           }
         } catch {
@@ -367,10 +393,35 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: queryKeys.activations }),
           queryClient.invalidateQueries({ queryKey: queryKeys.stats }),
-          queryClient.invalidateQueries({ queryKey: ["dashboard", "licenses"] }),
+          queryClient.invalidateQueries({
+            queryKey: ["dashboard", "licenses"],
+          }),
         ]);
       } catch (mutationError) {
-        onQueryError(mutationError, `Could not ${action} activation right now.`);
+        onQueryError(
+          mutationError,
+          `Could not ${action} activation right now.`,
+        );
+      } finally {
+        setActionLoadingId(null);
+      }
+    },
+    [onQueryError, queryClient],
+  );
+
+  const deleteActivationFn = useCallback(
+    async (id: string) => {
+      setActionLoadingId(id);
+      setError("");
+      try {
+        const ok = await deleteActivation(id);
+        if (!ok) throw new UnauthorizedError();
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: queryKeys.activations }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.stats }),
+        ]);
+      } catch (mutationError) {
+        onQueryError(mutationError, "Could not delete activation right now.");
       } finally {
         setActionLoadingId(null);
       }
@@ -379,12 +430,18 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
   );
 
   const createNewLicense = useCallback(
-    async (input: { appName: string; maxActivations: number; lockedMachineId?: string }) => {
+    async (input: {
+      appName: string;
+      maxActivations: number;
+      lockedMachineId?: string;
+    }) => {
       setError("");
       try {
         const created = await createLicenseMutation.mutateAsync(input);
         if (!created) throw new UnauthorizedError();
-        await queryClient.invalidateQueries({ queryKey: ["dashboard", "licenses"] });
+        await queryClient.invalidateQueries({
+          queryKey: ["dashboard", "licenses"],
+        });
         return created;
       } catch (mutationError) {
         onQueryError(mutationError, "Could not create license right now.");
@@ -402,7 +459,9 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
         if (!ok) throw new UnauthorizedError();
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: queryKeys.apps }),
-          queryClient.invalidateQueries({ queryKey: ["dashboard", "licenses"] }),
+          queryClient.invalidateQueries({
+            queryKey: ["dashboard", "licenses"],
+          }),
         ]);
         return true;
       } catch (mutationError) {
@@ -414,7 +473,12 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
   );
 
   const createNewClient = useCallback(
-    async (input: { name: string; email?: string; phone?: string; notes?: string }) => {
+    async (input: {
+      name: string;
+      email?: string;
+      phone?: string;
+      notes?: string;
+    }) => {
       setError("");
       try {
         const created = await createClientMutation.mutateAsync(input);
@@ -484,7 +548,13 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
   const updateExistingClient = useCallback(
     async (
       id: string,
-      input: { name?: string; email?: string; phone?: string; notes?: string; status?: "active" | "inactive" },
+      input: {
+        name?: string;
+        email?: string;
+        phone?: string;
+        notes?: string;
+        status?: "active" | "inactive";
+      },
     ) => {
       setError("");
       try {
@@ -530,7 +600,12 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
         return null;
       }
     },
-    [createInvoiceMutation, onQueryError, pollInvoicePdfUntilTerminal, queryClient],
+    [
+      createInvoiceMutation,
+      onQueryError,
+      pollInvoicePdfUntilTerminal,
+      queryClient,
+    ],
   );
 
   const updateExistingInvoice = useCallback(
@@ -635,7 +710,9 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
         const profile = await saveProfileMutation.mutateAsync(input);
         if (!profile) throw new Error("Profile save returned empty response.");
         queryClient.setQueryData(queryKeys.freelancerProfile, profile);
-        await queryClient.invalidateQueries({ queryKey: queryKeys.freelancerProfile });
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.freelancerProfile,
+        });
         return profile;
       } catch (mutationError) {
         onQueryError(mutationError, "Could not save profile right now.");
@@ -652,7 +729,9 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
         const profile = await uploadProfileLogoMutation.mutateAsync(file);
         if (!profile) throw new Error("Logo upload returned empty response.");
         queryClient.setQueryData(queryKeys.freelancerProfile, profile);
-        await queryClient.invalidateQueries({ queryKey: queryKeys.freelancerProfile });
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.freelancerProfile,
+        });
         return profile;
       } catch (mutationError) {
         onQueryError(mutationError, "Could not upload logo right now.");
@@ -705,7 +784,10 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
   );
 
   const updateApp = useCallback(
-    async (id: string, input: { name?: string; status?: "active" | "inactive" }) => {
+    async (
+      id: string,
+      input: { name?: string; status?: "active" | "inactive" },
+    ) => {
       setAppActionLoadingId(id);
       setError("");
       try {
@@ -713,7 +795,9 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
         if (!ok) throw new UnauthorizedError();
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: queryKeys.apps }),
-          queryClient.invalidateQueries({ queryKey: ["dashboard", "licenses"] }),
+          queryClient.invalidateQueries({
+            queryKey: ["dashboard", "licenses"],
+          }),
           queryClient.invalidateQueries({ queryKey: queryKeys.stats }),
           queryClient.invalidateQueries({ queryKey: queryKeys.activations }),
         ]);
@@ -735,7 +819,9 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
         if (!ok) throw new UnauthorizedError();
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: queryKeys.apps }),
-          queryClient.invalidateQueries({ queryKey: ["dashboard", "licenses"] }),
+          queryClient.invalidateQueries({
+            queryKey: ["dashboard", "licenses"],
+          }),
           queryClient.invalidateQueries({ queryKey: queryKeys.stats }),
           queryClient.invalidateQueries({ queryKey: queryKeys.activations }),
         ]);
@@ -755,7 +841,9 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
       try {
         const ok = await setLicenseStatus(id, nextStatus);
         if (!ok) throw new UnauthorizedError();
-        await queryClient.invalidateQueries({ queryKey: ["dashboard", "licenses"] });
+        await queryClient.invalidateQueries({
+          queryKey: ["dashboard", "licenses"],
+        });
       } catch (mutationError) {
         onQueryError(mutationError, `Could not set license to ${nextStatus}.`);
       } finally {
@@ -766,13 +854,18 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
   );
 
   const updateExistingLicense = useCallback(
-    async (id: string, input: { maxActivations?: number; status?: "active" | "revoked" }) => {
+    async (
+      id: string,
+      input: { maxActivations?: number; status?: "active" | "revoked" },
+    ) => {
       setLicenseActionLoadingId(id);
       setError("");
       try {
         const ok = await updateLicense(id, input);
         if (!ok) throw new UnauthorizedError();
-        await queryClient.invalidateQueries({ queryKey: ["dashboard", "licenses"] });
+        await queryClient.invalidateQueries({
+          queryKey: ["dashboard", "licenses"],
+        });
       } catch (mutationError) {
         onQueryError(mutationError, "Could not update license right now.");
       } finally {
@@ -790,7 +883,9 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
         const ok = await deleteLicense(id);
         if (!ok) throw new UnauthorizedError();
         await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["dashboard", "licenses"] }),
+          queryClient.invalidateQueries({
+            queryKey: ["dashboard", "licenses"],
+          }),
           queryClient.invalidateQueries({ queryKey: queryKeys.stats }),
           queryClient.invalidateQueries({ queryKey: queryKeys.activations }),
         ]);
@@ -841,6 +936,7 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
     setLicenseFilter,
     refreshData,
     changeStatus,
+    deleteActivation: deleteActivationFn,
     createNewLicense,
     createNewApp,
     createNewClient,
