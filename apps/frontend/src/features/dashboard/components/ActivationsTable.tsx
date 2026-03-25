@@ -9,6 +9,7 @@ interface ActivationsTableProps {
   activations: Activation[];
   loading: boolean;
   actionLoadingId: string | null;
+  onApprove: (id: string) => void;
   onRevoke: (id: string) => void;
   onGenerateLockedLicense: (activation: Activation) => void;
 }
@@ -30,6 +31,7 @@ export function ActivationsTable({
   activations,
   loading,
   actionLoadingId,
+  onApprove,
   onRevoke,
   onGenerateLockedLicense,
 }: ActivationsTableProps) {
@@ -113,8 +115,16 @@ export function ActivationsTable({
                       <>
                         <Button
                           size="sm"
+                          onClick={() => onApprove(activation.id)}
+                          disabled={actionLoadingId === activation.id}
+                        >
+                          {t("activations.approve")}
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="secondary"
                           onClick={() => onGenerateLockedLicense(activation)}
+                          disabled={actionLoadingId === activation.id}
                         >
                           {t("activations.createLocked")}
                         </Button>

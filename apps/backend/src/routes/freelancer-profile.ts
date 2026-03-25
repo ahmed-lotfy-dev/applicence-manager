@@ -15,6 +15,9 @@ const profileInputSchema = z.object({
   addressLine1: z.string().trim().max(220).optional(),
   addressLine2: z.string().trim().max(220).optional(),
   taxId: z.string().trim().max(120).optional(),
+  defaultCurrency: z.enum(["USD", "EUR", "EGP", "SAR", "AED", "GBP"]).optional(),
+  defaultInvoiceLanguage: z.enum(["en", "ar"]).optional(),
+  appLanguage: z.enum(["en", "ar"]).optional(),
 });
 
 export const freelancerProfileRoutes = new Elysia({
@@ -74,6 +77,18 @@ export const freelancerProfileRoutes = new Elysia({
         addressLine1: t.Optional(t.String({ maxLength: 220 })),
         addressLine2: t.Optional(t.String({ maxLength: 220 })),
         taxId: t.Optional(t.String({ maxLength: 120 })),
+        defaultCurrency: t.Optional(
+          t.Union([
+            t.Literal("USD"),
+            t.Literal("EUR"),
+            t.Literal("EGP"),
+            t.Literal("SAR"),
+            t.Literal("AED"),
+            t.Literal("GBP"),
+          ]),
+        ),
+        defaultInvoiceLanguage: t.Optional(t.Union([t.Literal("en"), t.Literal("ar")])),
+        appLanguage: t.Optional(t.Union([t.Literal("en"), t.Literal("ar")])),
       }),
     },
   )

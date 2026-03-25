@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import { NavLink } from "react-router-dom";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 
@@ -12,12 +13,62 @@ interface DashboardNavProps {
   page: DashboardPage;
 }
 
-const ITEMS: Array<{ id: DashboardPage; key: string; to: string }> = [
-  { id: "overview", key: "nav.overview", to: "/overview" },
-  { id: "branding", key: "nav.branding", to: "/branding" },
-  { id: "clients", key: "nav.clients", to: "/clients" },
-  { id: "invoices", key: "nav.invoices", to: "/invoices" },
-  { id: "licensing", key: "nav.licensing", to: "/licensing" },
+function OverviewIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 12.5 12 5l8 7.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.5 10.8V19h11v-8.2" />
+    </svg>
+  );
+}
+
+function BrandingIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4a8 8 0 1 0 8 8c0-1.1-.9-2-2-2h-1.4a1.6 1.6 0 0 1-1.6-1.6c0-.9.7-1.6 1.6-1.6H18a2 2 0 0 0 2-2 8 8 0 0 0-8-1Z" />
+      <circle cx="7.5" cy="11.5" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="10.5" cy="8.2" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="14.4" cy="8.4" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function ClientsIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.5 19a3.5 3.5 0 0 0-7 0" />
+      <circle cx="12" cy="9" r="3" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 18a3 3 0 0 0-2.5-2.95" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 15.05A3 3 0 0 0 4.5 18" />
+    </svg>
+  );
+}
+
+function InvoicesIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 3.5h8l3 3V20a.5.5 0 0 1-.5.5H7a.5.5 0 0 1-.5-.5V4A.5.5 0 0 1 7 3.5Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 3.5V7h3" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 11h6M9 14.5h6M9 18h4" />
+    </svg>
+  );
+}
+
+function LicensingIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.5 19 7v5c0 4.4-2.8 7.2-7 8.5-4.2-1.3-7-4.1-7-8.5V7l7-3.5Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m9.2 12.2 1.8 1.8 3.8-4.1" />
+    </svg>
+  );
+}
+
+const ITEMS: Array<{ id: DashboardPage; key: string; to: string; icon: ComponentType }> = [
+  { id: "overview", key: "nav.overview", to: "/overview", icon: OverviewIcon },
+  { id: "branding", key: "nav.branding", to: "/branding", icon: BrandingIcon },
+  { id: "clients", key: "nav.clients", to: "/clients", icon: ClientsIcon },
+  { id: "invoices", key: "nav.invoices", to: "/invoices", icon: InvoicesIcon },
+  { id: "licensing", key: "nav.licensing", to: "/licensing", icon: LicensingIcon },
 ];
 
 export function DashboardNav({ page }: DashboardNavProps) {
@@ -37,16 +88,20 @@ export function DashboardNav({ page }: DashboardNavProps) {
       <nav className="flex-1 space-y-2">
           {ITEMS.map((item) => {
             const active = page === item.id;
+            const Icon = item.icon;
             return (
               <NavLink
                 key={item.id}
                 to={item.to}
                 className={
                   active
-                    ? "flex h-12 items-center rounded-2xl bg-primary/10 px-4 text-sm font-semibold text-primary"
-                    : "flex h-12 items-center rounded-2xl px-4 text-sm font-medium text-text-muted transition-colors hover:bg-bg-card hover:text-text"
+                    ? "flex h-12 items-center gap-3 rounded-2xl bg-primary/10 px-4 text-sm font-semibold text-primary"
+                    : "flex h-12 items-center gap-3 rounded-2xl px-4 text-sm font-medium text-text-muted transition-colors hover:bg-bg-card hover:text-text"
                 }
               >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5">
+                  <Icon />
+                </span>
                 {t(item.key)}
               </NavLink>
             );

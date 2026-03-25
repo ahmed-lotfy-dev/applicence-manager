@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "../db/db";
-import { activationLogs, activations, licenses, managedApps } from "../db/auth-schema";
+import { activationLogs, activations, licenses, managedApps, users } from "../db/auth-schema";
 
 function slugify(input: string): string {
   return input
@@ -13,6 +13,27 @@ function slugify(input: string): string {
 
 function compactIdentifier(input: string): string {
   return input.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function matchesIdentifier(
+  identifier: string,
+  app: { name: string; slug: string },
+): boolean {
+  const normalized = identifier.trim();
+  if (!normalized) return false;
+
+  const slugCandidate = slugify(normalized);
+  const compact = compactIdentifier(normalized);
+  const appName = app.name.trim();
+  const appSlug = app.slug.trim();
+
+  return (
+    appName === normalized ||
+    appName.toLowerCase() === normalized.toLowerCase() ||
+    appSlug === normalized ||
+    appSlug === slugCandidate ||
+    compactIdentifier(appName) === compact
+  );
 }
 
 export async function listApps(userId: string) {
@@ -37,26 +58,13 @@ export async function getAppByIdentifier(identifier: string, userId: string) {
   const normalized = identifier.trim();
   if (!normalized) return null;
 
-  const slugCandidate = slugify(normalized);
-  const compact = compactIdentifier(normalized);
-
   const apps = await db
     .select()
     .from(managedApps)
     .where(eq(managedApps.userId, userId));
 
   return (
-    apps.find((app) => {
-      const appName = app.name.trim();
-      const appSlug = app.slug.trim();
-      return (
-        appName === normalized ||
-        appName.toLowerCase() === normalized.toLowerCase() ||
-        appSlug === normalized ||
-        appSlug === slugCandidate ||
-        compactIdentifier(appName) === compact
-      );
-    }) ?? null
+    apps.find((app) => matchesIdentifier(normalized, app)) ?? null
   );
 }
 
@@ -64,24 +72,29 @@ export async function resolveAppOwnerByIdentifier(identifier: string) {
   const normalized = identifier.trim();
   if (!normalized) return null;
 
-  const slugCandidate = slugify(normalized);
-  const compact = compactIdentifier(normalized);
-
   const apps = await db.select().from(managedApps);
+  const matchedApp = apps.find((app) => matchesIdentifier(normalized, app)) ?? null;
+  if (matchedApp) return matchedApp;
 
-  return (
-    apps.find((app) => {
-      const appName = app.name.trim();
-      const appSlug = app.slug.trim();
-      return (
-        appName === normalized ||
-        appName.toLowerCase() === normalized.toLowerCase() ||
-        appSlug === normalized ||
-        appSlug === slugCandidate ||
-        compactIdentifier(appName) === compact
-      );
-    }) ?? null
-  );
+  const activationAppName = process.env.ACTIVATION_APP_NAME?.trim();
+  const adminEmail = process.env.ADMIN_EMAIL?.trim();
+  if (!activationAppName || !adminEmail || !matchesIdentifier(normalized, {
+    name: activationAppName,
+    slug: slugify(activationAppName),
+  })) {
+    return null;
+  }
+
+  const [adminUser] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, adminEmail));
+
+  if (!adminUser?.id) {
+    return null;
+  }
+
+  return (await getOrCreateAppByName(activationAppName, adminUser.id)) ?? null;
 }
 
 export async function getAppById(id: string, userId: string) {

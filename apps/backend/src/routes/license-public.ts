@@ -7,7 +7,10 @@ import {
   validateActivation,
 } from "../services/licensing";
 import { resolveAppOwnerByIdentifier } from "../services/apps";
-import { createActivationRequest as submitRequest } from "../services/activation-requests";
+import {
+  createActivationRequest as submitRequest,
+  getActivationRequestStatus,
+} from "../services/activation-requests";
 
 async function handleActivationRequest(
   body: {
@@ -45,6 +48,11 @@ async function handleActivationRequest(
   return {
     success: true,
     id: result.id,
+    status: "pending",
+    poll: {
+      path: `/api/v1/license/request-status`,
+      requestId: result.id,
+    },
     message: "Activation request sent successfully.",
   };
 }
@@ -75,6 +83,30 @@ export const licensePublicRoutes = new Elysia({
         notes: t.Optional(t.String({ maxLength: 2000 })),
         platform: t.Optional(t.String({ maxLength: 120 })),
         userAgent: t.Optional(t.String({ maxLength: 500 })),
+      }),
+    },
+  )
+  .post(
+    "/request-status",
+    async ({ body, set }) => {
+      const result = await getActivationRequestStatus({
+        id: body.requestId,
+        appName: body.appName,
+        machineId: body.machineId,
+      });
+
+      if (!result.ok) {
+        set.status = result.status;
+        return { success: false, error: result.error };
+      }
+
+      return { success: true, ...result.data };
+    },
+    {
+      body: t.Object({
+        requestId: t.String({ minLength: 8, maxLength: 128 }),
+        appName: t.String({ minLength: 2, maxLength: 120 }),
+        machineId: t.String({ minLength: 6, maxLength: 256 }),
       }),
     },
   )

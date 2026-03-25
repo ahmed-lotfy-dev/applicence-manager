@@ -1,6 +1,6 @@
 import { and, asc, eq, sql, sum } from "drizzle-orm";
 import { db } from "../db/db";
-import { clients, invoices } from "../db/auth-schema";
+import { clients, freelancerProfiles, invoices } from "../db/auth-schema";
 
 export type InvoiceStatus =
   | "draft"
@@ -106,6 +106,13 @@ export async function createInvoice(
   if (!client) return { ok: false as const, error: "Client not found" };
 
   const invoiceNo = input.invoiceNo?.trim() || (await getNextInvoiceNo(userId));
+  const [profile] = await db
+    .select({
+      defaultCurrency: freelancerProfiles.defaultCurrency,
+      defaultInvoiceLanguage: freelancerProfiles.defaultInvoiceLanguage,
+    })
+    .from(freelancerProfiles)
+    .where(eq(freelancerProfiles.userId, userId));
   const id = crypto.randomUUID();
   await db.insert(invoices).values({
     id,
@@ -113,8 +120,15 @@ export async function createInvoice(
     clientId,
     invoiceNo,
     status: input.status || "draft",
-    currency: (input.currency || "USD").trim().toUpperCase(),
-    invoiceLanguage: input.invoiceLanguage === "ar" ? "ar" : "en",
+    currency: (input.currency || profile?.defaultCurrency || "USD").trim().toUpperCase(),
+    invoiceLanguage:
+      input.invoiceLanguage === "ar"
+        ? "ar"
+        : input.invoiceLanguage === "en"
+          ? "en"
+          : profile?.defaultInvoiceLanguage === "ar"
+            ? "ar"
+            : "en",
     isDeleted: false,
     totalAmount: toAmountCents(input.totalAmount),
     paidAmount: toAmountCents(input.paidAmount || 0),

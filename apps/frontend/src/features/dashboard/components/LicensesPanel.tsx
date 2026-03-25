@@ -52,6 +52,7 @@ export function LicensesPanel(props: LicensesPanelProps) {
     activationActionLoadingId,
     loadingActivations,
     activationError,
+    onApproveActivation,
     onRevokeActivation,
   } = props;
 
@@ -258,6 +259,9 @@ export function LicensesPanel(props: LicensesPanelProps) {
                     activations={filteredActivations}
                     loading={loadingActivations}
                     actionLoadingId={activationActionLoadingId}
+                    onApprove={(id) => {
+                      void onApproveActivation(id);
+                    }}
                     onRevoke={(id) => {
                       void onRevokeActivation(id);
                     }}

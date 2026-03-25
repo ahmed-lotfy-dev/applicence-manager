@@ -533,6 +533,9 @@ export async function updateFreelancerProfile(input: {
   addressLine1?: string;
   addressLine2?: string;
   taxId?: string;
+  defaultCurrency?: "USD" | "EUR" | "EGP" | "SAR" | "AED" | "GBP";
+  defaultInvoiceLanguage?: "en" | "ar";
+  appLanguage?: "en" | "ar";
 }): Promise<FreelancerProfile | null> {
   const response = await apiRequest('/freelancer-profile', {
     method: 'PUT',

@@ -101,6 +101,9 @@ export interface FreelancerProfile {
   addressLine1?: string | null;
   addressLine2?: string | null;
   taxId?: string | null;
+  defaultCurrency?: "USD" | "EUR" | "EGP" | "SAR" | "AED" | "GBP" | null;
+  defaultInvoiceLanguage?: "en" | "ar" | null;
+  appLanguage?: "en" | "ar" | null;
   createdAt: string;
   updatedAt: string;
 }

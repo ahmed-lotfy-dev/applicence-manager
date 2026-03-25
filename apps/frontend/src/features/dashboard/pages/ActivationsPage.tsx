@@ -10,6 +10,7 @@ interface ActivationsPageProps {
   filteredActivations: Activation[];
   loading: boolean;
   actionLoadingId: string | null;
+  onApprove: (id: string) => void;
   onRevoke: (id: string) => void;
 }
 
@@ -20,6 +21,7 @@ export function ActivationsPage({
   filteredActivations,
   loading,
   actionLoadingId,
+  onApprove,
   onRevoke,
 }: ActivationsPageProps) {
   return (
@@ -42,6 +44,7 @@ export function ActivationsPage({
           activations={filteredActivations}
           loading={loading}
           actionLoadingId={actionLoadingId}
+          onApprove={onApprove}
           onRevoke={onRevoke}
           onGenerateLockedLicense={() => {}}
         />

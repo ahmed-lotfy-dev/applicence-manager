@@ -100,8 +100,10 @@ interface UseDashboardDataResult {
     invoiceNo: string;
     totalAmount: number;
     paidAmount?: number;
+    currency?: string;
     dueDate?: string;
     notes?: string;
+    invoiceLanguage?: "en" | "ar";
   }) => Promise<Invoice | null>;
   updateExistingInvoice: (
     id: string,
@@ -121,6 +123,9 @@ interface UseDashboardDataResult {
     addressLine1?: string;
     addressLine2?: string;
     taxId?: string;
+    defaultCurrency?: "USD" | "EUR" | "EGP" | "SAR" | "AED" | "GBP";
+    defaultInvoiceLanguage?: "en" | "ar";
+    appLanguage?: "en" | "ar";
   }) => Promise<FreelancerProfile | null>;
   uploadProfileLogo: (file: File) => Promise<FreelancerProfile | null>;
   queueInvoicePdfGeneration: (invoiceId: string) => Promise<void>;
@@ -501,6 +506,7 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
       invoiceNo: string;
       totalAmount: number;
       paidAmount?: number;
+      currency?: string;
       dueDate?: string;
       notes?: string;
       invoiceLanguage?: "en" | "ar";
@@ -620,6 +626,9 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
       addressLine1?: string;
       addressLine2?: string;
       taxId?: string;
+      defaultCurrency?: "USD" | "EUR" | "EGP" | "SAR" | "AED" | "GBP";
+      defaultInvoiceLanguage?: "en" | "ar";
+      appLanguage?: "en" | "ar";
     }) => {
       setError("");
       try {

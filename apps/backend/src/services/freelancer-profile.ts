@@ -16,6 +16,9 @@ export async function getFreelancerProfile(userId: string) {
         addressLine1: freelancerProfiles.addressLine1,
         addressLine2: freelancerProfiles.addressLine2,
         taxId: freelancerProfiles.taxId,
+        defaultCurrency: freelancerProfiles.defaultCurrency,
+        defaultInvoiceLanguage: freelancerProfiles.defaultInvoiceLanguage,
+        appLanguage: freelancerProfiles.appLanguage,
         createdAt: freelancerProfiles.createdAt,
         updatedAt: freelancerProfiles.updatedAt,
       })
@@ -34,6 +37,9 @@ export async function getFreelancerProfile(userId: string) {
         addressLine1: freelancerProfiles.addressLine1,
         addressLine2: freelancerProfiles.addressLine2,
         taxId: freelancerProfiles.taxId,
+        defaultCurrency: sql<string | null>`null`,
+        defaultInvoiceLanguage: sql<string | null>`null`,
+        appLanguage: sql<string | null>`null`,
         createdAt: freelancerProfiles.createdAt,
         updatedAt: freelancerProfiles.updatedAt,
       })
@@ -53,6 +59,9 @@ export async function upsertFreelancerProfile(
     addressLine1?: string;
     addressLine2?: string;
     taxId?: string;
+    defaultCurrency?: string;
+    defaultInvoiceLanguage?: "en" | "ar";
+    appLanguage?: "en" | "ar";
   },
 ) {
   const existing = await getFreelancerProfile(userId);
@@ -67,6 +76,9 @@ export async function upsertFreelancerProfile(
   const addressLine1 = normalize(input.addressLine1);
   const addressLine2 = normalize(input.addressLine2);
   const taxId = normalize(input.taxId);
+  const defaultCurrency = normalize(input.defaultCurrency)?.toUpperCase() || null;
+  const defaultInvoiceLanguage = input.defaultInvoiceLanguage === "ar" ? "ar" : input.defaultInvoiceLanguage === "en" ? "en" : null;
+  const appLanguage = input.appLanguage === "ar" ? "ar" : input.appLanguage === "en" ? "en" : null;
   const now = new Date();
 
   if (!existing) {
@@ -74,9 +86,9 @@ export async function upsertFreelancerProfile(
     await db.execute(
       sql`
         insert into "freelancer_profiles"
-          ("id", "user_id", "business_name", "contact_email", "contact_phone", "address_line_1", "address_line_2", "tax_id", "created_at", "updated_at")
+          ("id", "user_id", "business_name", "contact_email", "contact_phone", "address_line_1", "address_line_2", "tax_id", "default_currency", "default_invoice_language", "app_language", "created_at", "updated_at")
         values
-          (${id}, ${userId}, ${businessName ?? null}, ${contactEmail ?? null}, ${contactPhone ?? null}, ${addressLine1 ?? null}, ${addressLine2 ?? null}, ${taxId ?? null}, ${now}, ${now})
+          (${id}, ${userId}, ${businessName ?? null}, ${contactEmail ?? null}, ${contactPhone ?? null}, ${addressLine1 ?? null}, ${addressLine2 ?? null}, ${taxId ?? null}, ${defaultCurrency}, ${defaultInvoiceLanguage}, ${appLanguage}, ${now}, ${now})
       `,
     );
   } else {
@@ -88,6 +100,9 @@ export async function upsertFreelancerProfile(
       addressLine1?: string | null;
       addressLine2?: string | null;
       taxId?: string | null;
+      defaultCurrency?: string | null;
+      defaultInvoiceLanguage?: string | null;
+      appLanguage?: string | null;
     } = {
       updatedAt: now,
     };
@@ -98,6 +113,9 @@ export async function upsertFreelancerProfile(
     if (input.addressLine1 !== undefined) payload.addressLine1 = addressLine1 ?? null;
     if (input.addressLine2 !== undefined) payload.addressLine2 = addressLine2 ?? null;
     if (input.taxId !== undefined) payload.taxId = taxId ?? null;
+    if (input.defaultCurrency !== undefined) payload.defaultCurrency = defaultCurrency;
+    if (input.defaultInvoiceLanguage !== undefined) payload.defaultInvoiceLanguage = defaultInvoiceLanguage;
+    if (input.appLanguage !== undefined) payload.appLanguage = appLanguage;
 
     await db
       .update(freelancerProfiles)

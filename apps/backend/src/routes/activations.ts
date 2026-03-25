@@ -3,6 +3,7 @@ import { and, count, desc, eq } from "drizzle-orm";
 import { db } from "../db/db";
 import { activationLogs, activationRequests, activations } from "../db/auth-schema";
 import { getAuthenticatedUserId } from "../lib/request-auth";
+import { approveActivationRequest } from "../services/activation-requests";
 
 function mapActivationRequest(request: typeof activationRequests.$inferSelect) {
   return {
@@ -10,20 +11,29 @@ function mapActivationRequest(request: typeof activationRequests.$inferSelect) {
     requestType: "request_only" as const,
     appName: request.appName,
     appVersion: request.appVersion,
-    licenseKey: "",
+    licenseKey: request.resolvedLicenseKey || "",
     machineId: request.machineId,
     shopName: request.shopName,
     phone: request.phone,
     notes: request.notes,
-    status: request.status === "revoked" ? "revoked" : "pending",
+    status:
+      request.status === "approved"
+        ? "active"
+        : request.status === "dismissed"
+          ? "revoked"
+          : "pending",
     metadata: JSON.stringify({
       source: "request_only",
-      reason: request.notes?.trim() || "Activation request received without a license key.",
+      reason:
+        request.notes?.trim() ||
+        (request.status === "approved"
+          ? "The activation request was approved and fulfilled."
+          : "Activation request received without a license key."),
       platform: request.platform,
     }),
     createdAt: request.createdAt,
     updatedAt: request.updatedAt,
-    activatedAt: null,
+    activatedAt: request.approvedAt,
   };
 }
 
@@ -169,6 +179,25 @@ export const activationRoutes = new Elysia({
       set.status = 401;
       return { error: "Unauthorized" };
     }
+
+    const [activationRequest] = await db
+      .select()
+      .from(activationRequests)
+      .where(and(eq(activationRequests.id, id), eq(activationRequests.userId, userId)));
+
+    if (activationRequest) {
+      const result = await approveActivationRequest({ id, userId });
+      if (!result.ok) {
+        set.status = result.status;
+        return { error: result.error };
+      }
+      return {
+        success: true,
+        message: "Activation request approved",
+        ...result.data,
+      };
+    }
+
     await db
       .update(activations)
       .set({
