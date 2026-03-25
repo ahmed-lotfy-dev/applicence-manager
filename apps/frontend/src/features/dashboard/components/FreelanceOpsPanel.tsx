@@ -7,6 +7,7 @@ import { Input } from '../../../shared/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/ui/select';
 import { Table, TableWrapper, Td, Th } from '../../../shared/ui/table';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { formatCurrencyCents } from '../../../shared/lib/currency';
 import type { BillingStats, Client, FreelancerProfile, Invoice, InvoicePdfJob } from '../types/dashboard';
 import { z } from 'zod';
 import { CURRENCY_OPTIONS, type SupportedCurrency } from '../../onboarding/setup';
@@ -106,15 +107,6 @@ interface FreelanceOpsPanelProps {
   onQueueInvoicePdf: (invoiceId: string) => Promise<void>;
   onRefreshInvoicePdfJob: (invoiceId: string) => Promise<void>;
   onSendInvoiceEmail: (invoiceId: string) => Promise<void>;
-}
-
-function formatMoneyCents(cents: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format((cents || 0) / 100);
 }
 
 function buildInvoicePdfFileName(invoice: Invoice) {
@@ -628,15 +620,15 @@ export function FreelanceOpsPanel({
           <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.invoiced")}</p>
-              <p className="metric-value mt-2 text-2xl font-bold text-white">{formatMoneyCents(billingStats.totalInvoiced, displayCurrency)}</p>
+              <p className="metric-value mt-2 text-2xl font-bold text-white">{formatCurrencyCents(billingStats.totalInvoiced, displayCurrency)}</p>
             </div>
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.paid")}</p>
-              <p className="metric-value mt-2 text-2xl font-bold text-emerald-300">{formatMoneyCents(billingStats.totalPaid, displayCurrency)}</p>
+              <p className="metric-value mt-2 text-2xl font-bold text-emerald-300">{formatCurrencyCents(billingStats.totalPaid, displayCurrency)}</p>
             </div>
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.outstanding")}</p>
-              <p className="metric-value mt-2 text-2xl font-bold text-amber-300">{formatMoneyCents(billingStats.totalOutstanding, displayCurrency)}</p>
+              <p className="metric-value mt-2 text-2xl font-bold text-amber-300">{formatCurrencyCents(billingStats.totalOutstanding, displayCurrency)}</p>
             </div>
           </CardContent>
         </Card>

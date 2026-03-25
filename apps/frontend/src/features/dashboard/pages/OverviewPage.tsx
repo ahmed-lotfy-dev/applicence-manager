@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 import type { BillingStats } from "../types/dashboard";
+import { formatCurrencyCents } from "../../../shared/lib/currency";
 
 interface OverviewPageProps {
   billingStats: BillingStats;
@@ -18,13 +19,7 @@ export function OverviewPage({
   const { t } = useI18n();
   const asCount = (value: number) =>
     new Intl.NumberFormat("en-US").format(value);
-  const asMoney = (cents: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency || "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(cents / 100);
+  const asMoney = (cents: number) => formatCurrencyCents(cents, currency);
 
   return (
     <section className="space-y-8">
