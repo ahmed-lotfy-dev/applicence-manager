@@ -79,20 +79,22 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[radial-gradient(circle_at_0%_0%,rgba(129,140,248,0.12),transparent_50%),radial-gradient(circle_at_100%_100%,rgba(251,113,133,0.08),transparent_50%),linear-gradient(180deg,#060816_0%,#0A0F1F_100%)]">
-      <Card className="w-full max-w-md bg-white/3 backdrop-blur-2xl border-white/5 shadow-soft-xl overflow-hidden ring-1 ring-white/5">
-        <CardHeader className="space-y-2 border-b border-white/5 bg-white/2 pt-10 pb-8 text-center">
-          <CardTitle className="text-3xl font-bold tracking-tight text-white">{t('auth.title')}</CardTitle>
-          <p className="text-slate-400 font-medium tracking-wide text-sm opacity-60">{t('auth.subtitle')}</p>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(128,131,255,0.18),transparent_28%),radial-gradient(circle_at_85%_22%,rgba(255,183,131,0.08),transparent_18%),radial-gradient(circle_at_80%_82%,rgba(192,193,255,0.12),transparent_24%)]" />
+      <Card className="relative w-full max-w-md overflow-hidden border-border/12 bg-bg-card/92 backdrop-blur-2xl">
+        <CardHeader className="space-y-3 pt-10 pb-7 text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/75">Fawtarly</p>
+          <CardTitle className="text-3xl font-black tracking-tight text-text">{t('auth.title')}</CardTitle>
+          <p className="text-text-muted font-medium tracking-wide text-sm opacity-75">{t('auth.subtitle')}</p>
         </CardHeader>
         <CardContent className="p-8 space-y-8">
-          {error && <div className="mb-4 rounded-lg border border-danger/30 bg-danger/20 p-3 text-sm text-danger">{error}</div>}
+          {error && <div className="mb-4 rounded-2xl border border-danger/20 bg-danger/10 p-4 text-sm text-danger">{error}</div>}
 
           <div className="space-y-3">
             <Button
               type="button"
               variant="outline"
-              className="relative w-full justify-center border-white/10 bg-[#181818] text-white hover:bg-[#222222]"
+              className="relative w-full justify-center border-border/15 bg-bg-light text-text hover:bg-bg-card-high"
               disabled={isLoading || socialLoading !== null}
               onClick={() => {
                 void handleSocialLogin('google');
@@ -106,7 +108,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             <Button
               type="button"
               variant="outline"
-              className="relative w-full justify-center border-white/10 bg-[#181818] text-white hover:bg-[#222222]"
+              className="relative w-full justify-center border-border/15 bg-bg-light text-text hover:bg-bg-card-high"
               disabled={isLoading || socialLoading !== null}
               onClick={() => {
                 void handleSocialLogin('github');
@@ -119,15 +121,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </Button>
           </div>
 
-          <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-slate-500">
-            <span className="h-px flex-1 bg-white/10" />
+          <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-text-muted/55">
+            <span className="h-px flex-1 bg-border/15" />
             <span>{t('auth.or')}</span>
-            <span className="h-px flex-1 bg-white/10" />
+            <span className="h-px flex-1 bg-border/15" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2.5">
-              <Label htmlFor="email" className="text-slate-300 font-semibold ml-1">{t('auth.email')}</Label>
+              <Label htmlFor="email" className="ml-1 text-text-muted font-semibold">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -139,7 +141,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </div>
 
             <div className="space-y-2.5">
-              <Label htmlFor="password" className="text-slate-300 font-semibold ml-1">{t('auth.password')}</Label>
+              <Label htmlFor="password" className="ml-1 text-text-muted font-semibold">{t('auth.password')}</Label>
               <Input
                 id="password"
                 type="password"

@@ -6,8 +6,8 @@ export interface ProcessImageInput {
 
 export interface ProcessedImage {
   buffer: Buffer;
-  contentType: "image/webp";
-  extension: "webp";
+  contentType: "image/png";
+  extension: "png";
 }
 
 export interface ImageProcessor {

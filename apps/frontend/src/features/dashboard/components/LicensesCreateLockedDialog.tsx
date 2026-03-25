@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import type { ManagedApp } from "../types/dashboard";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Button } from "../../../shared/ui/button";
 import { Dialog } from "../../../shared/ui/dialog";
 import { Input } from "../../../shared/ui/input";
@@ -41,14 +42,16 @@ export function LicensesCreateLockedDialog({
   onMaxActivationsChange,
   onSubmit,
 }: LicensesCreateLockedDialogProps) {
+  const { t } = useI18n();
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title="Create Device-Locked License">
+    <Dialog open={open} onOpenChange={onOpenChange} title={t("licensing.dialog.createLockedLicense")}>
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="create-locked-license-app">App</Label>
+          <Label htmlFor="create-locked-license-app">{t("licensing.field.app")}</Label>
           <Select value={appId} onValueChange={onAppIdChange}>
             <SelectTrigger id="create-locked-license-app">
-              <SelectValue placeholder="Select app" />
+              <SelectValue placeholder={t("licensing.field.selectApp")} />
             </SelectTrigger>
             <SelectContent>
             {apps.map((app) => (
@@ -61,7 +64,7 @@ export function LicensesCreateLockedDialog({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="locked-machine-id">Machine ID</Label>
+          <Label htmlFor="locked-machine-id">{t("licensing.field.machineId")}</Label>
           <Input
             id="locked-machine-id"
             value={machineId}
@@ -73,7 +76,7 @@ export function LicensesCreateLockedDialog({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="create-locked-license-max">Max activations</Label>
+          <Label htmlFor="create-locked-license-max">{t("licensing.field.maxActivations")}</Label>
           <Input
             id="create-locked-license-max"
             type="number"
@@ -82,12 +85,12 @@ export function LicensesCreateLockedDialog({
             onChange={(event) => onMaxActivationsChange(event.target.value)}
             required
           />
-          <p className="text-xs text-slate-400">Recommended: 1 for device-locked serials.</p>
+          <p className="text-xs text-slate-400">{t("licensing.recommendedLocked")}</p>
         </div>
 
         {generatedKey && (
           <div className="space-y-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
-            <Label htmlFor="generated-locked-license">Generated Serial</Label>
+            <Label htmlFor="generated-locked-license">{t("licensing.field.generatedSerial")}</Label>
             <Input
               id="generated-locked-license"
               readOnly
@@ -97,7 +100,7 @@ export function LicensesCreateLockedDialog({
             />
             <div className="flex justify-end">
               <Button type="button" variant="outline" onClick={() => navigator.clipboard.writeText(generatedKey)}>
-                Copy Serial
+                {t("licensing.copySerial")}
               </Button>
             </div>
           </div>
@@ -105,10 +108,10 @@ export function LicensesCreateLockedDialog({
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-            Close
+            {t("licensing.close")}
           </Button>
           <Button type="submit" disabled={isCreating}>
-            {isCreating ? "Generating..." : "Generate Serial"}
+            {isCreating ? t("licensing.generating") : t("licensing.generateSerial")}
           </Button>
         </div>
       </form>

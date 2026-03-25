@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import type { ManagedApp } from "../types/dashboard";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Button } from "../../../shared/ui/button";
 import { Dialog } from "../../../shared/ui/dialog";
 import { Input } from "../../../shared/ui/input";
@@ -35,14 +36,16 @@ export function LicensesCreateDialog({
   onMaxActivationsChange,
   onSubmit,
 }: LicensesCreateDialogProps) {
+  const { t } = useI18n();
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title="Create License">
+    <Dialog open={open} onOpenChange={onOpenChange} title={t("licensing.dialog.createLicense")}>
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="create-license-app">App</Label>
+          <Label htmlFor="create-license-app">{t("licensing.field.app")}</Label>
           <Select value={appId} onValueChange={onAppIdChange}>
             <SelectTrigger id="create-license-app">
-              <SelectValue placeholder="Select app" />
+              <SelectValue placeholder={t("licensing.field.selectApp")} />
             </SelectTrigger>
             <SelectContent>
             {apps.map((app) => (
@@ -55,7 +58,7 @@ export function LicensesCreateDialog({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="create-license-max">Max activations</Label>
+          <Label htmlFor="create-license-max">{t("licensing.field.maxActivations")}</Label>
           <Input
             id="create-license-max"
             type="number"
@@ -68,10 +71,10 @@ export function LicensesCreateDialog({
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("licensing.cancel")}
           </Button>
           <Button type="submit" disabled={isCreating}>
-            {isCreating ? "Creating..." : "Create"}
+            {isCreating ? t("licensing.creating") : t("licensing.create")}
           </Button>
         </div>
       </form>

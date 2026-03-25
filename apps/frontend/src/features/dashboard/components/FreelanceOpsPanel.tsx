@@ -7,6 +7,7 @@ import { Input } from '../../../shared/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/ui/select';
 import { Table, TableWrapper, Td, Th } from '../../../shared/ui/table';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
+import type { Locale } from '../../../shared/i18n/translations';
 import type { BillingStats, Client, FreelancerProfile, Invoice, InvoicePdfJob } from '../types/dashboard';
 import { z } from 'zod';
 
@@ -96,11 +97,21 @@ interface FreelanceOpsPanelProps {
   onRefreshInvoicePdfJob: (invoiceId: string) => Promise<void>;
 }
 
-function formatMoneyCents(cents: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
+function formatMoneyCents(cents: number, locale: Locale, currency = 'USD'): string {
+  return new Intl.NumberFormat(locale === 'ar' ? 'ar-EG' : 'en-US', {
     style: 'currency',
     currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format((cents || 0) / 100);
+}
+
+function buildInvoicePdfFileName(invoice: Invoice) {
+  const safeNo = (invoice.invoiceNo || 'invoice').trim().replace(/[^a-zA-Z0-9_-]+/g, '-');
+  const date = invoice.issuedAt ? new Date(invoice.issuedAt) : null;
+  if (!date || Number.isNaN(date.getTime())) return `${safeNo}.pdf`;
+  const safeDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return `${safeNo}-${safeDate}.pdf`;
 }
 
 export function FreelanceOpsPanel({
@@ -126,10 +137,34 @@ export function FreelanceOpsPanel({
   onRefreshInvoicePdfJob,
 }: FreelanceOpsPanelProps) {
   const { t, locale } = useI18n();
+  const replaceVars = (template: string, vars: Record<string, string>) =>
+    Object.entries(vars).reduce((result, [key, value]) => result.replace(`{${key}}`, value), template);
   const toOptional = (value: string): string | undefined => {
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : undefined;
   };
+  const translateValidationMessage = (message: string) => {
+    const map: Record<string, string> = {
+      'Business name is required': t('validation.businessRequired'),
+      'Business name is too long': t('validation.businessTooLong'),
+      'Contact email is too long': t('validation.emailTooLong'),
+      'Invalid contact email': t('validation.invalidEmail'),
+      'Contact phone is too long': t('validation.phoneTooLong'),
+      'Address line 1 is too long': t('validation.address1TooLong'),
+      'Address line 2 is too long': t('validation.address2TooLong'),
+      'Tax ID is too long': t('validation.taxIdTooLong'),
+      'Client is required': t('validation.clientRequired'),
+      'Invoice number is required': t('validation.invoiceNumberRequired'),
+      'Invoice number is too long': t('validation.invoiceNumberTooLong'),
+      'Total amount must be greater than zero': t('validation.totalMustBePositive'),
+      'Paid amount must be zero or higher': t('validation.paidMustBeNonNegative'),
+      'Paid amount cannot exceed total amount': t('validation.paidCannotExceedTotal'),
+    };
+    return map[message] || message;
+  };
+  const invoiceStatusLabel = (status: Invoice['status']) => t(`invoice.status.${status}`);
+  const invoicePdfJobStatusLabel = (status?: InvoicePdfJob['status'] | null) =>
+    status ? t(`invoice.pdfStatus.${status}`) : t('invoice.none');
 
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
@@ -387,15 +422,15 @@ export function FreelanceOpsPanel({
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.invoiced")}</p>
-            <p className="text-2xl font-bold text-white mt-2">{formatMoneyCents(billingStats.totalInvoiced)}</p>
+            <p className="metric-value text-2xl font-bold text-white mt-2">{formatMoneyCents(billingStats.totalInvoiced)}</p>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.paid")}</p>
-            <p className="text-2xl font-bold text-emerald-300 mt-2">{formatMoneyCents(billingStats.totalPaid)}</p>
+            <p className="metric-value text-2xl font-bold text-emerald-300 mt-2">{formatMoneyCents(billingStats.totalPaid)}</p>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.outstanding")}</p>
-            <p className="text-2xl font-bold text-amber-300 mt-2">{formatMoneyCents(billingStats.totalOutstanding)}</p>
+            <p className="metric-value text-2xl font-bold text-amber-300 mt-2">{formatMoneyCents(billingStats.totalOutstanding)}</p>
           </div>
         </CardContent>
       </Card>
@@ -795,7 +830,7 @@ export function FreelanceOpsPanel({
                             {invoicePdfJobs[invoice.id]?.status === 'completed' && (
                               <a
                                 href={getInvoicePdfUrl(invoice.id)}
-                                download={`invoice-${invoice.invoiceNo}.pdf`}
+                                download={buildInvoicePdfFileName(invoice)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="inline-flex h-8 items-center rounded-md border border-white/10 px-2 text-xs text-white"
@@ -886,3 +921,10 @@ export function FreelanceOpsPanel({
     </section>
   );
 }
+  const buildInvoicePdfFileName = (invoice: Invoice) => {
+    const safeNo = (invoice.invoiceNo || "invoice").trim().replace(/[^a-zA-Z0-9_-]+/g, "-");
+    const date = invoice.issuedAt ? new Date(invoice.issuedAt) : null;
+    if (!date || Number.isNaN(date.getTime())) return `${safeNo}.pdf`;
+    const safeDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return `${safeNo}-${safeDate}.pdf`;
+  };

@@ -1,4 +1,5 @@
 import type { Activation } from "../types/dashboard";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Badge } from "../../../shared/ui/badge";
 import type { BadgeVariant } from "../../../shared/ui/badge";
 import { Button } from "../../../shared/ui/button";
@@ -32,32 +33,34 @@ export function ActivationsTable({
   onRevoke,
   onGenerateLockedLicense,
 }: ActivationsTableProps) {
+  const { t } = useI18n();
+
   return (
     <TableWrapper>
       <Table>
         <thead className="bg-white/5 border-b border-white/5">
           <tr>
-            <Th>App</Th>
-            <Th>Store Name</Th>
-            <Th>Phone</Th>
-            <Th>License</Th>
-            <Th>Machine</Th>
-            <Th>Status</Th>
-            <Th>Request Details</Th>
-            <Th>Action</Th>
+            <Th>{t("activations.table.app")}</Th>
+            <Th>{t("activations.table.storeName")}</Th>
+            <Th>{t("activations.table.phone")}</Th>
+            <Th>{t("activations.table.license")}</Th>
+            <Th>{t("activations.table.machine")}</Th>
+            <Th>{t("activations.table.status")}</Th>
+            <Th>{t("activations.table.requestDetails")}</Th>
+            <Th>{t("activations.table.action")}</Th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
           {loading ? (
             <tr>
               <Td colSpan={8} className="text-center text-text-muted py-8">
-                Loading activations...
+                {t("activations.loading")}
               </Td>
             </tr>
           ) : activations.length === 0 ? (
             <tr>
               <Td colSpan={8} className="text-center text-slate-500 py-12 italic">
-                No activations found.
+                {t("activations.empty")}
               </Td>
             </tr>
           ) : (
@@ -71,26 +74,26 @@ export function ActivationsTable({
                     v{activation.appVersion}
                   </div>
                   <div className="text-[10px] uppercase tracking-wider text-slate-600">
-                    {activation.requestType === "request_only" ? "Request only" : "License activation"}
+                    {activation.requestType === "request_only" ? t("activations.requestOnly") : t("activations.licenseActivation")}
                   </div>
                 </Td>
                 <Td className="text-slate-200">{activation.shopName || "-"}</Td>
                 <Td className="text-slate-300">{activation.phone || "-"}</Td>
                 <Td className="font-mono text-primary-light/80">
-                  {activation.licenseKey || "No license yet"}
+                  {activation.licenseKey || t("activations.noLicense")}
                 </Td>
                 <Td className="font-mono text-slate-500 text-[10px]">
                   {activation.machineId}
                 </Td>
                 <Td>
                   <Badge variant={statusVariant(activation.status)} className="rounded-full px-3 py-1 text-[10px] uppercase font-bold tracking-widest">
-                    {activation.status}
+                    {t(`licensing.status.${activation.status}`)}
                   </Badge>
                 </Td>
                 <Td>
                   <div className="space-y-1">
                     <div className="text-sm text-slate-200">
-                      {activation.requestReason || "No additional request details."}
+                      {activation.requestReason || t("activations.noDetails")}
                     </div>
                     {activation.notes ? (
                       <div className="text-xs text-slate-400">
@@ -113,7 +116,7 @@ export function ActivationsTable({
                           variant="secondary"
                           onClick={() => onGenerateLockedLicense(activation)}
                         >
-                          Create Locked License
+                          {t("activations.createLocked")}
                         </Button>
                         <Button
                           size="sm"
@@ -121,7 +124,7 @@ export function ActivationsTable({
                           disabled={actionLoadingId === activation.id}
                           onClick={() => onRevoke(activation.id)}
                         >
-                          Dismiss
+                          {t("activations.dismiss")}
                         </Button>
                       </>
                     ) : activation.status === "active" ? (
@@ -131,10 +134,10 @@ export function ActivationsTable({
                         disabled={actionLoadingId === activation.id}
                         onClick={() => onRevoke(activation.id)}
                       >
-                        Revoke
+                        {t("licensing.action.revoke")}
                       </Button>
                     ) : (
-                      <span className="text-xs text-text-muted">No action</span>
+                      <span className="text-xs text-text-muted">{t("activations.noAction")}</span>
                     )}
                   </div>
                 </Td>

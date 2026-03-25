@@ -8,7 +8,8 @@ type InvoiceLanguage = "en" | "ar";
 
 const PAGE = {
   width: 595.28,
-  margin: 46,
+  height: 841.89,
+  margin: 40,
 };
 
 function isArabic(language: InvoiceLanguage) {
@@ -103,10 +104,23 @@ async function loadLogoBuffer(input: {
   logoObjectKey?: string | null;
   logoUrl?: string | null;
 }): Promise<Buffer | null> {
+  const normalizeForPdf = async (buffer: Buffer): Promise<Buffer> => {
+    if (buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP") {
+      try {
+        const sharpModule = await import("sharp");
+        return await sharpModule.default(buffer).png().toBuffer();
+      } catch {
+        return buffer;
+      }
+    }
+    return buffer;
+  };
+
   if (input.logoObjectKey) {
     try {
       const storage = new R2ObjectStorage();
-      return await storage.getObject(input.logoObjectKey);
+      const buffer = await storage.getObject(input.logoObjectKey);
+      return normalizeForPdf(buffer);
     } catch {
       // Fall back to public URL.
     }
@@ -116,7 +130,7 @@ async function loadLogoBuffer(input: {
   try {
     const response = await fetch(input.logoUrl);
     if (!response.ok) return null;
-    return Buffer.from(await response.arrayBuffer());
+    return normalizeForPdf(Buffer.from(await response.arrayBuffer()));
   } catch {
     return null;
   }
@@ -131,6 +145,15 @@ function buildPdfBuffer(doc: InstanceType<typeof PDFDocument>): Promise<Buffer> 
   });
 }
 
+function safeText(value: string | null | undefined): string {
+  const normalized = value?.trim();
+  return normalized && normalized.length > 0 ? normalized : "-";
+}
+
+function joinedAddress(data: Awaited<ReturnType<typeof getInvoicePdfData>>): string {
+  return [data?.addressLine1, data?.addressLine2].map((item) => item?.trim()).filter(Boolean).join(", ");
+}
+
 function drawHeader(
   doc: InstanceType<typeof PDFDocument>,
   language: InvoiceLanguage,
@@ -140,7 +163,7 @@ function drawHeader(
   const contentWidth = PAGE.width - PAGE.margin * 2;
   const cardX = PAGE.margin;
   const cardY = PAGE.margin;
-  const cardHeight = 118;
+  const cardHeight = 102;
 
   doc.save();
   doc.roundedRect(cardX, cardY, contentWidth, cardHeight, 18).fill("#F6F8FC");
@@ -149,27 +172,27 @@ function drawHeader(
 
   if (logoBuffer) {
     try {
-      const logoX = isArabic(language) ? cardX + contentWidth - 112 : cardX + 18;
-      doc.image(logoBuffer, logoX, cardY + 18, { fit: [94, 56], align: "center", valign: "center" });
+      const logoX = isArabic(language) ? cardX + contentWidth - 98 : cardX + 18;
+      doc.image(logoBuffer, logoX, cardY + 18, { fit: [78, 44], align: "center", valign: "center" });
     } catch {
       // Ignore invalid image bytes and continue.
     }
   }
 
-  const titleX = isArabic(language) ? cardX + 18 : cardX + 128;
-  const titleWidth = contentWidth - 146;
+  const titleX = isArabic(language) ? cardX + 18 : cardX + 110;
+  const titleWidth = contentWidth - 128;
   doc
     .fillColor("#10233B")
-    .fontSize(isArabic(language) ? 24 : 22)
-    .text(data?.businessName || label(language, "Freelancer", "مستقل"), titleX, cardY + 24, {
+    .fontSize(isArabic(language) ? 22 : 20)
+    .text(safeText(data?.businessName || label(language, "Freelancer", "مستقل")), titleX, cardY + 22, {
       width: titleWidth,
       align: isArabic(language) ? "right" : "left",
     });
 
   doc
     .fillColor("#4F5F75")
-    .fontSize(10)
-    .text(label(language, "Professional invoice", "فاتورة احترافية"), titleX, cardY + 56, {
+    .fontSize(9.5)
+    .text(label(language, "Official invoice", "فاتورة رسمية"), titleX, cardY + 50, {
       width: titleWidth,
       align: isArabic(language) ? "right" : "left",
     });
@@ -182,20 +205,20 @@ function drawHeader(
 
   doc
     .fillColor("#10233B")
-    .fontSize(isArabic(language) ? 26 : 24)
-    .text(invoiceTitle, cardX + 18, cardY + 78, {
+    .fontSize(isArabic(language) ? 24 : 22)
+    .text(invoiceTitle, cardX + 18, cardY + 66, {
       width: contentWidth - 36,
       align: isArabic(language) ? "left" : "right",
     });
   doc
     .fillColor("#4F5F75")
-    .fontSize(10)
-    .text(invoiceMeta.join("   "), cardX + 18, cardY + 100, {
+    .fontSize(9)
+    .text(invoiceMeta.join("   "), cardX + 18, cardY + 86, {
       width: contentWidth - 36,
       align: isArabic(language) ? "left" : "right",
     });
 
-  doc.y = cardY + cardHeight + 26;
+  doc.y = cardY + cardHeight + 20;
 }
 
 function drawKeyValueBlock(
@@ -207,8 +230,12 @@ function drawKeyValueBlock(
   y: number,
   width: number,
 ) {
+  const normalizedRows = rows.filter((row) => safeText(row.value) !== "-");
+  const rowsToRender = normalizedRows.length > 0 ? normalizedRows : rows.slice(0, 1);
+  const blockHeight = 22 + rowsToRender.length * 30 + 16;
+
   doc.save();
-  doc.roundedRect(x, y, width, 126, 16).fill("#FFFFFF");
+  doc.roundedRect(x, y, width, blockHeight, 16).fill("#FFFFFF");
   doc.restore();
 
   doc.fillColor("#10233B").fontSize(12).text(title, x + 16, y + 14, {
@@ -216,8 +243,8 @@ function drawKeyValueBlock(
     align: isArabic(language) ? "right" : "left",
   });
 
-  let rowY = y + 40;
-  for (const row of rows) {
+  let rowY = y + 38;
+  for (const row of rowsToRender) {
     doc
       .fillColor("#75859A")
       .fontSize(9)
@@ -227,13 +254,15 @@ function drawKeyValueBlock(
       });
     doc
       .fillColor("#1B2B3E")
-      .fontSize(11)
-      .text(row.value || "-", x + 16, rowY + 14, {
+      .fontSize(10.5)
+      .text(safeText(row.value), x + 16, rowY + 12, {
         width: width - 32,
         align: isArabic(language) ? "right" : "left",
       });
-    rowY += 34;
+    rowY += 30;
   }
+
+  return blockHeight;
 }
 
 function drawSummary(
@@ -246,7 +275,7 @@ function drawSummary(
   const y = doc.y;
 
   doc.save();
-  doc.roundedRect(x, y, width, 124, 18).fill("#10233B");
+  doc.roundedRect(x, y, width, 104, 18).fill("#10233B");
   doc.restore();
 
   doc.fillColor("#FFFFFF").fontSize(12).text(label(language, "Payment summary", "ملخص الدفع"), x + 18, y + 16, {
@@ -276,21 +305,21 @@ function drawSummary(
   const cardWidth = (width - 36 - 16) / 3;
   items.forEach((item, index) => {
     const cardX = x + 18 + index * (cardWidth + 8);
-    const cardY = y + 44;
+    const cardY = y + 36;
     doc.save();
-    doc.roundedRect(cardX, cardY, cardWidth, 56, 14).fill("#16304D");
+    doc.roundedRect(cardX, cardY, cardWidth, 48, 14).fill("#16304D");
     doc.restore();
     doc.fillColor("#B7C5D8").fontSize(9).text(item.label, cardX + 12, cardY + 11, {
       width: cardWidth - 24,
       align: "center",
     });
-    doc.fillColor("#FFFFFF").fontSize(13).text(item.value, cardX + 12, cardY + 28, {
+    doc.fillColor("#FFFFFF").fontSize(12).text(item.value, cardX + 12, cardY + 24, {
       width: cardWidth - 24,
       align: "center",
     });
   });
 
-  doc.y = y + 146;
+  doc.y = y + 118;
 }
 
 function drawNotes(
@@ -302,7 +331,8 @@ function drawNotes(
   const x = PAGE.margin;
   const width = PAGE.width - PAGE.margin * 2;
   const y = doc.y;
-  const height = 84;
+  const notesHeight = Math.max(doc.heightOfString(notes, { width: width - 32, align: isArabic(language) ? "right" : "left" }), 24);
+  const height = 46 + notesHeight;
 
   doc.save();
   doc.roundedRect(x, y, width, height, 16).fill("#F8FAFD");
@@ -311,11 +341,11 @@ function drawNotes(
     width: width - 32,
     align: isArabic(language) ? "right" : "left",
   });
-  doc.fillColor("#49586D").fontSize(10.5).text(notes, x + 16, y + 34, {
+  doc.fillColor("#49586D").fontSize(10).text(notes, x + 16, y + 34, {
     width: width - 32,
     align: isArabic(language) ? "right" : "left",
   });
-  doc.y = y + height + 18;
+  doc.y = y + height + 14;
 }
 
 export async function renderInvoicePdfAndSave(input: { userId: string; invoiceId: string }) {
@@ -342,7 +372,7 @@ export async function renderInvoicePdfAndSave(input: { userId: string; invoiceId
   const blockWidth = (contentWidth - gap) / 2;
   const topY = doc.y;
 
-  drawKeyValueBlock(
+  const fromHeight = drawKeyValueBlock(
     doc,
     language,
     label(language, "From", "من"),
@@ -350,13 +380,14 @@ export async function renderInvoicePdfAndSave(input: { userId: string; invoiceId
       { label: label(language, "Business name", "اسم النشاط"), value: data.businessName || "-" },
       { label: label(language, "Email", "البريد الإلكتروني"), value: data.contactEmail || "-" },
       { label: label(language, "Phone", "الهاتف"), value: isArabic(language) ? localizeDigits(data.contactPhone || "-", language) : data.contactPhone || "-" },
+      { label: label(language, "Address", "العنوان"), value: joinedAddress(data) || "-" },
     ],
     PAGE.margin,
     topY,
     blockWidth,
   );
 
-  drawKeyValueBlock(
+  const billToHeight = drawKeyValueBlock(
     doc,
     language,
     label(language, "Bill to", "الفاتورة إلى"),
@@ -370,9 +401,9 @@ export async function renderInvoicePdfAndSave(input: { userId: string; invoiceId
     blockWidth,
   );
 
-  doc.y = topY + 146;
+  doc.y = topY + Math.max(fromHeight, billToHeight) + 14;
 
-  drawKeyValueBlock(
+  const detailsHeight = drawKeyValueBlock(
     doc,
     language,
     label(language, "Invoice details", "تفاصيل الفاتورة"),
@@ -386,7 +417,7 @@ export async function renderInvoicePdfAndSave(input: { userId: string; invoiceId
     blockWidth,
   );
 
-  drawKeyValueBlock(
+  const statusHeight = drawKeyValueBlock(
     doc,
     language,
     label(language, "Status and tax", "الحالة والضريبة"),
@@ -400,17 +431,18 @@ export async function renderInvoicePdfAndSave(input: { userId: string; invoiceId
     blockWidth,
   );
 
-  doc.y += 146;
+  doc.y += Math.max(detailsHeight, statusHeight) + 14;
   drawSummary(doc, language, data);
   drawNotes(doc, language, data.invoiceNotes);
 
+  const footerY = Math.min(doc.y + 4, PAGE.height - PAGE.margin - 16);
   doc
     .fillColor("#7B8797")
     .fontSize(9)
     .text(
       label(language, "Generated by Fawtarly", "تم إنشاء الفاتورة عبر فوترلي"),
       PAGE.margin,
-      doc.y + 6,
+      footerY,
       {
         width: contentWidth,
         align: "center",

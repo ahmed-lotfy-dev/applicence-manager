@@ -9,6 +9,7 @@ import { LicensesCreateLockedDialog } from "./LicensesCreateLockedDialog";
 import { LicensesEditAppDialog } from "./LicensesEditAppDialog";
 import { LicensesEditLicenseDialog } from "./LicensesEditLicenseDialog";
 import { LicensesInventoryCard } from "./LicensesInventoryCard";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Button } from "../../../shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
 import { Input } from "../../../shared/ui/input";
@@ -26,6 +27,7 @@ function buildAppSummaries(licenses: LicensesPanelProps["licenses"]): AppSummary
 }
 
 export function LicensesPanel(props: LicensesPanelProps) {
+  const { t } = useI18n();
   const {
     activations,
     licenses,
@@ -160,10 +162,8 @@ export function LicensesPanel(props: LicensesPanelProps) {
         <CardHeader className="space-y-4 border-b border-white/5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <CardTitle className="text-xl text-white">Licensing Workspace</CardTitle>
-              <p className="mt-1 text-sm text-slate-400">
-                Manage products, licenses, and activation activity from one place.
-              </p>
+              <CardTitle className="text-xl text-white">{t("licensing.title")}</CardTitle>
+              <p className="mt-1 text-sm text-slate-400">{t("licensing.subtitle")}</p>
             </div>
             <div className="flex gap-2">
               <Button
@@ -171,14 +171,14 @@ export function LicensesPanel(props: LicensesPanelProps) {
                 onClick={() => setSection("licenses")}
                 className={section === "licenses" ? "" : "text-slate-300 hover:text-white"}
               >
-                Licenses
+                {t("licensing.section.licenses")}
               </Button>
               <Button
                 variant={section === "activations" ? "default" : "ghost"}
                 onClick={() => setSection("activations")}
                 className={section === "activations" ? "" : "text-slate-300 hover:text-white"}
               >
-                Activations
+                {t("licensing.section.activations")}
               </Button>
             </div>
           </div>
@@ -217,10 +217,8 @@ export function LicensesPanel(props: LicensesPanelProps) {
           ) : (
             <Card className="bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
               <CardHeader className="space-y-3 border-b border-white/5">
-                <CardTitle className="text-lg text-white">Activation Requests</CardTitle>
-                <p className="text-sm text-slate-400">
-                  Review incoming activation requests, store names, and issued activations across all apps.
-                </p>
+                <CardTitle className="text-lg text-white">{t("licensing.activationsTitle")}</CardTitle>
+                <p className="text-sm text-slate-400">{t("licensing.activationsSubtitle")}</p>
                 {activationError && (
                   <div className="rounded-lg border border-danger/30 bg-danger/20 p-3 text-sm text-danger">
                     {activationError}
@@ -228,19 +226,19 @@ export function LicensesPanel(props: LicensesPanelProps) {
                 )}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <Input
-                    placeholder="Search app, store, phone, machine, license, or request reason"
+                    placeholder={t("licensing.searchPlaceholder")}
                     value={activationQuery}
                     onChange={(event) => setActivationQuery(event.target.value)}
                   />
                   <Input
                     list="activation-app-options"
-                    placeholder="Filter by app or keep all"
+                    placeholder={t("licensing.filterAppPlaceholder")}
                     value={activationAppFilter === "all" ? "" : activationAppFilter}
                     onChange={(event) => setActivationAppFilter(event.target.value.trim() || "all")}
                   />
                   <Input
                     list="activation-license-options"
-                    placeholder="Filter by license or keep all"
+                    placeholder={t("licensing.filterLicensePlaceholder")}
                     value={activationLicenseFilter === "all" ? "" : activationLicenseFilter}
                     onChange={(event) => setActivationLicenseFilter(event.target.value.trim() || "all")}
                   />

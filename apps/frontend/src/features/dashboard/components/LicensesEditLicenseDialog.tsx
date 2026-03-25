@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import type { EditLicenseState } from "./LicensesPanel.types";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Button } from "../../../shared/ui/button";
 import { Dialog } from "../../../shared/ui/dialog";
 import { Input } from "../../../shared/ui/input";
@@ -27,12 +28,14 @@ export function LicensesEditLicenseDialog({
   onLicenseChange,
   onSubmit,
 }: LicensesEditLicenseDialogProps) {
+  const { t } = useI18n();
+
   return (
-    <Dialog open={license !== null} onOpenChange={onOpenChange} title="Edit License">
+    <Dialog open={license !== null} onOpenChange={onOpenChange} title={t("licensing.dialog.editLicense")}>
       {license && (
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-license-max">Max activations</Label>
+            <Label htmlFor="edit-license-max">{t("licensing.field.maxActivations")}</Label>
             <Input
               id="edit-license-max"
               type="number"
@@ -44,7 +47,7 @@ export function LicensesEditLicenseDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-license-status">Status</Label>
+            <Label htmlFor="edit-license-status">{t("licensing.field.status")}</Label>
             <Select
               value={license.status}
               onValueChange={(value) => onLicenseChange({ ...license, status: value as "active" | "revoked" })}
@@ -54,10 +57,10 @@ export function LicensesEditLicenseDialog({
               </SelectTrigger>
               <SelectContent>
               <SelectItem value="active">
-                active
+                {t("licensing.status.active")}
               </SelectItem>
               <SelectItem value="revoked">
-                revoked
+                {t("licensing.status.revoked")}
               </SelectItem>
               </SelectContent>
             </Select>
@@ -65,10 +68,10 @@ export function LicensesEditLicenseDialog({
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => onLicenseChange(null)}>
-              Cancel
+              {t("licensing.cancel")}
             </Button>
             <Button type="submit" disabled={licenseActionLoadingId === license.id}>
-              Save
+              {t("licensing.save")}
             </Button>
           </div>
         </form>

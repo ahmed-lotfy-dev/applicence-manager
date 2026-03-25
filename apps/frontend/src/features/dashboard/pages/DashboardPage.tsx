@@ -5,6 +5,7 @@ import { useDashboardData } from "../hooks/use-dashboard-data";
 import { authClient } from "../../../lib/auth-client";
 import type { ActivationFilter } from "../types/dashboard";
 import { DashboardHeader } from "../components/DashboardHeader";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 
 const OverviewPage = lazy(async () => {
   const module = await import("./OverviewPage");
@@ -27,6 +28,7 @@ interface DashboardPageProps {
 
 export function DashboardPage({ onLogout }: DashboardPageProps) {
   const location = useLocation();
+  const { dir, t } = useI18n();
   const page: DashboardPageType = useMemo(() => {
     if (location.pathname.startsWith("/branding")) return "branding";
     if (location.pathname.startsWith("/clients")) return "clients";
@@ -90,84 +92,113 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
   };
 
   const pageLoadingFallback = (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-slate-300">
-      Loading section...
+    <div className="rounded-[2rem] surface-panel p-6 text-sm text-text-muted">
+      {t("dashboard.loadingSection")}
     </div>
   );
 
   return (
-    <div className="min-h-screen w-full bg-[#060816] relative overflow-hidden">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[130px]" />
-      <div className="absolute bottom-[-5%] right-[-5%] w-[40%] h-[40%] rounded-full bg-cta/10 blur-[110px]" />
-
+    <div className="min-h-screen w-full bg-bg">
       <DashboardHeader userEmail={userEmail} onLogout={handleLogout} />
       <DashboardNav page={page} />
 
-      <main className="relative z-10 mx-auto w-full max-w-7xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
-        <Suspense fallback={pageLoadingFallback}>
-          {page === "overview" && (
-            <OverviewPage
-              stats={stats}
-              billingStats={billingStats}
-              clientsCount={clients.length}
-              invoicesCount={invoices.length}
-            />
-          )}
+      <main
+        className={
+          dir === "rtl"
+            ? "relative z-10 w-full space-y-10 px-4 py-8 sm:px-6 lg:pr-72 lg:px-8"
+            : "relative z-10 w-full space-y-10 px-4 py-8 sm:px-6 lg:pl-72 lg:px-8"
+        }
+      >
+        <div className="mx-auto w-full max-w-7xl">
+          <div className="mb-10">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/75">
+              {page === "overview"
+                ? t("dashboard.page.overview.kicker")
+                : page === "licensing"
+                  ? t("dashboard.page.licensing.kicker")
+                  : page === "clients"
+                    ? t("dashboard.page.clients.kicker")
+                    : page === "invoices"
+                      ? t("dashboard.page.invoices.kicker")
+                      : t("dashboard.page.branding.kicker")}
+            </p>
+            <h1 className="text-4xl font-black tracking-tight text-text sm:text-5xl">
+              {page === "overview"
+                ? t("dashboard.page.overview.title")
+                : page === "licensing"
+                  ? t("dashboard.page.licensing.title")
+                  : page === "clients"
+                    ? t("dashboard.page.clients.title")
+                    : page === "invoices"
+                      ? t("dashboard.page.invoices.title")
+                      : t("dashboard.page.branding.title")}
+            </h1>
+          </div>
+          <Suspense fallback={pageLoadingFallback}>
+            {page === "overview" && (
+              <OverviewPage
+                stats={stats}
+                billingStats={billingStats}
+                clientsCount={clients.length}
+                invoicesCount={invoices.length}
+              />
+            )}
 
-          {(page === "branding" || page === "clients" || page === "invoices") && (
-            <FreelanceOpsPanel
-              view={page}
-              error={error}
-              clients={clients}
-              invoices={invoices}
-              freelancerProfile={freelancerProfile}
-              invoicePdfJobs={invoicePdfJobs}
-              getInvoicePdfUrl={getInvoicePdfUrl}
-              billingStats={billingStats}
-              nextInvoiceNo={nextInvoiceNo}
-              isCreatingClient={isCreatingClient}
-              isCreatingInvoice={isCreatingInvoice}
-              onCreateClient={createNewClient}
-              onRemoveClient={removeClient}
-              onCreateInvoice={createNewInvoice}
-              onUpdateInvoice={updateExistingInvoice}
-              onRemoveInvoice={removeInvoice}
-              onSaveFreelancerProfile={saveFreelancerProfile}
-              onUploadProfileLogo={uploadProfileLogo}
-              onQueueInvoicePdf={queueInvoicePdfGeneration}
-              onRefreshInvoicePdfJob={refreshInvoicePdfJob}
-            />
-          )}
+            {(page === "branding" || page === "clients" || page === "invoices") && (
+              <FreelanceOpsPanel
+                view={page}
+                error={error}
+                clients={clients}
+                invoices={invoices}
+                freelancerProfile={freelancerProfile}
+                invoicePdfJobs={invoicePdfJobs}
+                getInvoicePdfUrl={getInvoicePdfUrl}
+                billingStats={billingStats}
+                nextInvoiceNo={nextInvoiceNo}
+                isCreatingClient={isCreatingClient}
+                isCreatingInvoice={isCreatingInvoice}
+                onCreateClient={createNewClient}
+                onRemoveClient={removeClient}
+                onCreateInvoice={createNewInvoice}
+                onUpdateInvoice={updateExistingInvoice}
+                onRemoveInvoice={removeInvoice}
+                onSaveFreelancerProfile={saveFreelancerProfile}
+                onUploadProfileLogo={uploadProfileLogo}
+                onQueueInvoicePdf={queueInvoicePdfGeneration}
+                onRefreshInvoicePdfJob={refreshInvoicePdfJob}
+              />
+            )}
 
-          {page === "licensing" && (
-            <LicensesPanel
-              licenses={licenses}
-              activations={filteredActivations}
-              apps={apps}
-              filterValue={licenseFilter}
-              onFilterChange={setLicenseFilter}
-              activationFilter={selectedTab}
-              onActivationFilterChange={setSelectedTab}
-              onCreateApp={createNewApp}
-              onUpdateApp={updateApp}
-              onRemoveApp={removeApp}
-              onCreateLicense={createNewLicense}
-              onUpdateLicense={updateExistingLicense}
-              onRemoveLicense={removeLicense}
-              onChangeLicenseStatus={changeLicenseStatus}
-              isCreatingLicense={isCreatingLicense}
-              isCreatingApp={isCreatingApp}
-              appActionLoadingId={appActionLoadingId}
-              licenseActionLoadingId={licenseActionLoadingId}
-              activationActionLoadingId={actionLoadingId}
-              loadingActivations={loading}
-              activationError={error}
-              onRevokeActivation={async (id) => {
-                await changeStatus(id, "revoke");
-              }}
-            />
-          )}
-        </Suspense>
+            {page === "licensing" && (
+              <LicensesPanel
+                licenses={licenses}
+                activations={filteredActivations}
+                apps={apps}
+                filterValue={licenseFilter}
+                onFilterChange={setLicenseFilter}
+                activationFilter={selectedTab}
+                onActivationFilterChange={setSelectedTab}
+                onCreateApp={createNewApp}
+                onUpdateApp={updateApp}
+                onRemoveApp={removeApp}
+                onCreateLicense={createNewLicense}
+                onUpdateLicense={updateExistingLicense}
+                onRemoveLicense={removeLicense}
+                onChangeLicenseStatus={changeLicenseStatus}
+                isCreatingLicense={isCreatingLicense}
+                isCreatingApp={isCreatingApp}
+                appActionLoadingId={appActionLoadingId}
+                licenseActionLoadingId={licenseActionLoadingId}
+                activationActionLoadingId={actionLoadingId}
+                loadingActivations={loading}
+                activationError={error}
+                onRevokeActivation={async (id) => {
+                  await changeStatus(id, "revoke");
+                }}
+              />
+            )}
+          </Suspense>
+        </div>
       </main>
     </div>
   );

@@ -15,22 +15,30 @@ export interface CreateActivationRequestInput {
 
 export async function createActivationRequest(input: CreateActivationRequestInput) {
   const id = crypto.randomUUID();
-  
-  await db.insert(activationRequests).values({
-    id,
-    userId: input.userId,
-    appName: input.appName,
-    appVersion: input.appVersion,
-    machineId: input.machineId,
-    shopName: input.shopName,
-    phone: input.phone,
-    notes: input.notes || null,
-    platform: input.platform || null,
-    userAgent: input.userAgent || null,
-    status: "pending",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
+  const now = new Date();
+
+  try {
+    await db.insert(activationRequests).values({
+      id,
+      userId: String(input.userId).trim(),
+      appName: input.appName.trim(),
+      appVersion: input.appVersion.trim(),
+      machineId: input.machineId.trim(),
+      shopName: input.shopName.trim(),
+      phone: input.phone.trim(),
+      notes: input.notes?.trim() || null,
+      platform: input.platform?.trim() || null,
+      userAgent: input.userAgent?.trim() || null,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+    });
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : "Failed to create activation request",
+    };
+  }
 
   return { ok: true as const, id };
 }

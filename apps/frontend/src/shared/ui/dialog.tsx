@@ -24,14 +24,14 @@ export function Dialog({ open, onOpenChange, title, children, maxWidthClassName 
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => onOpenChange(false)}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xl p-4" onClick={() => onOpenChange(false)}>
       <div
-        className={cn('w-full rounded-2xl border border-white/10 bg-[#151B2E] p-8 shadow-soft-xl ring-1 ring-white/5', maxWidthClassName)}
+        className={cn('surface-elevated w-full rounded-[2rem] border border-border/15 p-8 shadow-soft-xl', maxWidthClassName)}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white tracking-tight">{title}</h3>
-          <button className="cursor-pointer text-slate-500 transition-colors hover:text-white" onClick={() => onOpenChange(false)} aria-label="Close modal">
+          <h3 className="text-xl font-bold text-text tracking-tight">{title}</h3>
+          <button className="cursor-pointer text-text-muted transition-colors hover:text-text" onClick={() => onOpenChange(false)} aria-label="Close modal">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>

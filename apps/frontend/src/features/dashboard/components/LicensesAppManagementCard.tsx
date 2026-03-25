@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import type { AppSummary, EditAppState } from "./LicensesPanel.types";
 import type { ManagedApp } from "../types/dashboard";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Badge } from "../../../shared/ui/badge";
 import { Button } from "../../../shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
@@ -33,18 +34,20 @@ export function LicensesAppManagementCard({
   onEditApp,
   onRemoveApp,
 }: LicensesAppManagementCardProps) {
+  const { t } = useI18n();
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-3 border-b border-white/5 px-8 py-6 md:flex-row md:items-center md:justify-between">
         <div>
-          <CardTitle className="text-xl text-white">Licenses</CardTitle>
-          <p className="mt-1 text-sm text-slate-400">Manage products, seats, and generated license keys.</p>
+          <CardTitle className="text-xl text-white">{t("licensing.appsTitle")}</CardTitle>
+          <p className="mt-1 text-sm text-slate-400">{t("licensing.appsSubtitle")}</p>
         </div>
         <div className="w-full md:w-auto">
           <Input
             value={filterValue}
             onChange={(event) => onFilterChange(event.target.value)}
-            placeholder="Filter by app name"
+            placeholder={t("licensing.appFilterPlaceholder")}
             className="h-10 w-full rounded-xl border-white/10 bg-white/5 text-white placeholder:text-slate-500 md:w-72"
           />
         </div>
@@ -58,7 +61,7 @@ export function LicensesAppManagementCard({
           <Input
             value={newAppName}
             onChange={(event) => onNewAppNameChange(event.target.value)}
-            placeholder="Add new app (example: app-name-example)"
+            placeholder={t("licensing.appNewPlaceholder")}
             className="border-white/10 bg-white/5"
             required
           />
@@ -68,12 +71,12 @@ export function LicensesAppManagementCard({
             disabled={isCreatingApp}
             className="rounded-xl bg-success px-6 !text-white hover:bg-success/90"
           >
-            {isCreatingApp ? "Adding..." : "Add App"}
+            {isCreatingApp ? t("licensing.appAdding") : t("licensing.addApp")}
           </Button>
         </form>
 
         <div className="flex flex-wrap gap-3">
-          {apps.length === 0 && <p className="ml-1 text-sm italic text-text-muted">No apps created yet.</p>}
+          {apps.length === 0 && <p className="ml-1 text-sm italic text-text-muted">{t("licensing.noApps")}</p>}
           {apps.map((app) => (
             <div
               key={app.id}
@@ -84,7 +87,7 @@ export function LicensesAppManagementCard({
                 variant={app.status === "active" ? "success" : "muted"}
                 className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
               >
-                {app.status}
+                {t(`licensing.status.${app.status}`)}
               </Badge>
               <div className="mx-1 h-4 w-px bg-white/10" />
               <Button
@@ -125,7 +128,7 @@ export function LicensesAppManagementCard({
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {summaries.length === 0 ? (
-            <p className="ml-1 text-sm text-text-muted">No license summaries available yet.</p>
+            <p className="ml-1 text-sm text-text-muted">{t("licensing.noSummaries")}</p>
           ) : (
             summaries.map((summary) => (
               <div
@@ -135,11 +138,11 @@ export function LicensesAppManagementCard({
                 <p className="text-base font-bold text-white">{summary.appName}</p>
                 <div className="mt-3 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-slate-400">Total Licenses</span>
+                    <span className="font-medium text-slate-400">{t("licensing.totalLicenses")}</span>
                     <span className="font-bold text-slate-200">{summary.licenses}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-slate-400">Seats Usage</span>
+                    <span className="font-medium text-slate-400">{t("licensing.seatsUsage")}</span>
                     <span className="font-bold text-slate-200">
                       {summary.activeActivations} / {summary.maxActivations}
                     </span>

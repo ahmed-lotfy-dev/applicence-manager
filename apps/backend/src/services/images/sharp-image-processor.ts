@@ -10,16 +10,13 @@ export class SharpImageProcessor implements ImageProcessor {
         withoutEnlargement: true,
         fit: "inside",
       })
-      .webp({
-        quality: input.quality || 82,
-        effort: 4,
-      })
+      .png()
       .toBuffer();
 
     return {
       buffer,
-      contentType: "image/webp",
-      extension: "webp",
+      contentType: "image/png",
+      extension: "png",
     };
   }
 }

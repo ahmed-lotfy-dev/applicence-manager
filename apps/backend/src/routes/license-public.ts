@@ -4,10 +4,45 @@ import {
   deactivateActivation,
   validateActivation,
 } from "../services/licensing";
-import { db } from "../db/db";
-import { activationRequests } from "../db/auth-schema";
 import { resolveAppOwnerByIdentifier } from "../services/apps";
 import { createActivationRequest as submitRequest } from "../services/activation-requests";
+
+async function handleActivationRequest(
+  body: {
+    appName: string;
+    appVersion: string;
+    machineId: string;
+    shopName: string;
+    phone: string;
+    notes?: string;
+    platform?: string;
+    userAgent?: string;
+  },
+  set: { status?: number | string },
+) {
+  const ownerApp = await resolveAppOwnerByIdentifier(body.appName);
+  if (!ownerApp?.userId) {
+    set.status = 404;
+    return { success: false, error: "App not found" };
+  }
+
+  const result = await submitRequest({
+    ...body,
+    userId: ownerApp.userId,
+    appName: ownerApp.name,
+  });
+
+  if (!result.ok) {
+    set.status = 500;
+    return { success: false, error: result.error };
+  }
+
+  return {
+    success: true,
+    id: result.id,
+    message: "Activation request sent successfully.",
+  };
+}
 
 export const licensePublicRoutes = new Elysia({
   name: "license-public-routes",
@@ -15,46 +50,16 @@ export const licensePublicRoutes = new Elysia({
 })
   .post(
     "/request-activation",
-    async ({ body, set }) => {
-      const payload = body as {
-        appName: string;
-        appVersion: string;
-        machineId: string;
-        shopName: string;
-        phone: string;
-        notes?: string;
-        platform?: string;
-        userAgent?: string;
-      };
-
-      const ownerApp = await resolveAppOwnerByIdentifier(payload.appName);
-      if (!ownerApp?.userId) {
-        set.status = 404;
-        return { success: false, error: "App not found" };
-      }
-
-      const now = new Date();
-      await db.insert(activationRequests).values({
-        id: crypto.randomUUID(),
-        userId: ownerApp.userId,
-        appName: ownerApp.name,
-        appVersion: payload.appVersion,
-        machineId: payload.machineId,
-        shopName: payload.shopName.trim(),
-        phone: payload.phone.trim(),
-        notes: payload.notes?.trim() || null,
-        platform: payload.platform?.trim() || null,
-        userAgent: payload.userAgent?.trim() || null,
-        status: "pending",
-        createdAt: now,
-        updatedAt: now,
-      });
-
-      return {
-        success: true,
-        message: "Activation request sent successfully.",
-      };
-    },
+    async ({ body, set }) => handleActivationRequest(body as {
+      appName: string;
+      appVersion: string;
+      machineId: string;
+      shopName: string;
+      phone: string;
+      notes?: string;
+      platform?: string;
+      userAgent?: string;
+    }, set),
     {
       body: t.Object({
         appName: t.String({ minLength: 2, maxLength: 120 }),
@@ -161,14 +166,16 @@ export const licensePublicRoutes = new Elysia({
   )
   .post(
     "/request",
-    async ({ body, set }) => {
-      const result = await submitRequest(body as any);
-      if (!result.ok) {
-        set.status = 400;
-        return { success: false, error: "Failed to submit activation request" };
-      }
-      return { success: true, id: result.id };
-    },
+    async ({ body, set }) => handleActivationRequest(body as {
+      appName: string;
+      appVersion: string;
+      machineId: string;
+      shopName: string;
+      phone: string;
+      notes?: string;
+      platform?: string;
+      userAgent?: string;
+    }, set),
     {
       body: t.Object({
         appName: t.String({ minLength: 2, maxLength: 120 }),

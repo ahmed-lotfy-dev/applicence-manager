@@ -1,4 +1,5 @@
 import type { License } from "../types/dashboard";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Badge } from "../../../shared/ui/badge";
 import { Button } from "../../../shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
@@ -25,10 +26,12 @@ export function LicensesInventoryCard({
   onChangeLicenseStatus,
   onRemoveLicense,
 }: LicensesInventoryCardProps) {
+  const { t } = useI18n();
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-3">
-        <CardTitle>License Inventory</CardTitle>
+        <CardTitle>{t("licensing.inventoryTitle")}</CardTitle>
         <div className="flex items-center gap-2">
           <Button
             variant="secondary"
@@ -36,10 +39,10 @@ export function LicensesInventoryCard({
             onClick={onOpenCreateLockedLicense}
             disabled={appsCount === 0}
           >
-            Generate by Machine ID
+            {t("licensing.generateLocked")}
           </Button>
           <Button onClick={onOpenCreateLicense} disabled={appsCount === 0}>
-            New License
+            {t("licensing.newLicense")}
           </Button>
         </div>
       </CardHeader>
@@ -48,20 +51,20 @@ export function LicensesInventoryCard({
           <Table>
             <thead className="border-b border-white/5 bg-white/5">
               <tr>
-                <Th>App</Th>
-                <Th>License Key</Th>
-                <Th>Type</Th>
-                <Th>Status</Th>
-                <Th>Usage</Th>
-                <Th>Remaining</Th>
-                <Th>Actions</Th>
+                <Th>{t("licensing.table.app")}</Th>
+                <Th>{t("licensing.table.licenseKey")}</Th>
+                <Th>{t("licensing.table.type")}</Th>
+                <Th>{t("licensing.table.status")}</Th>
+                <Th>{t("licensing.table.usage")}</Th>
+                <Th>{t("licensing.table.remaining")}</Th>
+                <Th>{t("licensing.table.actions")}</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {licenses.length === 0 ? (
                 <tr>
                   <Td colSpan={7} className="py-8 text-center text-text-muted">
-                    No licenses found.
+                    {t("licensing.noLicenses")}
                   </Td>
                 </tr>
               ) : (
@@ -71,11 +74,13 @@ export function LicensesInventoryCard({
                     <Td className="font-mono text-primary-light">{license.licenseKey}</Td>
                     <Td>
                       <Badge variant={license.licenseType === "machine_id_bound" ? "warning" : "muted"}>
-                        {license.licenseType === "machine_id_bound" ? "Machine ID" : "Dynamic"}
+                        {license.licenseType === "machine_id_bound" ? t("licensing.type.machine") : t("licensing.type.dynamic")}
                       </Badge>
                     </Td>
                     <Td>
-                      <Badge variant={license.status === "active" ? "success" : "danger"}>{license.status}</Badge>
+                      <Badge variant={license.status === "active" ? "success" : "danger"}>
+                        {t(`licensing.status.${license.status}`)}
+                      </Badge>
                     </Td>
                     <Td className="text-text-muted">
                       {license.activeActivations} / {license.maxActivations}
@@ -89,7 +94,7 @@ export function LicensesInventoryCard({
                           disabled={licenseActionLoadingId === license.id}
                           onClick={() => onEditLicense(license.id, license.maxActivations, license.status)}
                         >
-                          Edit
+                          {t("licensing.action.edit")}
                         </Button>
                         {license.status === "active" ? (
                           <Button
@@ -98,7 +103,7 @@ export function LicensesInventoryCard({
                             disabled={licenseActionLoadingId === license.id}
                             onClick={() => onChangeLicenseStatus(license.id, "revoked")}
                           >
-                            Revoke
+                            {t("licensing.action.revoke")}
                           </Button>
                         ) : (
                           <Button
@@ -107,7 +112,7 @@ export function LicensesInventoryCard({
                             disabled={licenseActionLoadingId === license.id}
                             onClick={() => onChangeLicenseStatus(license.id, "active")}
                           >
-                            Activate
+                            {t("licensing.action.activate")}
                           </Button>
                         )}
                         <Button
@@ -116,7 +121,7 @@ export function LicensesInventoryCard({
                           disabled={licenseActionLoadingId === license.id}
                           onClick={() => onRemoveLicense(license.id)}
                         >
-                          Delete
+                          {t("licensing.action.delete")}
                         </Button>
                       </div>
                     </Td>

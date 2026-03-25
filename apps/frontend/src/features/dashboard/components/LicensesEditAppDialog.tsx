@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import type { EditAppState } from "./LicensesPanel.types";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Button } from "../../../shared/ui/button";
 import { Dialog } from "../../../shared/ui/dialog";
 import { Input } from "../../../shared/ui/input";
@@ -27,12 +28,14 @@ export function LicensesEditAppDialog({
   onAppChange,
   onSubmit,
 }: LicensesEditAppDialogProps) {
+  const { t } = useI18n();
+
   return (
-    <Dialog open={app !== null} onOpenChange={onOpenChange} title="Edit App">
+    <Dialog open={app !== null} onOpenChange={onOpenChange} title={t("licensing.dialog.editApp")}>
       {app && (
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-app-name">App name</Label>
+            <Label htmlFor="edit-app-name">{t("licensing.field.appName")}</Label>
             <Input
               id="edit-app-name"
               value={app.name}
@@ -42,7 +45,7 @@ export function LicensesEditAppDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-app-status">Status</Label>
+            <Label htmlFor="edit-app-status">{t("licensing.field.status")}</Label>
             <Select
               value={app.status}
               onValueChange={(value) => onAppChange({ ...app, status: value as "active" | "inactive" })}
@@ -52,10 +55,10 @@ export function LicensesEditAppDialog({
               </SelectTrigger>
               <SelectContent>
               <SelectItem value="active">
-                active
+                {t("licensing.status.active")}
               </SelectItem>
               <SelectItem value="inactive">
-                inactive
+                {t("licensing.status.inactive")}
               </SelectItem>
               </SelectContent>
             </Select>
@@ -63,10 +66,10 @@ export function LicensesEditAppDialog({
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => onAppChange(null)}>
-              Cancel
+              {t("licensing.cancel")}
             </Button>
             <Button type="submit" disabled={appActionLoadingId === app.id}>
-              Save
+              {t("licensing.save")}
             </Button>
           </div>
         </form>

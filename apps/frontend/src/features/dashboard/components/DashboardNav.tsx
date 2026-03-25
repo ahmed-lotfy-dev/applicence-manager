@@ -21,11 +21,20 @@ const ITEMS: Array<{ id: DashboardPage; key: string; to: string }> = [
 ];
 
 export function DashboardNav({ page }: DashboardNavProps) {
-  const { t } = useI18n();
+  const { t, dir } = useI18n();
   return (
-    <div className="px-4 sm:px-6 lg:px-8">
-      <nav className="mx-auto max-w-7xl rounded-2xl border border-white/10 bg-white/5 p-2 backdrop-blur-md">
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
+    <aside
+      className={
+        dir === "rtl"
+          ? "hidden lg:fixed lg:inset-y-0 lg:right-0 lg:z-40 lg:flex lg:w-72 lg:flex-col lg:border-l lg:border-border/10 lg:bg-bg lg:px-6 lg:py-7"
+          : "hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-72 lg:flex-col lg:border-r lg:border-border/10 lg:bg-bg lg:px-6 lg:py-7"
+      }
+    >
+      <div className="mb-10 px-4">
+        <h2 className="text-[1.65rem] font-black tracking-tight text-text">Fawtarly</h2>
+        <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-text-muted/55">Financial Command</p>
+      </div>
+      <nav className="flex-1 space-y-2">
           {ITEMS.map((item) => {
             const active = page === item.id;
             return (
@@ -34,16 +43,15 @@ export function DashboardNav({ page }: DashboardNavProps) {
                 to={item.to}
                 className={
                   active
-                    ? "inline-flex h-10 items-center justify-center rounded-md border border-primary/40 bg-primary/20 px-4 text-sm font-medium text-white transition-colors hover:bg-primary/25"
-                    : "inline-flex h-10 items-center justify-center rounded-md border border-white/10 bg-transparent px-4 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                    ? "flex h-12 items-center rounded-2xl bg-primary/10 px-4 text-sm font-semibold text-primary"
+                    : "flex h-12 items-center rounded-2xl px-4 text-sm font-medium text-text-muted transition-colors hover:bg-bg-card hover:text-text"
                 }
               >
                 {t(item.key)}
               </NavLink>
             );
           })}
-        </div>
       </nav>
-    </div>
+    </aside>
   );
 }

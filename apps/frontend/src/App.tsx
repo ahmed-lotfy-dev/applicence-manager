@@ -25,7 +25,7 @@ function App() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg">
-        <div className="text-slate-500 font-medium tracking-widest uppercase text-xs animate-pulse">
+        <div className="rounded-full surface-elevated px-5 py-3 text-text-muted font-medium tracking-[0.22em] uppercase text-[11px] animate-pulse">
           {t("app.loading")}
         </div>
       </div>

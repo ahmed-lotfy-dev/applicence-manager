@@ -4,11 +4,11 @@ import { cn } from '../../lib/utils';
 export type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'muted';
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-  success: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  warning: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  danger: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-  muted: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+  default: 'bg-primary/10 text-primary border-primary/15',
+  success: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/15',
+  warning: 'bg-warning/12 text-warning border-warning/15',
+  danger: 'bg-danger/12 text-danger border-danger/15',
+  muted: 'bg-white/5 text-text-muted border-border/12',
 };
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
@@ -18,7 +18,7 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 export function Badge({ className, variant = 'default', ...props }: BadgeProps) {
   return (
     <span
-      className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium', variantClasses[variant], className)}
+      className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]', variantClasses[variant], className)}
       {...props}
     />
   );

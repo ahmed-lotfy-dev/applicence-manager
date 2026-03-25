@@ -10,8 +10,19 @@ import {
 } from "../services/invoices";
 import {
   enqueueInvoicePdfJob,
+  getInvoicePdfData,
   getLatestInvoicePdfJob,
 } from "../services/invoice-pdf-jobs";
+
+function buildInvoicePdfFilename(input: { invoiceNo?: string | null; issuedAt?: Date | string | null }) {
+  const safeNo = (input.invoiceNo || "invoice").trim().replace(/[^a-zA-Z0-9_-]+/g, "-");
+  const date = input.issuedAt ? new Date(input.issuedAt) : null;
+  const safeDate =
+    date && !Number.isNaN(date.getTime())
+      ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+      : null;
+  return safeDate ? `${safeNo}-${safeDate}.pdf` : `${safeNo}.pdf`;
+}
 
 export const invoiceRoutes = new Elysia({
   name: "invoice-routes",
@@ -189,10 +200,16 @@ export const invoiceRoutes = new Elysia({
       return { success: false, error: "Invoice PDF file missing" };
     }
 
+    const invoiceData = await getInvoicePdfData(userId, params.id);
+    const fileName = buildInvoicePdfFilename({
+      invoiceNo: invoiceData?.invoiceNo,
+      issuedAt: invoiceData?.issuedAt,
+    });
+
     return new Response(file, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename=\"invoice-${params.id}.pdf\"`,
+        "Content-Disposition": `inline; filename=\"${fileName}\"`,
       },
     });
   });
