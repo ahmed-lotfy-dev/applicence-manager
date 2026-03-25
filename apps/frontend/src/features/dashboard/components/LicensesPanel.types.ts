@@ -29,7 +29,6 @@ export interface LicensesPanelProps {
   activationActionLoadingId: string | null;
   loadingActivations: boolean;
   activationError: string;
-  onApproveActivation: (id: string) => Promise<void>;
   onRevokeActivation: (id: string) => Promise<void>;
 }
 

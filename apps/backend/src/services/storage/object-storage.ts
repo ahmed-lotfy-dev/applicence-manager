@@ -7,5 +7,6 @@ export interface UploadObjectInput {
 
 export interface ObjectStorage {
   uploadObject(input: UploadObjectInput): Promise<{ key: string; publicUrl: string }>;
+  getObject(key: string): Promise<Buffer>;
   deleteObject(key: string): Promise<void>;
 }

@@ -60,6 +60,30 @@ export async function getAppByIdentifier(identifier: string, userId: string) {
   );
 }
 
+export async function resolveAppOwnerByIdentifier(identifier: string) {
+  const normalized = identifier.trim();
+  if (!normalized) return null;
+
+  const slugCandidate = slugify(normalized);
+  const compact = compactIdentifier(normalized);
+
+  const apps = await db.select().from(managedApps);
+
+  return (
+    apps.find((app) => {
+      const appName = app.name.trim();
+      const appSlug = app.slug.trim();
+      return (
+        appName === normalized ||
+        appName.toLowerCase() === normalized.toLowerCase() ||
+        appSlug === normalized ||
+        appSlug === slugCandidate ||
+        compactIdentifier(appName) === compact
+      );
+    }) ?? null
+  );
+}
+
 export async function getAppById(id: string, userId: string) {
   const [app] = await db
     .select()

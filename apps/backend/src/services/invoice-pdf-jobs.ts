@@ -103,6 +103,7 @@ export async function getInvoicePdfData(userId: string, invoiceId: string) {
       clientPhone: clients.phone,
       businessName: freelancerProfiles.businessName,
       logoUrl: freelancerProfiles.logoUrl,
+      logoObjectKey: freelancerProfiles.logoObjectKey,
       contactEmail: freelancerProfiles.contactEmail,
       contactPhone: freelancerProfiles.contactPhone,
       addressLine1: freelancerProfiles.addressLine1,

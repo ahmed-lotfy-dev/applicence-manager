@@ -2,12 +2,18 @@ export type ActivationStatus = "pending" | "active" | "revoked" | "expired";
 
 export interface Activation {
   id: string;
+  requestType?: "license_activation" | "request_only";
   appName: string;
   appVersion: string;
   licenseKey: string;
   machineId: string;
   shopName?: string | null;
+  phone?: string | null;
+  notes?: string | null;
   status: ActivationStatus;
+  requestReason?: string | null;
+  requestPlatform?: string | null;
+  requestSource?: string | null;
   createdAt: string;
   activatedAt?: string;
 }

@@ -1,7 +1,7 @@
 import { and, count, eq, ilike, inArray } from "drizzle-orm";
 import { randomBytes, randomInt } from "node:crypto";
 import { db } from "../db/db";
-import { activationLogs, activations, licenses } from "../db/auth-schema";
+import { activationLogs, activations, licenses, managedApps } from "../db/auth-schema";
 import { activationTokenTtlDays } from "../lib/env";
 import {
   signLicenseActivationToken,
@@ -12,12 +12,222 @@ import { getAppByIdentifier, getOrCreateAppByName } from "./apps";
 const DEFAULT_TOKEN_TTL_DAYS = activationTokenTtlDays;
 type ActivationType = "machine_id_bound" | "pre_generated";
 
+interface ActivationAttemptMetadata {
+  source: "public_activation_request";
+  outcome: "pending" | "active" | "revoked";
+  reason?: string;
+  platform?: string;
+  userAgent?: string;
+}
+
 function normalizeRequestedAppName(appName: string): string {
   const normalized = appName.trim();
   if (!normalized) {
     throw new Error("APP_NAME_REQUIRED");
   }
   return normalized;
+}
+
+function compactIdentifier(input: string): string {
+  return input.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function slugify(input: string): string {
+  return input
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120);
+}
+
+async function resolveActivationOwner(input: { appName: string; licenseKey: string }) {
+  const exactLicenseRows = await db
+    .select({
+      userId: licenses.userId,
+      appName: licenses.appName,
+      licenseKey: licenses.licenseKey,
+    })
+    .from(licenses)
+    .where(and(eq(licenses.appName, input.appName), eq(licenses.licenseKey, input.licenseKey)));
+
+  if (exactLicenseRows.length === 1 && exactLicenseRows[0]?.userId) {
+    return {
+      userId: exactLicenseRows[0].userId,
+      appName: exactLicenseRows[0].appName,
+    };
+  }
+
+  const keyOnlyRows = await db
+    .select({
+      userId: licenses.userId,
+      appName: licenses.appName,
+    })
+    .from(licenses)
+    .where(eq(licenses.licenseKey, input.licenseKey));
+
+  if (keyOnlyRows.length === 1 && keyOnlyRows[0]?.userId) {
+    return {
+      userId: keyOnlyRows[0].userId,
+      appName: keyOnlyRows[0].appName,
+    };
+  }
+
+  const normalized = input.appName.trim();
+  const compact = compactIdentifier(normalized);
+  const slug = slugify(normalized);
+
+  const matchingApps = (await db
+    .select({
+      userId: managedApps.userId,
+      name: managedApps.name,
+      slug: managedApps.slug,
+    })
+    .from(managedApps))
+    .filter((app) => {
+      if (!app.userId) return false;
+      return (
+        app.name === normalized ||
+        app.name.toLowerCase() === normalized.toLowerCase() ||
+        app.slug === normalized ||
+        app.slug === slug ||
+        compactIdentifier(app.name) === compact
+      );
+    });
+
+  if (matchingApps.length === 1 && matchingApps[0]?.userId) {
+    return {
+      userId: matchingApps[0].userId,
+      appName: matchingApps[0].name,
+    };
+  }
+
+  return null;
+}
+
+async function upsertActivationRequest(input: {
+  userId: string;
+  appName: string;
+  appVersion: string;
+  licenseKey: string;
+  machineId: string;
+  shopName: string | null;
+  status: "pending" | "active" | "revoked";
+  metadata: ActivationAttemptMetadata;
+  activatedAt?: Date | null;
+  expiresAt?: Date | null;
+}) {
+  const [existingActivation] = await db
+    .select({ id: activations.id })
+    .from(activations)
+    .where(
+      and(
+        eq(activations.userId, input.userId),
+        eq(activations.appName, input.appName),
+        eq(activations.licenseKey, input.licenseKey),
+        eq(activations.machineId, input.machineId),
+      ),
+    );
+
+  const serializedMetadata = JSON.stringify(input.metadata);
+
+  if (existingActivation) {
+    await db
+      .update(activations)
+      .set({
+        appVersion: input.appVersion,
+        shopName: input.shopName,
+        status: input.status,
+        metadata: serializedMetadata,
+        activatedAt:
+          input.activatedAt === undefined
+            ? undefined
+            : input.activatedAt,
+        expiresAt: input.expiresAt === undefined ? undefined : input.expiresAt,
+        updatedAt: new Date(),
+      })
+      .where(eq(activations.id, existingActivation.id));
+
+    return existingActivation.id;
+  }
+
+  const id = crypto.randomUUID();
+  await db.insert(activations).values({
+    id,
+    userId: input.userId,
+    appName: input.appName,
+    appVersion: input.appVersion,
+    licenseKey: input.licenseKey,
+    machineId: input.machineId,
+    shopName: input.shopName,
+    status: input.status,
+    metadata: serializedMetadata,
+    activatedAt: input.activatedAt ?? null,
+    expiresAt: input.expiresAt ?? null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  return id;
+}
+
+async function recordActivationRequest(input: {
+  appName: string;
+  appVersion: string;
+  licenseKey: string;
+  machineId: string;
+  metadata?: unknown;
+  reason: string;
+  status?: "pending" | "active" | "revoked";
+  activatedAt?: Date | null;
+  expiresAt?: Date | null;
+}) {
+  const owner = await resolveActivationOwner({
+    appName: input.appName,
+    licenseKey: input.licenseKey,
+  });
+  if (!owner?.userId) {
+    return null;
+  }
+
+  const metadata = input.metadata as
+    | { shopName?: string; platform?: string; userAgent?: string }
+    | undefined;
+  const shopName = metadata?.shopName?.trim() || null;
+
+  const activationId = await upsertActivationRequest({
+    userId: owner.userId,
+    appName: owner.appName,
+    appVersion: input.appVersion,
+    licenseKey: input.licenseKey,
+    machineId: input.machineId,
+    shopName,
+    status: input.status || "pending",
+    activatedAt: input.activatedAt,
+    expiresAt: input.expiresAt,
+    metadata: {
+      source: "public_activation_request",
+      outcome: input.status || "pending",
+      reason: input.reason,
+      platform: metadata?.platform?.trim() || undefined,
+      userAgent: metadata?.userAgent?.trim() || undefined,
+    },
+  });
+
+  await db.insert(activationLogs).values({
+    id: crypto.randomUUID(),
+    userId: owner.userId,
+    activationId,
+    action: input.status === "active" ? "activated" : "request_logged",
+    metadata: JSON.stringify({
+      reason: input.reason,
+      platform: metadata?.platform || null,
+      shopName,
+    }),
+    createdAt: new Date(),
+  });
+
+  return activationId;
 }
 
 function randomGroup(length: number): string {
@@ -285,12 +495,36 @@ export async function activateLicense(input: {
   const shopName = metadata?.shopName || null;
 
   if (!license || !license.userId) {
+    await recordActivationRequest({
+      appName: requestedAppName,
+      appVersion: input.appVersion,
+      licenseKey: input.licenseKey,
+      machineId: input.machineId,
+      metadata: input.metadata,
+      reason: "No matching license was found for this request.",
+    });
     return { ok: false as const, status: 404, error: "License not found" };
   }
   if (license.status !== "active") {
+    await recordActivationRequest({
+      appName: license.appName,
+      appVersion: input.appVersion,
+      licenseKey: input.licenseKey,
+      machineId: input.machineId,
+      metadata: input.metadata,
+      reason: "The matching license exists but is not active.",
+    });
     return { ok: false as const, status: 403, error: "License is not active" };
   }
   if (license.expiresAt && license.expiresAt.getTime() < Date.now()) {
+    await recordActivationRequest({
+      appName: license.appName,
+      appVersion: input.appVersion,
+      licenseKey: input.licenseKey,
+      machineId: input.machineId,
+      metadata: input.metadata,
+      reason: "The matching license is expired.",
+    });
     return { ok: false as const, status: 403, error: "License expired" };
   }
 
@@ -305,6 +539,14 @@ export async function activateLicense(input: {
   }
 
   if (lockedMachineId && lockedMachineId !== input.machineId) {
+    await recordActivationRequest({
+      appName: license.appName,
+      appVersion: input.appVersion,
+      licenseKey: input.licenseKey,
+      machineId: input.machineId,
+      metadata: input.metadata,
+      reason: "The license is locked to a different machine ID.",
+    });
     return {
       ok: false as const,
       status: 403,
@@ -342,6 +584,14 @@ export async function activateLicense(input: {
   const activeCount = currentActiveCount[0]?.count || 0;
   const hasSeat = !!existingActivation || activeCount < license.maxActivations;
   if (!hasSeat) {
+    await recordActivationRequest({
+      appName: license.appName,
+      appVersion: input.appVersion,
+      licenseKey: input.licenseKey,
+      machineId: input.machineId,
+      metadata: input.metadata,
+      reason: "The license reached its activation limit.",
+    });
     return {
       ok: false as const,
       status: 409,
@@ -349,37 +599,26 @@ export async function activateLicense(input: {
     };
   }
 
-  const activationId = existingActivation?.id || crypto.randomUUID();
-  if (existingActivation) {
-    await db
-      .update(activations)
-      .set({
-        appVersion: input.appVersion,
-        shopName,
-        status: "active",
-        metadata: input.metadata ? JSON.stringify(input.metadata) : existingActivation.metadata,
-        activatedAt: new Date(),
-        expiresAt: license.expiresAt,
-        updatedAt: new Date(),
-      })
-      .where(eq(activations.id, existingActivation.id));
-  } else {
-    await db.insert(activations).values({
-      id: activationId,
-      userId: license.userId,
-      appName: license.appName,
-      appVersion: input.appVersion,
-      licenseKey: input.licenseKey,
-      machineId: input.machineId,
-      shopName,
-      status: "active",
-      metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-      activatedAt: new Date(),
-      expiresAt: license.expiresAt,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-  }
+  const activationId = await upsertActivationRequest({
+    userId: license.userId,
+    appName: license.appName,
+    appVersion: input.appVersion,
+    licenseKey: input.licenseKey,
+    machineId: input.machineId,
+    shopName,
+    status: "active",
+    activatedAt: new Date(),
+    expiresAt: license.expiresAt,
+    metadata: {
+      source: "public_activation_request",
+      outcome: "active",
+      reason: existingActivation
+        ? "The request reactivated an existing machine."
+        : "The request activated successfully.",
+      platform: metadata?.platform?.trim() || undefined,
+      userAgent: metadata?.userAgent?.trim() || undefined,
+    },
+  });
 
   await db.insert(activationLogs).values({
     id: crypto.randomUUID(),

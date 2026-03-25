@@ -284,3 +284,33 @@ export const invoicePdfJobs = pgTable(
     invoicePdfJobsStatusIdx: index("invoice_pdf_jobs_status_idx").on(table.status),
   }),
 );
+
+export const activationRequests = pgTable(
+  "activation_requests",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    appName: text("app_name").notNull(),
+    appVersion: text("app_version").notNull(),
+    machineId: text("machine_id").notNull(),
+    shopName: text("shop_name").notNull(),
+    phone: text("phone").notNull(),
+    notes: text("notes"),
+    platform: text("platform"),
+    userAgent: text("user_agent"),
+    status: text("status").notNull().default("pending"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    activationRequestsUserStatusIdx: index("activation_requests_user_status_idx").on(
+      table.userId,
+      table.status,
+    ),
+    activationRequestsAppNameIdx: index("activation_requests_app_name_idx").on(
+      table.userId,
+      table.appName,
+    ),
+    activationRequestsMachineIdIdx: index("activation_requests_machine_id_idx").on(table.machineId),
+  }),
+);

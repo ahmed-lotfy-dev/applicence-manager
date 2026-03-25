@@ -83,6 +83,59 @@ function normalizeLicense(raw: Record<string, unknown>): License {
   };
 }
 
+function normalizeActivation(raw: Record<string, unknown>): Activation {
+  let requestReason: string | null = null;
+  let requestPlatform: string | null = null;
+  let requestSource: string | null = null;
+
+  const metadataRaw = raw.metadata;
+  if (typeof metadataRaw === "string" && metadataRaw.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(metadataRaw) as {
+        reason?: string;
+        platform?: string;
+        source?: string;
+      };
+      requestReason = parsed.reason?.trim() || null;
+      requestPlatform = parsed.platform?.trim() || null;
+      requestSource = parsed.source?.trim() || null;
+    } catch {
+      requestReason = null;
+      requestPlatform = null;
+      requestSource = null;
+    }
+  }
+
+  return {
+    id: String(raw.id || ""),
+    requestType:
+      raw.requestType === "request_only" ? "request_only" : "license_activation",
+    appName: String(raw.appName || ""),
+    appVersion: String(raw.appVersion || ""),
+    licenseKey: String(raw.licenseKey || ""),
+    machineId: String(raw.machineId || ""),
+    shopName:
+      typeof raw.shopName === "string" && raw.shopName.trim().length > 0
+        ? raw.shopName
+        : null,
+    phone: typeof raw.phone === "string" && raw.phone.trim().length > 0 ? raw.phone : null,
+    notes: typeof raw.notes === "string" && raw.notes.trim().length > 0 ? raw.notes : null,
+    status:
+      raw.status === "active"
+        ? "active"
+        : raw.status === "revoked"
+          ? "revoked"
+          : raw.status === "expired"
+            ? "expired"
+            : "pending",
+    requestReason,
+    requestPlatform,
+    requestSource,
+    createdAt: String(raw.createdAt || ""),
+    activatedAt: typeof raw.activatedAt === "string" ? raw.activatedAt : undefined,
+  };
+}
+
 async function apiRequest(path: string, init?: RequestInit): Promise<Response> {
   const method = (init?.method || 'GET').toUpperCase();
   const csrfToken = isStateChangingMethod(method) ? await authClient.getCsrfToken() : null;
@@ -105,8 +158,8 @@ export async function fetchActivations(): Promise<Activation[] | null> {
   if (response.status === 401) return null;
   if (!response.ok) throw new Error('Failed to fetch activations');
 
-  const data = await parseJsonResponse<{ activations?: Activation[] }>(response);
-  return data?.activations || [];
+  const data = await parseJsonResponse<{ activations?: Record<string, unknown>[] }>(response);
+  return (data?.activations || []).map((activation) => normalizeActivation(activation));
 }
 
 export async function fetchStats(): Promise<Stats | null> {

@@ -162,9 +162,6 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
               activationActionLoadingId={actionLoadingId}
               loadingActivations={loading}
               activationError={error}
-              onApproveActivation={async (id) => {
-                await changeStatus(id, "approve");
-              }}
               onRevokeActivation={async (id) => {
                 await changeStatus(id, "revoke");
               }}

@@ -48,7 +48,6 @@ export function LicensesPanel(props: LicensesPanelProps) {
     activationActionLoadingId,
     loadingActivations,
     activationError,
-    onApproveActivation,
     onRevokeActivation,
   } = props;
 
@@ -68,6 +67,15 @@ export function LicensesPanel(props: LicensesPanelProps) {
   const [activationQuery, setActivationQuery] = useState("");
   const [activationAppFilter, setActivationAppFilter] = useState<string>("all");
   const [activationLicenseFilter, setActivationLicenseFilter] = useState<string>("all");
+
+  const openLockedLicenseFromActivation = (activation: LicensesPanelProps["activations"][number]) => {
+    const matchingApp = apps.find((app) => app.name === activation.appName);
+    setCreateLockedLicenseAppId(matchingApp?.id || "");
+    setLockedMachineId(activation.machineId);
+    setCreateLockedLicenseMax("1");
+    setCreatedLockedLicenseKey("");
+    setCreateLockedLicenseOpen(true);
+  };
 
   const handleCreateApp = async (event: FormEvent) => {
     event.preventDefault();
@@ -137,7 +145,11 @@ export function LicensesPanel(props: LicensesPanelProps) {
         activation.appName.toLowerCase().includes(query) ||
         activation.licenseKey.toLowerCase().includes(query) ||
         activation.machineId.toLowerCase().includes(query) ||
-        (activation.shopName || "").toLowerCase().includes(query)
+        (activation.shopName || "").toLowerCase().includes(query) ||
+        (activation.phone || "").toLowerCase().includes(query) ||
+        (activation.notes || "").toLowerCase().includes(query) ||
+        (activation.requestReason || "").toLowerCase().includes(query) ||
+        (activation.requestPlatform || "").toLowerCase().includes(query)
       );
     });
   }, [activationAppFilter, activationFilter, activationLicenseFilter, activationQuery, activations]);
@@ -207,7 +219,7 @@ export function LicensesPanel(props: LicensesPanelProps) {
               <CardHeader className="space-y-3 border-b border-white/5">
                 <CardTitle className="text-lg text-white">Activation Requests</CardTitle>
                 <p className="text-sm text-slate-400">
-                  Review activations across all apps or narrow them by app and license.
+                  Review incoming activation requests, store names, and issued activations across all apps.
                 </p>
                 {activationError && (
                   <div className="rounded-lg border border-danger/30 bg-danger/20 p-3 text-sm text-danger">
@@ -216,7 +228,7 @@ export function LicensesPanel(props: LicensesPanelProps) {
                 )}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <Input
-                    placeholder="Search app, store, machine, or license"
+                    placeholder="Search app, store, phone, machine, license, or request reason"
                     value={activationQuery}
                     onChange={(event) => setActivationQuery(event.target.value)}
                   />
@@ -250,12 +262,10 @@ export function LicensesPanel(props: LicensesPanelProps) {
                   activations={filteredActivations}
                   loading={loadingActivations}
                   actionLoadingId={activationActionLoadingId}
-                  onApprove={(id) => {
-                    void onApproveActivation(id);
-                  }}
                   onRevoke={(id) => {
                     void onRevokeActivation(id);
                   }}
+                  onGenerateLockedLicense={openLockedLicenseFromActivation}
                 />
               </CardContent>
             </Card>

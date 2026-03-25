@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { ensureR2Config } from "../../lib/env";
 import type { ObjectStorage, UploadObjectInput } from "./object-storage";
 
@@ -52,6 +52,31 @@ export class R2ObjectStorage implements ObjectStorage {
 
     const base = this.config.publicBaseUrl.replace(/\/+$/, "");
     return { key: input.key, publicUrl: `${base}/${input.key}` };
+  }
+
+  async getObject(key: string): Promise<Buffer> {
+    const response = await this.client.send(
+      new GetObjectCommand({
+        Bucket: this.config.bucket,
+        Key: key,
+      }),
+    );
+
+    const body = response.Body;
+    if (!body) {
+      throw new Error("R2 object body missing");
+    }
+
+    if (typeof (body as { transformToByteArray?: () => Promise<Uint8Array> }).transformToByteArray === "function") {
+      const bytes = await (body as { transformToByteArray: () => Promise<Uint8Array> }).transformToByteArray();
+      return Buffer.from(bytes);
+    }
+
+    const chunks: Buffer[] = [];
+    for await (const chunk of body as AsyncIterable<Uint8Array | Buffer | string>) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
   }
 
   async deleteObject(key: string): Promise<void> {

@@ -2,46 +2,62 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import PDFDocument from "pdfkit";
 import { getInvoicePdfData } from "./invoice-pdf-jobs";
-
-function formatMoney(cents: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD" }).format(
-    (cents || 0) / 100,
-  );
-}
+import { R2ObjectStorage } from "./storage/r2-object-storage";
 
 type InvoiceLanguage = "en" | "ar";
 
-function label(language: InvoiceLanguage, en: string, ar: string): string {
-  return language === "ar" ? ar : en;
+const PAGE = {
+  width: 595.28,
+  margin: 46,
+};
+
+function isArabic(language: InvoiceLanguage) {
+  return language === "ar";
 }
 
-function writeLabeledRow(
-  doc: InstanceType<typeof PDFDocument>,
-  language: InvoiceLanguage,
-  labelText: string,
-  valueText: string,
-) {
-  const value = valueText || "-";
-  if (language === "ar") {
-    const y = doc.y;
-    doc.text(labelText, 320, y, { width: 225, align: "right" });
-    doc.text(value, 50, y, { width: 250, align: "left" });
-    doc.moveDown(1);
-    return;
-  }
-  doc.text(`${labelText}: ${value}`);
+function label(language: InvoiceLanguage, en: string, ar: string): string {
+  return isArabic(language) ? ar : en;
+}
+
+function localizeDigits(value: string, language: InvoiceLanguage): string {
+  if (!isArabic(language)) return value;
+  return value.replace(/\d/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[Number(digit)] || digit);
+}
+
+function formatDate(value: Date | string | null | undefined, language: InvoiceLanguage): string {
+  if (!value) return "-";
+  const date = value instanceof Date ? value : new Date(value);
+  return new Intl.DateTimeFormat(isArabic(language) ? "ar-EG-u-nu-arab" : "en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+function formatMoney(cents: number, currency: string, language: InvoiceLanguage): string {
+  return new Intl.NumberFormat(isArabic(language) ? "ar-EG-u-nu-arab" : "en-US", {
+    style: "currency",
+    currency: currency || "USD",
+    maximumFractionDigits: 2,
+  }).format((cents || 0) / 100);
 }
 
 function localizeStatus(status: string, language: InvoiceLanguage): string {
-  if (language !== "ar") return status;
+  if (!isArabic(language)) {
+    return status.replace(/_/g, " ");
+  }
   const map: Record<string, string> = {
     draft: "مسودة",
     sent: "مرسلة",
-    partially_paid: "مدفوعة جزئيا",
+    partially_paid: "مدفوعة جزئياً",
     paid: "مدفوعة",
     overdue: "متأخرة",
   };
   return map[status] || status;
+}
+
+function invoiceNumber(value: string, language: InvoiceLanguage): string {
+  return localizeDigits(value || "-", language);
 }
 
 async function pickExistingPath(candidates: Array<string | null | undefined>): Promise<string | null> {
@@ -53,7 +69,7 @@ async function pickExistingPath(candidates: Array<string | null | undefined>): P
       await fs.access(normalized);
       return normalized;
     } catch {
-      // Try next candidate.
+      // Continue checking.
     }
   }
   return null;
@@ -78,20 +94,29 @@ async function resolvePdfFont(language: InvoiceLanguage): Promise<string | null>
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
   ];
 
-  if (language === "ar") {
-    const arabicFont = await pickExistingPath(arabicCandidates);
-    if (arabicFont) return arabicFont;
-  }
-  return pickExistingPath(defaultCandidates);
+  return isArabic(language)
+    ? (await pickExistingPath(arabicCandidates)) || (await pickExistingPath(defaultCandidates))
+    : pickExistingPath(defaultCandidates);
 }
 
-async function loadLogoBuffer(logoUrl?: string | null): Promise<Buffer | null> {
-  if (!logoUrl) return null;
+async function loadLogoBuffer(input: {
+  logoObjectKey?: string | null;
+  logoUrl?: string | null;
+}): Promise<Buffer | null> {
+  if (input.logoObjectKey) {
+    try {
+      const storage = new R2ObjectStorage();
+      return await storage.getObject(input.logoObjectKey);
+    } catch {
+      // Fall back to public URL.
+    }
+  }
+
+  if (!input.logoUrl) return null;
   try {
-    const response = await fetch(logoUrl);
+    const response = await fetch(input.logoUrl);
     if (!response.ok) return null;
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    return Buffer.from(await response.arrayBuffer());
   } catch {
     return null;
   }
@@ -106,111 +131,291 @@ function buildPdfBuffer(doc: InstanceType<typeof PDFDocument>): Promise<Buffer> 
   });
 }
 
-export async function renderInvoicePdfAndSave(input: { userId: string; invoiceId: string }) {
-  const data = await getInvoicePdfData(input.userId, input.invoiceId);
-  if (!data) throw new Error("INVOICE_NOT_FOUND");
-  const invoiceLanguage: InvoiceLanguage = data.invoiceLanguage === "ar" ? "ar" : "en";
-  const dateLocale = invoiceLanguage === "ar" ? "ar-EG" : "en-US";
-  const customFontPath = await resolvePdfFont(invoiceLanguage);
+function drawHeader(
+  doc: InstanceType<typeof PDFDocument>,
+  language: InvoiceLanguage,
+  data: Awaited<ReturnType<typeof getInvoicePdfData>>,
+  logoBuffer: Buffer | null,
+) {
+  const contentWidth = PAGE.width - PAGE.margin * 2;
+  const cardX = PAGE.margin;
+  const cardY = PAGE.margin;
+  const cardHeight = 118;
 
-  const doc = new PDFDocument({ margin: 50, size: "A4" });
-  const outputPromise = buildPdfBuffer(doc);
-  if (customFontPath) {
-    doc.font(customFontPath);
-  } else if (invoiceLanguage === "ar") {
-    console.warn(
-      "Arabic invoice PDF requested but no Arabic-capable font found. Set INVOICE_PDF_ARABIC_FONT_PATH.",
-    );
-  }
+  doc.save();
+  doc.roundedRect(cardX, cardY, contentWidth, cardHeight, 18).fill("#F6F8FC");
+  doc.roundedRect(cardX, cardY, contentWidth, 10, 18).fill("#183153");
+  doc.restore();
 
-  const logoBuffer = await loadLogoBuffer(data.logoUrl);
   if (logoBuffer) {
     try {
-      doc.image(logoBuffer, 50, 40, { fit: [120, 60] });
+      const logoX = isArabic(language) ? cardX + contentWidth - 112 : cardX + 18;
+      doc.image(logoBuffer, logoX, cardY + 18, { fit: [94, 56], align: "center", valign: "center" });
     } catch {
-      // Ignore invalid logo format and continue rendering.
+      // Ignore invalid image bytes and continue.
     }
   }
 
-  doc.fontSize(22).text(data.businessName || "Freelancer", 50, 120);
-  doc.fontSize(10).fillColor("#444");
-  if (data.addressLine1) doc.text(data.addressLine1);
-  if (data.addressLine2) doc.text(data.addressLine2);
-  if (data.contactEmail) {
-    writeLabeledRow(
-      doc,
-      invoiceLanguage,
-      label(invoiceLanguage, "Email", "البريد الإلكتروني"),
-      data.contactEmail,
+  const titleX = isArabic(language) ? cardX + 18 : cardX + 128;
+  const titleWidth = contentWidth - 146;
+  doc
+    .fillColor("#10233B")
+    .fontSize(isArabic(language) ? 24 : 22)
+    .text(data?.businessName || label(language, "Freelancer", "مستقل"), titleX, cardY + 24, {
+      width: titleWidth,
+      align: isArabic(language) ? "right" : "left",
+    });
+
+  doc
+    .fillColor("#4F5F75")
+    .fontSize(10)
+    .text(label(language, "Professional invoice", "فاتورة احترافية"), titleX, cardY + 56, {
+      width: titleWidth,
+      align: isArabic(language) ? "right" : "left",
+    });
+
+  const invoiceTitle = label(language, "INVOICE", "فاتورة");
+  const invoiceMeta = [
+    `${label(language, "Invoice #", "رقم الفاتورة")} ${invoiceNumber(data?.invoiceNo || "-", language)}`,
+    `${label(language, "Issued", "تاريخ الإصدار")} ${formatDate(data?.issuedAt, language)}`,
+  ];
+
+  doc
+    .fillColor("#10233B")
+    .fontSize(isArabic(language) ? 26 : 24)
+    .text(invoiceTitle, cardX + 18, cardY + 78, {
+      width: contentWidth - 36,
+      align: isArabic(language) ? "left" : "right",
+    });
+  doc
+    .fillColor("#4F5F75")
+    .fontSize(10)
+    .text(invoiceMeta.join("   "), cardX + 18, cardY + 100, {
+      width: contentWidth - 36,
+      align: isArabic(language) ? "left" : "right",
+    });
+
+  doc.y = cardY + cardHeight + 26;
+}
+
+function drawKeyValueBlock(
+  doc: InstanceType<typeof PDFDocument>,
+  language: InvoiceLanguage,
+  title: string,
+  rows: Array<{ label: string; value: string | null | undefined }>,
+  x: number,
+  y: number,
+  width: number,
+) {
+  doc.save();
+  doc.roundedRect(x, y, width, 126, 16).fill("#FFFFFF");
+  doc.restore();
+
+  doc.fillColor("#10233B").fontSize(12).text(title, x + 16, y + 14, {
+    width: width - 32,
+    align: isArabic(language) ? "right" : "left",
+  });
+
+  let rowY = y + 40;
+  for (const row of rows) {
+    doc
+      .fillColor("#75859A")
+      .fontSize(9)
+      .text(row.label, x + 16, rowY, {
+        width: width - 32,
+        align: isArabic(language) ? "right" : "left",
+      });
+    doc
+      .fillColor("#1B2B3E")
+      .fontSize(11)
+      .text(row.value || "-", x + 16, rowY + 14, {
+        width: width - 32,
+        align: isArabic(language) ? "right" : "left",
+      });
+    rowY += 34;
+  }
+}
+
+function drawSummary(
+  doc: InstanceType<typeof PDFDocument>,
+  language: InvoiceLanguage,
+  data: Awaited<ReturnType<typeof getInvoicePdfData>>,
+) {
+  const x = PAGE.margin;
+  const width = PAGE.width - PAGE.margin * 2;
+  const y = doc.y;
+
+  doc.save();
+  doc.roundedRect(x, y, width, 124, 18).fill("#10233B");
+  doc.restore();
+
+  doc.fillColor("#FFFFFF").fontSize(12).text(label(language, "Payment summary", "ملخص الدفع"), x + 18, y + 16, {
+    width: width - 36,
+    align: isArabic(language) ? "right" : "left",
+  });
+
+  const items = [
+    {
+      label: label(language, "Total", "الإجمالي"),
+      value: formatMoney(data?.totalAmount || 0, data?.currency || "USD", language),
+    },
+    {
+      label: label(language, "Paid", "المدفوع"),
+      value: formatMoney(data?.paidAmount || 0, data?.currency || "USD", language),
+    },
+    {
+      label: label(language, "Outstanding", "المتبقي"),
+      value: formatMoney(
+        Math.max((data?.totalAmount || 0) - (data?.paidAmount || 0), 0),
+        data?.currency || "USD",
+        language,
+      ),
+    },
+  ];
+
+  const cardWidth = (width - 36 - 16) / 3;
+  items.forEach((item, index) => {
+    const cardX = x + 18 + index * (cardWidth + 8);
+    const cardY = y + 44;
+    doc.save();
+    doc.roundedRect(cardX, cardY, cardWidth, 56, 14).fill("#16304D");
+    doc.restore();
+    doc.fillColor("#B7C5D8").fontSize(9).text(item.label, cardX + 12, cardY + 11, {
+      width: cardWidth - 24,
+      align: "center",
+    });
+    doc.fillColor("#FFFFFF").fontSize(13).text(item.value, cardX + 12, cardY + 28, {
+      width: cardWidth - 24,
+      align: "center",
+    });
+  });
+
+  doc.y = y + 146;
+}
+
+function drawNotes(
+  doc: InstanceType<typeof PDFDocument>,
+  language: InvoiceLanguage,
+  notes: string | null | undefined,
+) {
+  if (!notes) return;
+  const x = PAGE.margin;
+  const width = PAGE.width - PAGE.margin * 2;
+  const y = doc.y;
+  const height = 84;
+
+  doc.save();
+  doc.roundedRect(x, y, width, height, 16).fill("#F8FAFD");
+  doc.restore();
+  doc.fillColor("#10233B").fontSize(12).text(label(language, "Notes", "ملاحظات"), x + 16, y + 14, {
+    width: width - 32,
+    align: isArabic(language) ? "right" : "left",
+  });
+  doc.fillColor("#49586D").fontSize(10.5).text(notes, x + 16, y + 34, {
+    width: width - 32,
+    align: isArabic(language) ? "right" : "left",
+  });
+  doc.y = y + height + 18;
+}
+
+export async function renderInvoicePdfAndSave(input: { userId: string; invoiceId: string }) {
+  const data = await getInvoicePdfData(input.userId, input.invoiceId);
+  if (!data) throw new Error("INVOICE_NOT_FOUND");
+
+  const language: InvoiceLanguage = data.invoiceLanguage === "ar" ? "ar" : "en";
+  const fontPath = await resolvePdfFont(language);
+  const logoBuffer = await loadLogoBuffer({
+    logoObjectKey: data.logoObjectKey,
+    logoUrl: data.logoUrl,
+  });
+
+  const doc = new PDFDocument({ margin: PAGE.margin, size: "A4" });
+  const outputPromise = buildPdfBuffer(doc);
+  if (fontPath) {
+    doc.font(fontPath);
+  }
+
+  drawHeader(doc, language, data, logoBuffer);
+
+  const contentWidth = PAGE.width - PAGE.margin * 2;
+  const gap = 16;
+  const blockWidth = (contentWidth - gap) / 2;
+  const topY = doc.y;
+
+  drawKeyValueBlock(
+    doc,
+    language,
+    label(language, "From", "من"),
+    [
+      { label: label(language, "Business name", "اسم النشاط"), value: data.businessName || "-" },
+      { label: label(language, "Email", "البريد الإلكتروني"), value: data.contactEmail || "-" },
+      { label: label(language, "Phone", "الهاتف"), value: isArabic(language) ? localizeDigits(data.contactPhone || "-", language) : data.contactPhone || "-" },
+    ],
+    PAGE.margin,
+    topY,
+    blockWidth,
+  );
+
+  drawKeyValueBlock(
+    doc,
+    language,
+    label(language, "Bill to", "الفاتورة إلى"),
+    [
+      { label: label(language, "Client", "العميل"), value: data.clientName || "-" },
+      { label: label(language, "Email", "البريد الإلكتروني"), value: data.clientEmail || "-" },
+      { label: label(language, "Phone", "الهاتف"), value: isArabic(language) ? localizeDigits(data.clientPhone || "-", language) : data.clientPhone || "-" },
+    ],
+    PAGE.margin + blockWidth + gap,
+    topY,
+    blockWidth,
+  );
+
+  doc.y = topY + 146;
+
+  drawKeyValueBlock(
+    doc,
+    language,
+    label(language, "Invoice details", "تفاصيل الفاتورة"),
+    [
+      { label: label(language, "Invoice #", "رقم الفاتورة"), value: invoiceNumber(data.invoiceNo || "-", language) },
+      { label: label(language, "Issue date", "تاريخ الإصدار"), value: formatDate(data.issuedAt, language) },
+      { label: label(language, "Due date", "تاريخ الاستحقاق"), value: formatDate(data.dueDate, language) },
+    ],
+    PAGE.margin,
+    doc.y,
+    blockWidth,
+  );
+
+  drawKeyValueBlock(
+    doc,
+    language,
+    label(language, "Status and tax", "الحالة والضريبة"),
+    [
+      { label: label(language, "Status", "الحالة"), value: localizeStatus(data.status, language) },
+      { label: label(language, "Currency", "العملة"), value: data.currency || "USD" },
+      { label: label(language, "Tax ID", "الرقم الضريبي"), value: isArabic(language) ? localizeDigits(data.taxId || "-", language) : data.taxId || "-" },
+    ],
+    PAGE.margin + blockWidth + gap,
+    doc.y,
+    blockWidth,
+  );
+
+  doc.y += 146;
+  drawSummary(doc, language, data);
+  drawNotes(doc, language, data.invoiceNotes);
+
+  doc
+    .fillColor("#7B8797")
+    .fontSize(9)
+    .text(
+      label(language, "Generated by Fawtarly", "تم إنشاء الفاتورة عبر فوترلي"),
+      PAGE.margin,
+      doc.y + 6,
+      {
+        width: contentWidth,
+        align: "center",
+      },
     );
-  }
-  if (data.contactPhone) {
-    writeLabeledRow(doc, invoiceLanguage, label(invoiceLanguage, "Phone", "الهاتف"), data.contactPhone);
-  }
-  if (data.taxId) {
-    writeLabeledRow(doc, invoiceLanguage, label(invoiceLanguage, "Tax ID", "الرقم الضريبي"), data.taxId);
-  }
-
-  doc.moveDown(2);
-  doc.fillColor("#111").fontSize(20).text(label(invoiceLanguage, "INVOICE", "فاتورة"), { align: "right" });
-  doc.fontSize(11);
-  writeLabeledRow(doc, invoiceLanguage, label(invoiceLanguage, "Invoice #", "رقم الفاتورة"), data.invoiceNo);
-  writeLabeledRow(
-    doc,
-    invoiceLanguage,
-    label(invoiceLanguage, "Issued", "تاريخ الإصدار"),
-    data.issuedAt ? new Date(data.issuedAt).toLocaleDateString(dateLocale) : "-",
-  );
-  writeLabeledRow(
-    doc,
-    invoiceLanguage,
-    label(invoiceLanguage, "Due", "تاريخ الاستحقاق"),
-    data.dueDate ? new Date(data.dueDate).toLocaleDateString(dateLocale) : "-",
-  );
-  writeLabeledRow(
-    doc,
-    invoiceLanguage,
-    label(invoiceLanguage, "Status", "الحالة"),
-    localizeStatus(data.status, invoiceLanguage),
-  );
-
-  doc.moveDown(2);
-  doc.fontSize(12).fillColor("#111").text(label(invoiceLanguage, "Bill To", "الفاتورة إلى"));
-  doc.fontSize(11).fillColor("#333").text(data.clientName || "-");
-  if (data.clientEmail) doc.text(data.clientEmail);
-  if (data.clientPhone) doc.text(data.clientPhone);
-
-  doc.moveDown(2);
-  doc.fontSize(12).fillColor("#111").text(label(invoiceLanguage, "Summary", "الملخص"));
-  doc.moveDown(0.5);
-  doc.fontSize(11).fillColor("#333");
-  writeLabeledRow(
-    doc,
-    invoiceLanguage,
-    label(invoiceLanguage, "Total", "الإجمالي"),
-    formatMoney(data.totalAmount || 0, data.currency || "USD"),
-  );
-  writeLabeledRow(
-    doc,
-    invoiceLanguage,
-    label(invoiceLanguage, "Paid", "المدفوع"),
-    formatMoney(data.paidAmount || 0, data.currency || "USD"),
-  );
-  writeLabeledRow(
-    doc,
-    invoiceLanguage,
-    label(invoiceLanguage, "Outstanding", "المستحق"),
-    formatMoney(
-      Math.max((data.totalAmount || 0) - (data.paidAmount || 0), 0),
-      data.currency || "USD",
-    ),
-  );
-
-  if (data.invoiceNotes) {
-    doc.moveDown(1.5);
-    doc.fillColor("#111").fontSize(12).text(label(invoiceLanguage, "Notes", "ملاحظات"));
-    doc.fillColor("#333").fontSize(11).text(data.invoiceNotes);
-  }
 
   doc.end();
   const buffer = await outputPromise;

@@ -3,28 +3,45 @@ import { db } from "../db/db";
 import { freelancerProfiles } from "../db/auth-schema";
 
 export async function getFreelancerProfile(userId: string) {
-  const [row] = await db
-    .select({
-      id: freelancerProfiles.id,
-      userId: freelancerProfiles.userId,
-      businessName: freelancerProfiles.businessName,
-      logoUrl: freelancerProfiles.logoUrl,
-      // Intentionally omitted in query to tolerate partially migrated databases.
-      contactEmail: freelancerProfiles.contactEmail,
-      contactPhone: freelancerProfiles.contactPhone,
-      addressLine1: freelancerProfiles.addressLine1,
-      addressLine2: freelancerProfiles.addressLine2,
-      taxId: freelancerProfiles.taxId,
-      createdAt: freelancerProfiles.createdAt,
-      updatedAt: freelancerProfiles.updatedAt,
-    })
-    .from(freelancerProfiles)
-    .where(eq(freelancerProfiles.userId, userId));
-  if (!row) return null;
-  return {
-    ...row,
-    logoObjectKey: null,
-  };
+  try {
+    const [row] = await db
+      .select({
+        id: freelancerProfiles.id,
+        userId: freelancerProfiles.userId,
+        businessName: freelancerProfiles.businessName,
+        logoUrl: freelancerProfiles.logoUrl,
+        logoObjectKey: freelancerProfiles.logoObjectKey,
+        contactEmail: freelancerProfiles.contactEmail,
+        contactPhone: freelancerProfiles.contactPhone,
+        addressLine1: freelancerProfiles.addressLine1,
+        addressLine2: freelancerProfiles.addressLine2,
+        taxId: freelancerProfiles.taxId,
+        createdAt: freelancerProfiles.createdAt,
+        updatedAt: freelancerProfiles.updatedAt,
+      })
+      .from(freelancerProfiles)
+      .where(eq(freelancerProfiles.userId, userId));
+    return row ?? null;
+  } catch {
+    const [row] = await db
+      .select({
+        id: freelancerProfiles.id,
+        userId: freelancerProfiles.userId,
+        businessName: freelancerProfiles.businessName,
+        logoUrl: freelancerProfiles.logoUrl,
+        contactEmail: freelancerProfiles.contactEmail,
+        contactPhone: freelancerProfiles.contactPhone,
+        addressLine1: freelancerProfiles.addressLine1,
+        addressLine2: freelancerProfiles.addressLine2,
+        taxId: freelancerProfiles.taxId,
+        createdAt: freelancerProfiles.createdAt,
+        updatedAt: freelancerProfiles.updatedAt,
+      })
+      .from(freelancerProfiles)
+      .where(eq(freelancerProfiles.userId, userId));
+    if (!row) return null;
+    return { ...row, logoObjectKey: null };
+  }
 }
 
 export async function upsertFreelancerProfile(
@@ -103,19 +120,30 @@ export async function setFreelancerLogo(
     await db.execute(
       sql`
         insert into "freelancer_profiles"
-          ("id", "user_id", "logo_url", "created_at", "updated_at")
+          ("id", "user_id", "logo_url", "logo_object_key", "created_at", "updated_at")
         values
-          (${id}, ${userId}, ${input.logoUrl}, ${now}, ${now})
+          (${id}, ${userId}, ${input.logoUrl}, ${input.logoObjectKey}, ${now}, ${now})
       `,
     );
   } else {
-    await db
-      .update(freelancerProfiles)
-      .set({
-        logoUrl: input.logoUrl,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(freelancerProfiles.userId, userId), eq(freelancerProfiles.id, existing.id)));
+    try {
+      await db
+        .update(freelancerProfiles)
+        .set({
+          logoUrl: input.logoUrl,
+          logoObjectKey: input.logoObjectKey,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(freelancerProfiles.userId, userId), eq(freelancerProfiles.id, existing.id)));
+    } catch {
+      await db
+        .update(freelancerProfiles)
+        .set({
+          logoUrl: input.logoUrl,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(freelancerProfiles.userId, userId), eq(freelancerProfiles.id, existing.id)));
+    }
   }
 
   return getFreelancerProfile(userId);
