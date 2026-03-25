@@ -69,6 +69,7 @@ export interface Invoice {
   clientId: string;
   clientName?: string | null;
   clientIsDeleted?: boolean | null;
+  isDeleted: boolean;
   invoiceNo: string;
   status: "draft" | "sent" | "partially_paid" | "paid" | "overdue";
   currency: string;

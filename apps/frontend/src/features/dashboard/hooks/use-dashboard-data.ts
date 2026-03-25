@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   archiveClient,
+  archiveInvoice,
   buildInvoicePdfUrl,
   createClient,
   createInvoice,
@@ -23,6 +24,7 @@ import {
   fetchUserEmail,
   queueInvoicePdf,
   restoreClient,
+  restoreInvoice,
   setLicenseStatus,
   uploadFreelancerLogo,
   updateFreelancerProfile,
@@ -108,7 +110,9 @@ interface UseDashboardDataResult {
       paidAmount?: number;
     },
   ) => Promise<void>;
-  removeInvoice: (id: string) => Promise<void>;
+  removeInvoice: (id: string) => Promise<boolean>;
+  restoreExistingInvoice: (id: string) => Promise<Invoice | null>;
+  hardDeleteInvoice: (id: string) => Promise<{ ok: boolean; error?: string }>;
   saveFreelancerProfile: (input: {
     businessName?: string;
     contactEmail?: string;
@@ -549,14 +553,58 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
     async (id: string) => {
       setError("");
       try {
+        const ok = await archiveInvoice(id);
+        if (!ok) throw new UnauthorizedError();
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: queryKeys.invoices }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.billingStats }),
+        ]);
+        return true;
+      } catch (mutationError) {
+        onQueryError(mutationError, "Could not archive invoice right now.");
+        return false;
+      }
+    },
+    [onQueryError, queryClient],
+  );
+
+  const restoreExistingInvoice = useCallback(
+    async (id: string) => {
+      setError("");
+      try {
+        const restored = await restoreInvoice(id);
+        if (!restored) throw new UnauthorizedError();
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: queryKeys.invoices }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.billingStats }),
+        ]);
+        return restored;
+      } catch (mutationError) {
+        onQueryError(mutationError, "Could not restore invoice right now.");
+        return null;
+      }
+    },
+    [onQueryError, queryClient],
+  );
+
+  const hardDeleteExistingInvoice = useCallback(
+    async (id: string) => {
+      setError("");
+      try {
         const ok = await deleteInvoice(id);
         if (!ok) throw new UnauthorizedError();
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: queryKeys.invoices }),
           queryClient.invalidateQueries({ queryKey: queryKeys.billingStats }),
         ]);
+        return { ok: true as const };
       } catch (mutationError) {
-        onQueryError(mutationError, "Could not remove invoice right now.");
+        const message =
+          mutationError instanceof Error && mutationError.message
+            ? mutationError.message
+            : "Could not permanently delete invoice right now.";
+        onQueryError(mutationError, message);
+        return { ok: false as const, error: message };
       }
     },
     [onQueryError, queryClient],
@@ -778,6 +826,8 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
     createNewInvoice,
     updateExistingInvoice,
     removeInvoice,
+    restoreExistingInvoice,
+    hardDeleteInvoice: hardDeleteExistingInvoice,
     saveFreelancerProfile,
     uploadProfileLogo,
     queueInvoicePdfGeneration,

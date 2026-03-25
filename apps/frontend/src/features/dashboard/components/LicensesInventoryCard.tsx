@@ -57,7 +57,7 @@ export function LicensesInventoryCard({
                 <Th>{t("licensing.table.status")}</Th>
                 <Th>{t("licensing.table.usage")}</Th>
                 <Th>{t("licensing.table.remaining")}</Th>
-                <Th>{t("licensing.table.actions")}</Th>
+                <Th className="w-[1%] whitespace-nowrap text-right">{t("licensing.table.actions")}</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -86,11 +86,12 @@ export function LicensesInventoryCard({
                       {license.activeActivations} / {license.maxActivations}
                     </Td>
                     <Td className="text-text-muted">{license.remainingActivations}</Td>
-                    <Td>
-                      <div className="flex flex-wrap gap-2">
+                    <Td className="w-[1%] whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                         <Button
                           size="sm"
                           variant="outline"
+                          className="min-w-[4.75rem]"
                           disabled={licenseActionLoadingId === license.id}
                           onClick={() => onEditLicense(license.id, license.maxActivations, license.status)}
                         >
@@ -100,6 +101,7 @@ export function LicensesInventoryCard({
                           <Button
                             size="sm"
                             variant="destructive"
+                            className="min-w-[4.75rem]"
                             disabled={licenseActionLoadingId === license.id}
                             onClick={() => onChangeLicenseStatus(license.id, "revoked")}
                           >
@@ -109,6 +111,7 @@ export function LicensesInventoryCard({
                           <Button
                             size="sm"
                             variant="secondary"
+                            className="min-w-[4.75rem]"
                             disabled={licenseActionLoadingId === license.id}
                             onClick={() => onChangeLicenseStatus(license.id, "active")}
                           >
@@ -118,6 +121,7 @@ export function LicensesInventoryCard({
                         <Button
                           size="sm"
                           variant="ghost"
+                          className="min-w-[4.75rem]"
                           disabled={licenseActionLoadingId === license.id}
                           onClick={() => onRemoveLicense(license.id)}
                         >

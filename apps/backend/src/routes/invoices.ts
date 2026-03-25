@@ -3,9 +3,11 @@ import { getAuthenticatedUserId } from "../lib/request-auth";
 import {
   createInvoice,
   deleteInvoice,
+  hardDeleteInvoice,
   getBillingStats,
   getNextInvoiceNo,
   listInvoices,
+  restoreInvoice,
   updateInvoice,
 } from "../services/invoices";
 import {
@@ -145,13 +147,39 @@ export const invoiceRoutes = new Elysia({
       }),
     },
   )
-  .delete("/:id", async ({ request, params, set }) => {
+  .patch("/:id/archive", async ({ request, params, set }) => {
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       set.status = 401;
       return { success: false, error: "Unauthorized" };
     }
     const result = await deleteInvoice(userId, params.id);
+    if (!result.ok) {
+      set.status = 400;
+      return { success: false, error: result.error };
+    }
+    return { success: true };
+  })
+  .patch("/:id/restore", async ({ request, params, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { success: false, error: "Unauthorized" };
+    }
+    const result = await restoreInvoice(userId, params.id);
+    if (!result.ok) {
+      set.status = 400;
+      return { success: false, error: result.error };
+    }
+    return { success: true, invoice: result.invoice };
+  })
+  .delete("/:id", async ({ request, params, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { success: false, error: "Unauthorized" };
+    }
+    const result = await hardDeleteInvoice(userId, params.id);
     if (!result.ok) {
       set.status = 400;
       return { success: false, error: result.error };

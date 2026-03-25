@@ -24,15 +24,27 @@ const sizeClasses: Record<ButtonSize, string> = {
   icon: 'h-10 w-10 p-0',
 };
 
+export function buttonVariants({
+  variant = 'default',
+  size = 'md',
+  className,
+}: {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  className?: string;
+}) {
+  return cn(
+    'inline-flex cursor-pointer items-center justify-center rounded-full font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
+    variantClasses[variant],
+    sizeClasses[size],
+    className,
+  );
+}
+
 export function Button({ className, variant = 'default', size = 'md', ...props }: ButtonProps) {
   return (
     <button
-      className={cn(
-        'inline-flex cursor-pointer items-center justify-center rounded-full font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
-        variantClasses[variant],
-        sizeClasses[size],
-        className,
-      )}
+      className={buttonVariants({ variant, size, className })}
       {...props}
     />
   );

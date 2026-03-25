@@ -71,6 +71,8 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     createNewInvoice,
     updateExistingInvoice,
     removeInvoice,
+    restoreExistingInvoice,
+    hardDeleteInvoice,
     saveFreelancerProfile,
     uploadProfileLogo,
     queueInvoicePdfGeneration,
@@ -167,6 +169,8 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 onCreateInvoice={createNewInvoice}
                 onUpdateInvoice={updateExistingInvoice}
                 onRemoveInvoice={removeInvoice}
+                onRestoreInvoice={restoreExistingInvoice}
+                onHardDeleteInvoice={hardDeleteInvoice}
                 onSaveFreelancerProfile={saveFreelancerProfile}
                 onUploadProfileLogo={uploadProfileLogo}
                 onQueueInvoicePdf={queueInvoicePdfGeneration}

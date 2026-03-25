@@ -226,6 +226,7 @@ export const invoices = pgTable(
     status: text("status").notNull().default("draft"),
     currency: text("currency").notNull().default("USD"),
     invoiceLanguage: text("invoice_language").notNull().default("en"),
+    isDeleted: boolean("is_deleted").notNull().default(false),
     totalAmount: integer("total_amount").notNull().default(0),
     paidAmount: integer("paid_amount").notNull().default(0),
     dueDate: timestamp("due_date"),
@@ -237,6 +238,7 @@ export const invoices = pgTable(
   (table) => ({
     invoicesUserClientIdx: index("invoices_user_client_idx").on(table.userId, table.clientId),
     invoicesUserStatusIdx: index("invoices_user_status_idx").on(table.userId, table.status),
+    invoicesUserDeletedIdx: index("invoices_user_deleted_idx").on(table.userId, table.isDeleted),
     invoicesUserNoUnique: uniqueIndex("invoices_user_no_uidx").on(table.userId, table.invoiceNo),
   }),
 );

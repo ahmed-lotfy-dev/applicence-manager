@@ -22,6 +22,7 @@ export async function listInvoices(userId: string) {
       status: invoices.status,
       currency: invoices.currency,
       invoiceLanguage: invoices.invoiceLanguage,
+      isDeleted: invoices.isDeleted,
       totalAmount: invoices.totalAmount,
       paidAmount: invoices.paidAmount,
       dueDate: invoices.dueDate,
@@ -114,6 +115,7 @@ export async function createInvoice(
     status: input.status || "draft",
     currency: (input.currency || "USD").trim().toUpperCase(),
     invoiceLanguage: input.invoiceLanguage === "ar" ? "ar" : "en",
+    isDeleted: false,
     totalAmount: toAmountCents(input.totalAmount),
     paidAmount: toAmountCents(input.paidAmount || 0),
     dueDate: input.dueDate ? new Date(input.dueDate) : null,
@@ -142,6 +144,7 @@ export async function updateInvoice(
 ) {
   const existing = await getInvoiceById(userId, id);
   if (!existing) return { ok: false as const, error: "Invoice not found" };
+  if (existing.isDeleted) return { ok: false as const, error: "Archived invoices cannot be edited" };
   if ((input.totalAmount ?? 0) < 0 || (input.paidAmount ?? 0) < 0) {
     return { ok: false as const, error: "Amounts cannot be negative" };
   }
@@ -180,6 +183,43 @@ export async function updateInvoice(
 export async function deleteInvoice(userId: string, id: string) {
   const existing = await getInvoiceById(userId, id);
   if (!existing) return { ok: false as const, error: "Invoice not found" };
+
+  if (existing.isDeleted) return { ok: false as const, error: "Invoice already archived" };
+
+  await db
+    .update(invoices)
+    .set({
+      isDeleted: true,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(invoices.userId, userId), eq(invoices.id, id)));
+  return { ok: true as const };
+}
+
+export async function restoreInvoice(userId: string, id: string) {
+  const existing = await getInvoiceById(userId, id);
+  if (!existing) return { ok: false as const, error: "Invoice not found" };
+  if (!existing.isDeleted) return { ok: false as const, error: "Invoice is already active" };
+
+  await db
+    .update(invoices)
+    .set({
+      isDeleted: false,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(invoices.userId, userId), eq(invoices.id, id)));
+
+  const restored = await getInvoiceById(userId, id);
+  if (!restored) return { ok: false as const, error: "Failed to restore invoice" };
+  return { ok: true as const, invoice: restored };
+}
+
+export async function hardDeleteInvoice(userId: string, id: string) {
+  const existing = await getInvoiceById(userId, id);
+  if (!existing) return { ok: false as const, error: "Invoice not found" };
+  if (!existing.isDeleted) {
+    return { ok: false as const, error: "Archive the invoice before deleting it permanently." };
+  }
 
   await db.delete(invoices).where(and(eq(invoices.userId, userId), eq(invoices.id, id)));
   return { ok: true as const };

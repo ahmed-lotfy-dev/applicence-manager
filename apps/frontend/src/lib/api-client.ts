@@ -477,6 +477,25 @@ export async function deleteInvoice(id: string): Promise<boolean> {
   return true;
 }
 
+export async function archiveInvoice(id: string): Promise<boolean> {
+  const response = await apiRequest(`/invoices/${id}/archive`, {
+    method: 'PATCH',
+  });
+  if (response.status === 401) return false;
+  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to archive invoice'));
+  return true;
+}
+
+export async function restoreInvoice(id: string): Promise<Invoice | null> {
+  const response = await apiRequest(`/invoices/${id}/restore`, {
+    method: 'PATCH',
+  });
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to restore invoice'));
+  const data = await parseJsonResponse<{ invoice?: Invoice }>(response);
+  return data?.invoice || null;
+}
+
 export async function fetchBillingStats(): Promise<BillingStats | null> {
   const response = await apiRequest('/invoices/stats');
   if (response.status === 401) return null;

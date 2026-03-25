@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
-import { Button } from '../../../shared/ui/button';
+import { Button, buttonVariants } from '../../../shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/ui/card';
 import { DatePicker } from '../../../shared/ui/date-picker';
 import { Dialog } from '../../../shared/ui/dialog';
@@ -11,7 +11,8 @@ import type { BillingStats, Client, FreelancerProfile, Invoice, InvoicePdfJob } 
 import { z } from 'zod';
 
 type FreelanceOpsView = 'branding' | 'clients' | 'invoices' | 'all';
-type ClientFilter = 'all' | 'active' | 'archived';
+type ClientFilter = 'all' | 'active' | 'inactive' | 'archived';
+type InvoiceFilter = 'all' | 'active' | 'archived';
 
 const brandingSchema = z.object({
   businessName: z.string().trim().min(2, 'Business name is required').max(180, 'Business name is too long'),
@@ -85,7 +86,9 @@ interface FreelanceOpsPanelProps {
       paidAmount?: number;
     },
   ) => Promise<void>;
-  onRemoveInvoice: (id: string) => Promise<void>;
+  onRemoveInvoice: (id: string) => Promise<boolean>;
+  onRestoreInvoice: (id: string) => Promise<Invoice | null>;
+  onHardDeleteInvoice: (id: string) => Promise<{ ok: boolean; error?: string }>;
   onSaveFreelancerProfile: (input: {
     businessName?: string;
     contactEmail?: string;
@@ -136,6 +139,8 @@ export function FreelanceOpsPanel({
   onCreateInvoice,
   onUpdateInvoice,
   onRemoveInvoice,
+  onRestoreInvoice,
+  onHardDeleteInvoice,
   onSaveFreelancerProfile,
   onUploadProfileLogo,
   onQueueInvoicePdf,
@@ -218,20 +223,33 @@ export function FreelanceOpsPanel({
   const [editClientEmail, setEditClientEmail] = useState('');
   const [editClientPhone, setEditClientPhone] = useState('');
   const [clientFilter, setClientFilter] = useState<ClientFilter>('active');
+  const [invoiceFilter, setInvoiceFilter] = useState<InvoiceFilter>('active');
+  const [invoiceToArchive, setInvoiceToArchive] = useState<Invoice | null>(null);
+  const [invoiceToRestore, setInvoiceToRestore] = useState<Invoice | null>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
   const activeClients = useMemo(
-    () => clients.filter((client) => !client.isDeleted),
+    () => clients.filter((client) => !client.isDeleted && client.status === 'active'),
     [clients],
   );
   const filteredClients = useMemo(() => {
     if (clientFilter === 'archived') return clients.filter((client) => client.isDeleted);
-    if (clientFilter === 'active') return clients.filter((client) => !client.isDeleted);
+    if (clientFilter === 'active') return clients.filter((client) => !client.isDeleted && client.status === 'active');
+    if (clientFilter === 'inactive') return clients.filter((client) => !client.isDeleted && client.status === 'inactive');
     return clients;
   }, [clientFilter, clients]);
   const hasClients = activeClients.length > 0;
   const sortedInvoices = useMemo(
-    () => [...invoices].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [invoices],
+    () =>
+      [...invoices]
+        .filter((invoice) => {
+          const isArchived = invoice.isDeleted === true;
+          if (invoiceFilter === 'archived') return isArchived;
+          if (invoiceFilter === 'active') return !isArchived;
+          return true;
+        })
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [invoiceFilter, invoices],
   );
 
   useEffect(() => {
@@ -413,6 +431,60 @@ export function FreelanceOpsPanel({
         : result.error || t("clients.deleteBlocked"),
     });
     setClientToDelete(null);
+  };
+
+  const handleToggleClientStatus = async (client: Client) => {
+    if (client.isDeleted) return;
+    setClientStatus(null);
+    const nextStatus: 'active' | 'inactive' = client.status === 'active' ? 'inactive' : 'active';
+    const updated = await onUpdateClient(client.id, { status: nextStatus });
+    if (updated) {
+      setClientStatus({
+        tone: 'success',
+        message: nextStatus === 'active' ? t('clients.markedActive') : t('clients.markedInactive'),
+      });
+      if (invoiceClientId === client.id && nextStatus === 'inactive') {
+        setInvoiceClientId('');
+      }
+    }
+  };
+
+  const handleArchiveInvoice = async () => {
+    if (!invoiceToArchive) return;
+    setInvoiceRowStatus(null);
+    const ok = await onRemoveInvoice(invoiceToArchive.id);
+    if (ok) {
+      setInvoiceRowStatus({ tone: 'success', message: t("invoice.archiveSuccess") });
+      setInvoiceToArchive(null);
+    }
+  };
+
+  const handleRestoreInvoice = async () => {
+    if (!invoiceToRestore) return;
+    setInvoiceRowStatus(null);
+    const restored = await onRestoreInvoice(invoiceToRestore.id);
+    if (restored) {
+      setInvoiceRowStatus({ tone: 'success', message: t("invoice.restoreSuccess") });
+      setInvoiceToRestore(null);
+    }
+  };
+
+  const handleHardDeleteInvoice = async () => {
+    if (!invoiceToDelete) return;
+    setInvoiceRowStatus(null);
+    const result = await onHardDeleteInvoice(invoiceToDelete.id);
+    if (result.ok) {
+      setInvoiceRowStatus({ tone: 'success', message: t("invoice.deleteSuccess") });
+      setInvoiceToDelete(null);
+      return;
+    }
+    setInvoiceRowStatus({
+      tone: 'error',
+      message: result.error === 'Archive the invoice before deleting it permanently.'
+        ? t("invoice.deleteBlocked")
+        : result.error || t("invoice.deleteBlocked"),
+    });
+    setInvoiceToDelete(null);
   };
 
   const handleCreateInvoiceSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -645,6 +717,7 @@ export function FreelanceOpsPanel({
                   <SelectContent>
                     <SelectItem value="all">{t("clients.filter.all")}</SelectItem>
                     <SelectItem value="active">{t("clients.filter.active")}</SelectItem>
+                    <SelectItem value="inactive">{t("clients.filter.inactive")}</SelectItem>
                     <SelectItem value="archived">{t("clients.filter.archived")}</SelectItem>
                   </SelectContent>
                 </Select>
@@ -690,7 +763,7 @@ export function FreelanceOpsPanel({
                       <Td className="text-slate-300">{client.email || '-'}</Td>
                       <Td className="text-slate-300">{client.phone || '-'}</Td>
                       <Td className="text-slate-300">
-                        {client.isDeleted ? t("clients.archivedBadge") : client.status}
+                        {client.isDeleted ? t("clients.archivedBadge") : t(`clients.statusValue.${client.status}`)}
                       </Td>
                       <Td className="text-right">
                         {client.isDeleted ? (
@@ -727,6 +800,16 @@ export function FreelanceOpsPanel({
                               onClick={() => openEditClient(client)}
                             >
                               {t("clients.edit")}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-white/10 text-white"
+                              onClick={() => {
+                                void handleToggleClientStatus(client);
+                              }}
+                            >
+                              {client.status === 'active' ? t("clients.markInactive") : t("clients.markActive")}
                             </Button>
                             <Button
                               variant="outline"
@@ -825,6 +908,20 @@ export function FreelanceOpsPanel({
               </div>
               <DatePicker value={invoiceDueDate} onChange={setInvoiceDueDate} placeholder={t('invoice.pickDueDate')} />
             </form>
+            <div className="flex justify-end">
+              <div className="w-40">
+                <Select value={invoiceFilter} onValueChange={(value) => setInvoiceFilter(value as InvoiceFilter)}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("invoice.filter.all")}</SelectItem>
+                    <SelectItem value="active">{t("invoice.filter.active")}</SelectItem>
+                    <SelectItem value="archived">{t("invoice.filter.archived")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             {invoiceCreateStatus && (
               <div
                 className={`rounded-lg border p-3 text-sm ${
@@ -895,42 +992,54 @@ export function FreelanceOpsPanel({
                           }
                         />
                       </Td>
-                      <Td>
-                        <Select
-                          value={invoiceStatusMap[invoice.id] ?? invoice.status}
-                          onValueChange={(value) =>
-                            setInvoiceStatusMap((prev) => ({
-                              ...prev,
-                              [invoice.id]: value as Invoice['status'],
-                            }))
-                          }
-                        >
-                          <SelectTrigger className="h-9 rounded-lg px-2">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="draft">{invoiceStatusLabel('draft')}</SelectItem>
-                            <SelectItem value="sent">{invoiceStatusLabel('sent')}</SelectItem>
-                            <SelectItem value="partially_paid">{invoiceStatusLabel('partially_paid')}</SelectItem>
-                            <SelectItem value="paid">{invoiceStatusLabel('paid')}</SelectItem>
-                            <SelectItem value="overdue">{invoiceStatusLabel('overdue')}</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <Td className="text-slate-300">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span>{invoiceStatusLabel(invoice.status)}</span>
+                            {invoice.isDeleted && (
+                              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-100">
+                                {t("invoice.archivedBadge")}
+                              </span>
+                            )}
+                          </div>
+                          {!invoice.isDeleted && (
+                            <Select
+                              value={invoiceStatusMap[invoice.id] ?? invoice.status}
+                              onValueChange={(value) =>
+                                setInvoiceStatusMap((prev) => ({
+                                  ...prev,
+                                  [invoice.id]: value as Invoice['status'],
+                                }))
+                              }
+                            >
+                              <SelectTrigger className="h-9 rounded-full px-3">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="draft">{invoiceStatusLabel('draft')}</SelectItem>
+                                <SelectItem value="sent">{invoiceStatusLabel('sent')}</SelectItem>
+                                <SelectItem value="partially_paid">{invoiceStatusLabel('partially_paid')}</SelectItem>
+                                <SelectItem value="paid">{invoiceStatusLabel('paid')}</SelectItem>
+                                <SelectItem value="overdue">{invoiceStatusLabel('overdue')}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
                       </Td>
                       <Td>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-xs text-slate-300">
+                        <div className="space-y-2">
+                          <span className="text-xs font-medium uppercase tracking-[0.14em] text-text-muted/80">
                             {invoicePdfJobStatusLabel(invoicePdfJobs[invoice.id]?.status)}
                           </span>
                           {(invoicePdfJobs[invoice.id]?.status === 'pending' ||
                             invoicePdfJobs[invoice.id]?.status === 'processing') && (
-                            <span className="text-[11px] text-slate-500">{t("invoice.autoChecking")}</span>
+                            <span className="block text-[11px] text-slate-500">{t("invoice.autoChecking")}</span>
                           )}
-                          <div className="flex gap-1">
+                          <div className="flex flex-wrap gap-2">
                             <Button
                               variant="outline"
                               size="sm"
-                              className="border-white/10 text-white"
+                              className="min-w-[5.5rem] border-white/10 text-white"
                               onClick={() => {
                                 void onQueueInvoicePdf(invoice.id);
                               }}
@@ -940,7 +1049,7 @@ export function FreelanceOpsPanel({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="border-white/10 text-white"
+                              className="min-w-[5.5rem] border-white/10 text-white"
                               onClick={() => {
                                 void onRefreshInvoicePdfJob(invoice.id);
                               }}
@@ -953,7 +1062,11 @@ export function FreelanceOpsPanel({
                                 download={buildInvoicePdfFileName(invoice)}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex h-8 items-center rounded-md border border-white/10 px-2 text-xs text-white"
+                                className={buttonVariants({
+                                  variant: 'secondary',
+                                  size: 'sm',
+                                  className: 'min-w-[5.5rem] !text-white',
+                                })}
                               >
                                 {t("invoice.download")}
                               </a>
@@ -961,27 +1074,59 @@ export function FreelanceOpsPanel({
                           </div>
                         </div>
                       </Td>
-                      <Td className="text-right space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-white/10 text-white"
-                          onClick={() => {
-                            void handleInvoiceRowSave(invoice);
-                          }}
-                        >
-                          {t('invoice.save')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-white/10 text-white"
-                          onClick={() => {
-                            void onRemoveInvoice(invoice.id);
-                          }}
-                        >
-                          {t('invoice.delete')}
-                        </Button>
+                      <Td className="text-right">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {invoice.isDeleted ? (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="min-w-[6.5rem] border-white/10 text-white"
+                                onClick={() => {
+                                  setInvoiceRowStatus(null);
+                                  setInvoiceToRestore(invoice);
+                                }}
+                              >
+                                {t('invoice.restore')}
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="min-w-[6.5rem]"
+                                onClick={() => {
+                                  setInvoiceRowStatus(null);
+                                  setInvoiceToDelete(invoice);
+                                }}
+                              >
+                                {t('invoice.delete')}
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="min-w-[5.5rem] border-white/10 text-white"
+                                onClick={() => {
+                                  void handleInvoiceRowSave(invoice);
+                                }}
+                              >
+                                {t('invoice.save')}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="min-w-[6.5rem] border-white/10 text-white"
+                                onClick={() => {
+                                  setInvoiceRowStatus(null);
+                                  setInvoiceToArchive(invoice);
+                                }}
+                              >
+                                {t('invoice.archive')}
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </Td>
                     </tr>
                   ))}
@@ -998,6 +1143,84 @@ export function FreelanceOpsPanel({
           </CardContent>
           </Card>
         )}
+
+      <Dialog
+        open={invoiceToRestore !== null}
+        onOpenChange={(open) => {
+          if (!open) setInvoiceToRestore(null);
+        }}
+        title={t("invoice.restoreTitle")}
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-slate-300">{t("invoice.restoreDescription")}</p>
+          {invoiceToRestore && (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-100">
+              {invoiceToRestore.invoiceNo}
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" className="border-white/10 text-white" onClick={() => setInvoiceToRestore(null)}>
+              {t("clients.archiveCancel")}
+            </Button>
+            <Button type="button" onClick={() => void handleRestoreInvoice()}>
+              {t("invoice.restoreConfirm")}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={invoiceToArchive !== null}
+        onOpenChange={(open) => {
+          if (!open) setInvoiceToArchive(null);
+        }}
+        title={t("invoice.archiveTitle")}
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-slate-300">{t("invoice.archiveDescription")}</p>
+          {invoiceToArchive && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+              {invoiceToArchive.invoiceNo}
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" className="border-white/10 text-white" onClick={() => setInvoiceToArchive(null)}>
+              {t("clients.archiveCancel")}
+            </Button>
+            <Button type="button" onClick={() => void handleArchiveInvoice()}>
+              {t("invoice.archiveConfirm")}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={invoiceToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setInvoiceToDelete(null);
+        }}
+        title={t("invoice.deleteTitle")}
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-slate-300">{t("invoice.deleteDescription")}</p>
+          {invoiceToDelete && (
+            <div className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+              {invoiceToDelete.invoiceNo}
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" className="border-white/10 text-white" onClick={() => setInvoiceToDelete(null)}>
+              {t("clients.archiveCancel")}
+            </Button>
+            <Button type="button" className="bg-danger text-white hover:bg-danger/90" onClick={() => void handleHardDeleteInvoice()}>
+              {t("invoice.deleteConfirm")}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
 
       <Dialog
         open={clientToEdit !== null}
