@@ -97,6 +97,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     updateExistingLicense,
     removeLicense,
     changeLicenseStatus,
+    deleteActivation: deleteActivationFn,
   } = useDashboardData(onLogout);
 
   const filteredActivations = useMemo(() => {
@@ -226,6 +227,9 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 }}
                 onRevokeActivation={async (id) => {
                   await changeStatus(id, "revoke");
+                }}
+                onDeleteActivation={async (id) => {
+                  await deleteActivationFn(id);
                 }}
               />
             )}

@@ -49,6 +49,7 @@ export function useLicensingPanel(props: LicensesPanelProps) {
     onChangeLicenseStatus,
     onApproveActivation,
     onRevokeActivation,
+    onDeleteActivation,
   } = props;
 
   const summaries = useMemo(() => buildAppSummaries(licenses), [licenses]);
@@ -109,6 +110,9 @@ export function useLicensingPanel(props: LicensesPanelProps) {
     LicensesPanelProps["licenses"][number] | null
   >(null);
   const [activationToRevoke, setActivationToRevoke] = useState<
+    LicensesPanelProps["activations"][number] | null
+  >(null);
+  const [activationToDelete, setActivationToDelete] = useState<
     LicensesPanelProps["activations"][number] | null
   >(null);
 
@@ -227,6 +231,7 @@ export function useLicensingPanel(props: LicensesPanelProps) {
     licenseToDelete,
     licenseToRevoke,
     activationToRevoke,
+    activationToDelete,
     handleSectionChange,
     handleFilterChange,
     handleQueryChange,
@@ -245,6 +250,7 @@ export function useLicensingPanel(props: LicensesPanelProps) {
     setLicenseToDelete,
     setLicenseToRevoke,
     setActivationToRevoke,
+    setActivationToDelete,
     handleCreateApp,
     handleCreateLicense,
     handleCreateLockedLicense,
@@ -256,5 +262,6 @@ export function useLicensingPanel(props: LicensesPanelProps) {
     onRemoveApp,
     onChangeLicenseStatus,
     onRemoveLicense,
+    onDeleteActivation,
   };
 }

@@ -1,34 +1,45 @@
-import type { Stats } from "../types/dashboard";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
-import { Card, CardContent } from "../../../shared/ui/card";
+import { useLicensingPanelContext } from "../hooks/LicensingPanelContext";
 
-interface StatsCardsProps {
-  stats: Stats;
-}
-
-const ITEMS = [
-  { key: "total", labelKey: "stats.total", tone: "text-primary", accent: "bg-primary" },
-  { key: "active", labelKey: "stats.active", tone: "text-emerald-300", accent: "bg-emerald-300" },
-  { key: "pending", labelKey: "stats.pending", tone: "text-warning", accent: "bg-warning" },
-  { key: "revoked", labelKey: "stats.revoked", tone: "text-danger", accent: "bg-danger" },
-] as const;
-
-export function StatsCards({ stats }: StatsCardsProps) {
+export function StatsCards() {
   const { t } = useI18n();
-  const asCount = (value: number) =>
-    new Intl.NumberFormat("en-US").format(value);
+  const state = useLicensingPanelContext();
+  const { stats } = state.props;
 
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4 mb-6">
-      {ITEMS.map((item) => (
-        <Card key={item.key} className="overflow-hidden rounded-[1.375rem]">
-          <CardContent className="relative px-8 py-7">
-            <div className={`absolute left-8 top-0 h-1.5 w-16 rounded-b-full ${item.accent}`} />
-            <p className="mb-3 text-[11px] uppercase font-semibold tracking-[0.18em] text-text-muted/70">{t(item.labelKey)}</p>
-            <p className={`metric-value text-5xl font-black tracking-tight ${item.tone}`}>{asCount(stats[item.key])}</p>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-6 shadow-soft transition-all hover:bg-white/[0.05]">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+          {t("licensing.stats.totalApps")}
+        </p>
+        <p className="mt-2 text-3xl font-bold text-white tabular-nums">
+          {stats.totalApps}
+        </p>
+      </div>
+      <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-6 shadow-soft transition-all hover:bg-white/[0.05]">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+          {t("licensing.stats.totalLicenses")}
+        </p>
+        <p className="mt-2 text-3xl font-bold text-white tabular-nums">
+          {stats.totalLicenses}
+        </p>
+      </div>
+      <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-6 shadow-soft transition-all hover:bg-white/[0.05]">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500/80">
+          {t("licensing.stats.totalActivations")}
+        </p>
+        <p className="mt-2 text-3xl font-bold text-emerald-400 tabular-nums">
+          {stats.totalActivations}
+        </p>
+      </div>
+      <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-6 shadow-soft transition-all hover:bg-white/[0.05]">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500/80">
+          {t("licensing.stats.activeKeysPercentage")}
+        </p>
+        <p className="mt-2 text-3xl font-bold text-amber-400 tabular-nums">
+          {stats.activeKeysPercentage}%
+        </p>
+      </div>
     </div>
   );
 }

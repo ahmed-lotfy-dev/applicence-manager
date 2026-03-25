@@ -1,4 +1,10 @@
-import type { Activation, ActivationFilter, License, ManagedApp, Stats } from "../types/dashboard";
+import type {
+  Activation,
+  ActivationFilter,
+  License,
+  ManagedApp,
+  Stats,
+} from "../types/dashboard";
 
 export interface LicensesPanelProps {
   activations: Activation[];
@@ -10,7 +16,10 @@ export interface LicensesPanelProps {
   activationFilter: ActivationFilter;
   onActivationFilterChange: (value: ActivationFilter) => void;
   onCreateApp: (name: string) => Promise<boolean>;
-  onUpdateApp: (id: string, input: { name?: string; status?: "active" | "inactive" }) => Promise<void>;
+  onUpdateApp: (
+    id: string,
+    input: { name?: string; status?: "active" | "inactive" },
+  ) => Promise<void>;
   onRemoveApp: (id: string) => Promise<void>;
   onCreateLicense: (input: {
     appName: string;
@@ -22,7 +31,10 @@ export interface LicensesPanelProps {
     input: { maxActivations?: number; status?: "active" | "revoked" },
   ) => Promise<void>;
   onRemoveLicense: (id: string) => Promise<void>;
-  onChangeLicenseStatus: (id: string, nextStatus: "active" | "revoked") => Promise<void>;
+  onChangeLicenseStatus: (
+    id: string,
+    nextStatus: "active" | "revoked",
+  ) => Promise<void>;
   isCreatingLicense: boolean;
   isCreatingApp: boolean;
   appActionLoadingId: string | null;
@@ -32,6 +44,7 @@ export interface LicensesPanelProps {
   activationError: string;
   onApproveActivation: (id: string) => Promise<void>;
   onRevokeActivation: (id: string) => Promise<void>;
+  onDeleteActivation: (id: string) => Promise<void>;
 }
 
 export interface AppSummary {

@@ -1,21 +1,3 @@
-import { useMemo, useState } from "react";
-import type { FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
-import { ActivationsTable } from "./ActivationsTable";
-import { FilterTabs } from "./FilterTabs";
-import type {
-  AppSummary,
-  EditAppState,
-  EditLicenseState,
-  LicensesPanelProps,
-} from "./LicensesPanel.types";
-import { LicensesAppManagementCard } from "./LicensesAppManagementCard";
-import { LicensesCreateDialog } from "./LicensesCreateDialog";
-import { LicensesCreateLockedDialog } from "./LicensesCreateLockedDialog";
-import { LicensesEditAppDialog } from "./LicensesEditAppDialog";
-import { LicensesEditLicenseDialog } from "./LicensesEditLicenseDialog";
-import { LicensesInventoryCard } from "./LicensesInventoryCard";
-import { StatsCards } from "./StatsCards";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Button } from "../../../shared/ui/button";
 import {
@@ -24,221 +6,23 @@ import {
   CardHeader,
   CardTitle,
 } from "../../../shared/ui/card";
-import { Dialog } from "../../../shared/ui/dialog";
 import { Input } from "../../../shared/ui/input";
-
-function buildAppSummaries(
-  licenses: LicensesPanelProps["licenses"],
-): AppSummary[] {
-  const map = new Map<string, AppSummary>();
-  for (const license of licenses) {
-    const current = map.get(license.appName) || {
-      appName: license.appName,
-      licenses: 0,
-      activeActivations: 0,
-      maxActivations: 0,
-    };
-    current.licenses += 1;
-    current.activeActivations += license.activeActivations;
-    current.maxActivations += license.maxActivations;
-    map.set(license.appName, current);
-  }
-  return Array.from(map.values()).sort((a, b) =>
-    a.appName.localeCompare(b.appName),
-  );
-}
+import { useLicensingPanel } from "../hooks/useLicensingPanel";
+import { ActivationsTable } from "./ActivationsTable";
+import { FilterTabs } from "./FilterTabs";
+import type { LicensesPanelProps } from "./LicensesPanel.types";
+import { LicensesAppManagementCard } from "./LicensesAppManagementCard";
+import { LicensesCreateDialog } from "./LicensesCreateDialog";
+import { LicensesCreateLockedDialog } from "./LicensesCreateLockedDialog";
+import { LicensesEditAppDialog } from "./LicensesEditAppDialog";
+import { LicensesEditLicenseDialog } from "./LicensesEditLicenseDialog";
+import { LicensesInventoryCard } from "./LicensesInventoryCard";
+import { StatsCards } from "./StatsCards";
+import { LicensingDialogs } from "./LicensingDialogs";
 
 export function LicensesPanel(props: LicensesPanelProps) {
   const { t } = useI18n();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const urlTab = searchParams.get("tab");
-  const urlFilter = searchParams.get("filter");
-  const urlQuery = searchParams.get("q") || "";
-
-  const initialSection: "licenses" | "activations" =
-    urlTab === "activations" ? "activations" : "licenses";
-  const {
-    activations,
-    licenses,
-    apps,
-    stats,
-    filterValue,
-    onFilterChange,
-    activationFilter,
-    onActivationFilterChange,
-    onCreateApp,
-    onUpdateApp,
-    onRemoveApp,
-    onCreateLicense,
-    onUpdateLicense,
-    onRemoveLicense,
-    onChangeLicenseStatus,
-    isCreatingLicense,
-    isCreatingApp,
-    appActionLoadingId,
-    licenseActionLoadingId,
-    activationActionLoadingId,
-    loadingActivations,
-    activationError,
-    onApproveActivation,
-    onRevokeActivation,
-  } = props;
-
-  const summaries = useMemo(() => buildAppSummaries(licenses), [licenses]);
-  const [section, setSection] = useState<"licenses" | "activations">(
-    urlTab === "activations" ? "activations" : "licenses",
-  );
-  const [activationQuery, setActivationQuery] = useState(urlQuery);
-
-  const handleSectionChange = (newSection: "licenses" | "activations") => {
-    setSection(newSection);
-    // Preserve other params when changing tab
-    const params = new URLSearchParams(searchParams);
-    params.set("tab", newSection);
-    setSearchParams(params);
-  };
-
-  const handleFilterChange = (newFilter: string) => {
-    onActivationFilterChange(newFilter as typeof activationFilter);
-    const params = new URLSearchParams(searchParams);
-    if (newFilter && newFilter !== "all") {
-      params.set("filter", newFilter);
-    } else {
-      params.delete("filter");
-    }
-    setSearchParams(params);
-  };
-
-  const handleQueryChange = (newQuery: string) => {
-    setActivationQuery(newQuery);
-    const params = new URLSearchParams(searchParams);
-    if (newQuery) {
-      params.set("q", newQuery);
-    } else {
-      params.delete("q");
-    }
-    setSearchParams(params);
-  };
-  const [newAppName, setNewAppName] = useState("");
-  const [createLicenseOpen, setCreateLicenseOpen] = useState(false);
-  const [createLockedLicenseOpen, setCreateLockedLicenseOpen] = useState(false);
-  const [createLicenseAppId, setCreateLicenseAppId] = useState("");
-  const [createLicenseMax, setCreateLicenseMax] = useState("1");
-  const [createLockedLicenseAppId, setCreateLockedLicenseAppId] = useState("");
-  const [lockedMachineId, setLockedMachineId] = useState("");
-  const [createLockedLicenseMax, setCreateLockedLicenseMax] = useState("1");
-  const [createdLockedLicenseKey, setCreatedLockedLicenseKey] = useState("");
-  const [editingApp, setEditingApp] = useState<EditAppState | null>(null);
-  const [editingLicense, setEditingLicense] = useState<EditLicenseState | null>(
-    null,
-  );
-  const [appToDelete, setAppToDelete] = useState<
-    LicensesPanelProps["apps"][number] | null
-  >(null);
-  const [licenseToDelete, setLicenseToDelete] = useState<
-    LicensesPanelProps["licenses"][number] | null
-  >(null);
-  const [licenseToRevoke, setLicenseToRevoke] = useState<
-    LicensesPanelProps["licenses"][number] | null
-  >(null);
-  const [activationToRevoke, setActivationToRevoke] = useState<
-    LicensesPanelProps["activations"][number] | null
-  >(null);
-
-  const openLockedLicenseFromActivation = (
-    activation: LicensesPanelProps["activations"][number],
-  ) => {
-    const matchingApp = apps.find((app) => app.name === activation.appName);
-    setCreateLockedLicenseAppId(matchingApp?.id || "");
-    setLockedMachineId(activation.machineId);
-    setCreateLockedLicenseMax("1");
-    setCreatedLockedLicenseKey("");
-    setCreateLockedLicenseOpen(true);
-  };
-
-  const handleCreateApp = async (event: FormEvent) => {
-    event.preventDefault();
-    const name = newAppName.trim();
-    if (!name) return;
-    const ok = await onCreateApp(name);
-    if (ok) setNewAppName("");
-  };
-
-  const handleCreateLicense = async (event: FormEvent) => {
-    event.preventDefault();
-    const app = apps.find((item) => item.id === createLicenseAppId);
-    const maxActivations = Number(createLicenseMax);
-    if (!app || Number.isNaN(maxActivations) || maxActivations < 1) return;
-    const created = await onCreateLicense({
-      appName: app.name,
-      maxActivations,
-    });
-    if (created) {
-      setCreateLicenseOpen(false);
-      setCreateLicenseAppId("");
-      setCreateLicenseMax("1");
-    }
-  };
-
-  const handleCreateLockedLicense = async (event: FormEvent) => {
-    event.preventDefault();
-    const app = apps.find((item) => item.id === createLockedLicenseAppId);
-    const maxActivations = Number(createLockedLicenseMax);
-    const machineId = lockedMachineId.trim();
-    if (
-      !app ||
-      Number.isNaN(maxActivations) ||
-      maxActivations < 1 ||
-      machineId.length < 6
-    )
-      return;
-    const created = await onCreateLicense({
-      appName: app.name,
-      maxActivations,
-      lockedMachineId: machineId,
-    });
-    if (created) setCreatedLockedLicenseKey(created.licenseKey);
-  };
-
-  const handleSubmitEditApp = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!editingApp) return;
-    const name = editingApp.name.trim();
-    if (!name) return;
-    await onUpdateApp(editingApp.id, { name, status: editingApp.status });
-    setEditingApp(null);
-  };
-
-  const handleSubmitEditLicense = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!editingLicense) return;
-    const maxActivations = Number(editingLicense.maxActivations);
-    if (Number.isNaN(maxActivations) || maxActivations < 1) return;
-    await onUpdateLicense(editingLicense.id, {
-      maxActivations,
-      status: editingLicense.status,
-    });
-    setEditingLicense(null);
-  };
-
-  const filteredActivations = useMemo(() => {
-    const query = activationQuery.trim().toLowerCase();
-    return activations.filter((activation) => {
-      if (activationFilter !== "all" && activation.status !== activationFilter)
-        return false;
-      if (!query) return true;
-      return (
-        activation.appName.toLowerCase().includes(query) ||
-        activation.licenseKey.toLowerCase().includes(query) ||
-        activation.machineId.toLowerCase().includes(query) ||
-        (activation.shopName || "").toLowerCase().includes(query) ||
-        (activation.phone || "").toLowerCase().includes(query) ||
-        (activation.notes || "").toLowerCase().includes(query) ||
-        (activation.requestReason || "").toLowerCase().includes(query) ||
-        (activation.requestPlatform || "").toLowerCase().includes(query)
-      );
-    });
-  }, [activationFilter, activationQuery, activations]);
+  const state = useLicensingPanel(props);
 
   return (
     <section className="mb-6 space-y-4">
@@ -246,10 +30,10 @@ export function LicensesPanel(props: LicensesPanelProps) {
         <CardHeader className="border-b border-white/5">
           <div className="flex flex-wrap gap-2">
             <Button
-              variant={section === "licenses" ? "default" : "ghost"}
-              onClick={() => handleSectionChange("licenses")}
+              variant={state.section === "licenses" ? "default" : "ghost"}
+              onClick={() => state.handleSectionChange("licenses")}
               className={
-                section === "licenses"
+                state.section === "licenses"
                   ? "rounded-xl"
                   : "rounded-xl text-slate-300 hover:text-white"
               }
@@ -257,10 +41,10 @@ export function LicensesPanel(props: LicensesPanelProps) {
               {t("licensing.section.licenses")}
             </Button>
             <Button
-              variant={section === "activations" ? "default" : "ghost"}
-              onClick={() => handleSectionChange("activations")}
+              variant={state.section === "activations" ? "default" : "ghost"}
+              onClick={() => state.handleSectionChange("activations")}
               className={
-                section === "activations"
+                state.section === "activations"
                   ? "rounded-xl"
                   : "rounded-xl text-slate-300 hover:text-white"
               }
@@ -270,36 +54,37 @@ export function LicensesPanel(props: LicensesPanelProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4 p-4 md:p-6">
-          {section === "licenses" ? (
+          {state.section === "licenses" ? (
             <>
               <LicensesAppManagementCard
-                apps={apps}
-                summaries={summaries}
-                filterValue={filterValue}
-                newAppName={newAppName}
-                isCreatingApp={isCreatingApp}
-                appActionLoadingId={appActionLoadingId}
-                onFilterChange={onFilterChange}
-                onNewAppNameChange={setNewAppName}
-                onCreateAppSubmit={handleCreateApp}
-                onEditApp={setEditingApp}
+                apps={props.apps}
+                summaries={state.summaries}
+                filterValue={props.filterValue}
+                newAppName={state.newAppName}
+                isCreatingApp={props.isCreatingApp}
+                appActionLoadingId={props.appActionLoadingId}
+                onFilterChange={props.onFilterChange}
+                onNewAppNameChange={state.setNewAppName}
+                onCreateAppSubmit={state.handleCreateApp}
+                onEditApp={state.setEditingApp}
                 onRemoveApp={(id) => {
-                  const target = apps.find((app) => app.id === id) ?? null;
-                  setAppToDelete(target);
+                  const target =
+                    props.apps.find((app) => app.id === id) ?? null;
+                  state.setAppToDelete(target);
                 }}
               />
 
               <LicensesInventoryCard
-                appsCount={apps.length}
-                licenses={licenses}
-                licenseActionLoadingId={licenseActionLoadingId}
-                onOpenCreateLicense={() => setCreateLicenseOpen(true)}
+                appsCount={props.apps.length}
+                licenses={props.licenses}
+                licenseActionLoadingId={props.licenseActionLoadingId}
+                onOpenCreateLicense={() => state.setCreateLicenseOpen(true)}
                 onOpenCreateLockedLicense={() => {
-                  setCreatedLockedLicenseKey("");
-                  setCreateLockedLicenseOpen(true);
+                  state.setCreatedLockedLicenseKey("");
+                  state.setCreateLockedLicenseOpen(true);
                 }}
                 onEditLicense={(id, maxActivations, status) =>
-                  setEditingLicense({
+                  state.setEditingLicense({
                     id,
                     maxActivations: String(maxActivations),
                     status,
@@ -308,22 +93,23 @@ export function LicensesPanel(props: LicensesPanelProps) {
                 onChangeLicenseStatus={(id, nextStatus) => {
                   if (nextStatus === "revoked") {
                     const target =
-                      licenses.find((license) => license.id === id) ?? null;
-                    setLicenseToRevoke(target);
+                      props.licenses.find((license) => license.id === id) ??
+                      null;
+                    state.setLicenseToRevoke(target);
                     return;
                   }
-                  void onChangeLicenseStatus(id, nextStatus);
+                  void state.onChangeLicenseStatus(id, nextStatus);
                 }}
                 onRemoveLicense={(id) => {
                   const target =
-                    licenses.find((license) => license.id === id) ?? null;
-                  setLicenseToDelete(target);
+                    props.licenses.find((license) => license.id === id) ?? null;
+                  state.setLicenseToDelete(target);
                 }}
               />
             </>
           ) : (
             <>
-              <StatsCards stats={stats} />
+              <StatsCards stats={props.stats} />
               <Card className="rounded-[1.5rem] bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
                 <CardHeader className="space-y-3 border-b border-white/5 px-8 py-7">
                   <CardTitle className="text-lg text-white">
@@ -332,9 +118,9 @@ export function LicensesPanel(props: LicensesPanelProps) {
                   <p className="text-sm text-slate-400">
                     {t("licensing.activationsSubtitle")}
                   </p>
-                  {activationError && (
+                  {props.activationError && (
                     <div className="rounded-lg border border-danger/30 bg-danger/20 p-3 text-sm text-danger">
-                      {activationError}
+                      {props.activationError}
                     </div>
                   )}
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_14rem]">
@@ -344,35 +130,44 @@ export function LicensesPanel(props: LicensesPanelProps) {
                       </p>
                       <Input
                         placeholder={t("licensing.searchPlaceholder")}
-                        value={activationQuery}
+                        value={state.activationQuery}
                         onChange={(event) =>
-                          handleQueryChange(event.target.value)
+                          state.handleQueryChange(event.target.value)
                         }
                       />
                     </div>
                     <FilterTabs
-                      selectedTab={activationFilter}
-                      onSelect={handleFilterChange}
+                      selectedTab={props.activationFilter}
+                      onSelect={state.handleFilterChange}
                     />
                   </div>
                 </CardHeader>
                 <CardContent className="px-8 pb-8 pt-0">
                   <div className="overflow-hidden rounded-[1.25rem] border border-white/5 bg-white/5">
                     <ActivationsTable
-                      activations={filteredActivations}
-                      loading={loadingActivations}
-                      actionLoadingId={activationActionLoadingId}
+                      activations={state.filteredActivations}
+                      loading={props.loadingActivations}
+                      actionLoadingId={props.activationActionLoadingId}
                       onApprove={(id) => {
-                        void onApproveActivation(id);
+                        void state.onApproveActivation(id);
                       }}
                       onRevoke={(id) => {
                         const target =
-                          activations.find(
+                          props.activations.find(
                             (activation) => activation.id === id,
                           ) ?? null;
-                        setActivationToRevoke(target);
+                        state.setActivationToRevoke(target);
                       }}
-                      onGenerateLockedLicense={openLockedLicenseFromActivation}
+                      onDelete={(id) => {
+                        const target =
+                          props.activations.find(
+                            (activation) => activation.id === id,
+                          ) ?? null;
+                        state.setActivationToDelete(target);
+                      }}
+                      onGenerateLockedLicense={
+                        state.openLockedLicenseFromActivation
+                      }
                     />
                   </div>
                 </CardContent>
@@ -383,265 +178,94 @@ export function LicensesPanel(props: LicensesPanelProps) {
       </Card>
 
       <LicensesCreateDialog
-        open={createLicenseOpen}
-        apps={apps}
-        appId={createLicenseAppId}
-        maxActivations={createLicenseMax}
-        isCreating={isCreatingLicense}
-        onOpenChange={setCreateLicenseOpen}
-        onAppIdChange={setCreateLicenseAppId}
-        onMaxActivationsChange={setCreateLicenseMax}
-        onSubmit={handleCreateLicense}
+        open={state.createLicenseOpen}
+        apps={props.apps}
+        appId={state.createLicenseAppId}
+        maxActivations={state.createLicenseMax}
+        isCreating={props.isCreatingLicense}
+        onOpenChange={state.setCreateLicenseOpen}
+        onAppIdChange={state.setCreateLicenseAppId}
+        onMaxActivationsChange={state.setCreateLicenseMax}
+        onSubmit={state.handleCreateLicense}
       />
 
       <LicensesCreateLockedDialog
-        open={createLockedLicenseOpen}
-        apps={apps}
-        appId={createLockedLicenseAppId}
-        machineId={lockedMachineId}
-        maxActivations={createLockedLicenseMax}
-        generatedKey={createdLockedLicenseKey}
-        isCreating={isCreatingLicense}
+        open={state.createLockedLicenseOpen}
+        apps={props.apps}
+        appId={state.createLockedLicenseAppId}
+        machineId={state.lockedMachineId}
+        maxActivations={state.createLockedLicenseMax}
+        generatedKey={state.createdLockedLicenseKey}
+        isCreating={props.isCreatingLicense}
         onOpenChange={(open) => {
-          setCreateLockedLicenseOpen(open);
+          state.setCreateLockedLicenseOpen(open);
           if (!open) {
-            setCreateLockedLicenseAppId("");
-            setCreateLockedLicenseMax("1");
-            setLockedMachineId("");
-            setCreatedLockedLicenseKey("");
+            state.setCreateLockedLicenseAppId("");
+            state.setCreateLockedLicenseMax("1");
+            state.setLockedMachineId("");
+            state.setCreatedLockedLicenseKey("");
           }
         }}
-        onAppIdChange={setCreateLockedLicenseAppId}
-        onMachineIdChange={setLockedMachineId}
-        onMaxActivationsChange={setCreateLockedLicenseMax}
-        onSubmit={handleCreateLockedLicense}
+        onAppIdChange={state.setCreateLockedLicenseAppId}
+        onMachineIdChange={state.setLockedMachineId}
+        onMaxActivationsChange={state.setCreateLockedLicenseMax}
+        onSubmit={state.handleCreateLockedLicense}
       />
 
       <LicensesEditAppDialog
-        app={editingApp}
-        appActionLoadingId={appActionLoadingId}
-        onOpenChange={(open) => !open && setEditingApp(null)}
-        onAppChange={setEditingApp}
-        onSubmit={handleSubmitEditApp}
+        app={state.editingApp}
+        appActionLoadingId={props.appActionLoadingId}
+        onOpenChange={(open) => !open && state.setEditingApp(null)}
+        onAppChange={state.setEditingApp}
+        onSubmit={state.handleSubmitEditApp}
       />
 
       <LicensesEditLicenseDialog
-        license={editingLicense}
-        licenseActionLoadingId={licenseActionLoadingId}
-        onOpenChange={(open) => !open && setEditingLicense(null)}
-        onLicenseChange={setEditingLicense}
-        onSubmit={handleSubmitEditLicense}
+        license={state.editingLicense}
+        licenseActionLoadingId={props.licenseActionLoadingId}
+        onOpenChange={(open) => !open && state.setEditingLicense(null)}
+        onLicenseChange={state.setEditingLicense}
+        onSubmit={state.handleSubmitEditLicense}
       />
 
-      <Dialog
-        open={appToDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) setAppToDelete(null);
+      <LicensingDialogs
+        appToDelete={state.appToDelete}
+        licenseToRevoke={state.licenseToRevoke}
+        licenseToDelete={state.licenseToDelete}
+        activationToRevoke={state.activationToRevoke}
+        activationToDelete={state.activationToDelete}
+        appActionLoadingId={props.appActionLoadingId}
+        licenseActionLoadingId={props.licenseActionLoadingId}
+        activationActionLoadingId={props.activationActionLoadingId}
+        onAppDeleteCancel={() => state.setAppToDelete(null)}
+        onAppDeleteConfirm={(id) => {
+          void state.onRemoveApp(id).finally(() => state.setAppToDelete(null));
         }}
-        title={t("licensing.appDeleteTitle")}
-        maxWidthClassName="max-w-md"
-      >
-        <div className="space-y-4">
-          <p className="text-sm leading-6 text-slate-300">
-            {t("licensing.appDeleteDescription")}
-          </p>
-          {appToDelete ? (
-            <div className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
-              <div className="font-semibold text-white">{appToDelete.name}</div>
-            </div>
-          ) : null}
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="border-white/10 text-white"
-              onClick={() => setAppToDelete(null)}
-            >
-              {t("clients.archiveCancel")}
-            </Button>
-            <Button
-              type="button"
-              className="bg-danger text-white hover:bg-danger/90"
-              disabled={!appToDelete || appActionLoadingId === appToDelete.id}
-              onClick={() => {
-                if (!appToDelete) return;
-                void onRemoveApp(appToDelete.id).finally(() => {
-                  setAppToDelete(null);
-                });
-              }}
-            >
-              {t("licensing.appDeleteConfirm")}
-            </Button>
-          </div>
-        </div>
-      </Dialog>
-
-      <Dialog
-        open={licenseToRevoke !== null}
-        onOpenChange={(open) => {
-          if (!open) setLicenseToRevoke(null);
+        onLicenseRevokeCancel={() => state.setLicenseToRevoke(null)}
+        onLicenseRevokeConfirm={(id) => {
+          void state
+            .onChangeLicenseStatus(id, "revoked")
+            .finally(() => state.setLicenseToRevoke(null));
         }}
-        title={t("licensing.revokeTitle")}
-        maxWidthClassName="max-w-md"
-      >
-        <div className="space-y-4">
-          <p className="text-sm leading-6 text-slate-300">
-            {t("licensing.revokeDescription")}
-          </p>
-          {licenseToRevoke ? (
-            <div className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
-              <div className="font-semibold text-white">
-                {licenseToRevoke.appName}
-              </div>
-              <div className="mt-1 font-mono text-xs text-danger">
-                {licenseToRevoke.licenseKey}
-              </div>
-            </div>
-          ) : null}
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="border-white/10 text-white"
-              onClick={() => setLicenseToRevoke(null)}
-            >
-              {t("clients.archiveCancel")}
-            </Button>
-            <Button
-              type="button"
-              className="bg-danger text-white hover:bg-danger/90"
-              disabled={
-                !licenseToRevoke ||
-                licenseActionLoadingId === licenseToRevoke.id
-              }
-              onClick={() => {
-                if (!licenseToRevoke) return;
-                void onChangeLicenseStatus(
-                  licenseToRevoke.id,
-                  "revoked",
-                ).finally(() => {
-                  setLicenseToRevoke(null);
-                });
-              }}
-            >
-              {t("licensing.revokeConfirm")}
-            </Button>
-          </div>
-        </div>
-      </Dialog>
-
-      <Dialog
-        open={licenseToDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) setLicenseToDelete(null);
+        onLicenseDeleteCancel={() => state.setLicenseToDelete(null)}
+        onLicenseDeleteConfirm={(id) => {
+          void state
+            .onRemoveLicense(id)
+            .finally(() => state.setLicenseToDelete(null));
         }}
-        title={t("licensing.deleteTitle")}
-        maxWidthClassName="max-w-md"
-      >
-        <div className="space-y-4">
-          <p className="text-sm leading-6 text-slate-300">
-            {t("licensing.deleteDescription")}
-          </p>
-          {licenseToDelete ? (
-            <div className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
-              <div className="font-semibold text-white">
-                {licenseToDelete.appName}
-              </div>
-              <div className="mt-1 font-mono text-xs text-danger">
-                {licenseToDelete.licenseKey}
-              </div>
-            </div>
-          ) : null}
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="border-white/10 text-white"
-              onClick={() => setLicenseToDelete(null)}
-            >
-              {t("clients.archiveCancel")}
-            </Button>
-            <Button
-              type="button"
-              className="bg-danger text-white hover:bg-danger/90"
-              disabled={
-                !licenseToDelete ||
-                licenseActionLoadingId === licenseToDelete.id
-              }
-              onClick={() => {
-                if (!licenseToDelete) return;
-                void onRemoveLicense(licenseToDelete.id).finally(() => {
-                  setLicenseToDelete(null);
-                });
-              }}
-            >
-              {t("licensing.deleteConfirm")}
-            </Button>
-          </div>
-        </div>
-      </Dialog>
-
-      <Dialog
-        open={activationToRevoke !== null}
-        onOpenChange={(open) => {
-          if (!open) setActivationToRevoke(null);
+        onActivationRevokeCancel={() => state.setActivationToRevoke(null)}
+        onActivationRevokeConfirm={(id) => {
+          void state
+            .onRevokeActivation(id)
+            .finally(() => state.setActivationToRevoke(null));
         }}
-        title={
-          activationToRevoke?.status === "pending"
-            ? t("activations.dismissTitle")
-            : t("activations.revokeTitle")
-        }
-        maxWidthClassName="max-w-md"
-      >
-        <div className="space-y-4">
-          <p className="text-sm leading-6 text-slate-300">
-            {activationToRevoke?.status === "pending"
-              ? t("activations.dismissDescription")
-              : t("activations.revokeDescription")}
-          </p>
-          {activationToRevoke ? (
-            <div className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
-              <div className="font-semibold text-white">
-                {activationToRevoke.appName}
-              </div>
-              <div className="mt-1 text-xs text-slate-300">
-                {activationToRevoke.shopName || activationToRevoke.machineId}
-              </div>
-              <div className="mt-1 font-mono text-xs text-danger">
-                {activationToRevoke.licenseKey || t("activations.noLicense")}
-              </div>
-            </div>
-          ) : null}
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="border-white/10 text-white"
-              onClick={() => setActivationToRevoke(null)}
-            >
-              {t("clients.archiveCancel")}
-            </Button>
-            <Button
-              type="button"
-              className="bg-danger text-white hover:bg-danger/90"
-              disabled={
-                !activationToRevoke ||
-                activationActionLoadingId === activationToRevoke.id
-              }
-              onClick={() => {
-                if (!activationToRevoke) return;
-                void onRevokeActivation(activationToRevoke.id).finally(() => {
-                  setActivationToRevoke(null);
-                });
-              }}
-            >
-              {activationToRevoke?.status === "pending"
-                ? t("activations.dismissConfirm")
-                : t("activations.revokeConfirm")}
-            </Button>
-          </div>
-        </div>
-      </Dialog>
+        onActivationDeleteCancel={() => state.setActivationToDelete(null)}
+        onActivationDeleteConfirm={(id) => {
+          void state
+            .onDeleteActivation(id)
+            .finally(() => state.setActivationToDelete(null));
+        }}
+      />
     </section>
   );
 }

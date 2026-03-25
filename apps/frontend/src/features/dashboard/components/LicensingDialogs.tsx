@@ -8,6 +8,7 @@ interface LicensingDialogsProps {
   licenseToRevoke: LicensesPanelProps["licenses"][number] | null;
   licenseToDelete: LicensesPanelProps["licenses"][number] | null;
   activationToRevoke: LicensesPanelProps["activations"][number] | null;
+  activationToDelete: LicensesPanelProps["activations"][number] | null;
   appActionLoadingId: string | null;
   licenseActionLoadingId: string | null;
   activationActionLoadingId: string | null;
@@ -19,6 +20,8 @@ interface LicensingDialogsProps {
   onLicenseDeleteConfirm: (id: string) => void;
   onActivationRevokeCancel: () => void;
   onActivationRevokeConfirm: (id: string) => void;
+  onActivationDeleteCancel: () => void;
+  onActivationDeleteConfirm: (id: string) => void;
 }
 
 export function LicensingDialogs(props: LicensingDialogsProps) {
@@ -28,6 +31,7 @@ export function LicensingDialogs(props: LicensingDialogsProps) {
     licenseToRevoke,
     licenseToDelete,
     activationToRevoke,
+    activationToDelete,
     appActionLoadingId,
     licenseActionLoadingId,
     activationActionLoadingId,
@@ -39,6 +43,8 @@ export function LicensingDialogs(props: LicensingDialogsProps) {
     onLicenseDeleteConfirm,
     onActivationRevokeCancel,
     onActivationRevokeConfirm,
+    onActivationDeleteCancel,
+    onActivationDeleteConfirm,
   } = props;
 
   return (
@@ -228,6 +234,57 @@ export function LicensingDialogs(props: LicensingDialogsProps) {
               {activationToRevoke?.status === "pending"
                 ? t("activations.dismissConfirm")
                 : t("activations.revokeConfirm")}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Activation Delete Dialog */}
+      <Dialog
+        open={activationToDelete !== null}
+        onOpenChange={(open) => !open && onActivationDeleteCancel()}
+        title={t("licensing.deleteTitle")}
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-slate-300">
+            {t("licensing.deleteDescription")}
+          </p>
+          {activationToDelete ? (
+            <div className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+              <div className="font-semibold text-white">
+                {activationToDelete.appName}
+              </div>
+              <div className="mt-1 text-xs text-slate-300">
+                {activationToDelete.shopName || activationToDelete.machineId}
+              </div>
+              <div className="mt-1 font-mono text-xs text-danger">
+                {activationToDelete.licenseKey || t("activations.noLicense")}
+              </div>
+            </div>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/10 text-white"
+              onClick={onActivationDeleteCancel}
+            >
+              {t("clients.archiveCancel")}
+            </Button>
+            <Button
+              type="button"
+              className="bg-danger text-white hover:bg-danger/90"
+              disabled={
+                !activationToDelete ||
+                activationActionLoadingId === activationToDelete.id
+              }
+              onClick={() =>
+                activationToDelete &&
+                onActivationDeleteConfirm(activationToDelete.id)
+              }
+            >
+              {t("licensing.deleteConfirm")}
             </Button>
           </div>
         </div>
