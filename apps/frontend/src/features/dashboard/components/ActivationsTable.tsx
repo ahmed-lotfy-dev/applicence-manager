@@ -38,9 +38,9 @@ export function ActivationsTable({
   const { t } = useI18n();
 
   return (
-    <TableWrapper>
+    <TableWrapper className="rounded-none">
       <Table>
-        <thead className="bg-white/5 border-b border-white/5">
+        <thead className="border-b border-white/5 bg-transparent">
           <tr>
             <Th>{t("activations.table.app")}</Th>
             <Th>{t("activations.table.storeName")}</Th>

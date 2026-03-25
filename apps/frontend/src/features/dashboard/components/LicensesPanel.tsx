@@ -13,6 +13,7 @@ import { StatsCards } from "./StatsCards";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Button } from "../../../shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
+import { Dialog } from "../../../shared/ui/dialog";
 import { Input } from "../../../shared/ui/input";
 
 function buildAppSummaries(licenses: LicensesPanelProps["licenses"]): AppSummary[] {
@@ -69,6 +70,7 @@ export function LicensesPanel(props: LicensesPanelProps) {
   const [createdLockedLicenseKey, setCreatedLockedLicenseKey] = useState("");
   const [editingApp, setEditingApp] = useState<EditAppState | null>(null);
   const [editingLicense, setEditingLicense] = useState<EditLicenseState | null>(null);
+  const [licenseToDelete, setLicenseToDelete] = useState<LicensesPanelProps["licenses"][number] | null>(null);
   const [activationQuery, setActivationQuery] = useState("");
   const [activationAppFilter, setActivationAppFilter] = useState<string>("all");
   const [activationLicenseFilter, setActivationLicenseFilter] = useState<string>("all");
@@ -208,7 +210,10 @@ export function LicensesPanel(props: LicensesPanelProps) {
                 }}
                 onEditLicense={(id, maxActivations, status) => setEditingLicense({ id, maxActivations: String(maxActivations), status })}
                 onChangeLicenseStatus={(id, nextStatus) => void onChangeLicenseStatus(id, nextStatus)}
-                onRemoveLicense={(id) => void onRemoveLicense(id)}
+                onRemoveLicense={(id) => {
+                  const target = licenses.find((license) => license.id === id) ?? null;
+                  setLicenseToDelete(target);
+                }}
               />
             </>
           ) : (
@@ -253,20 +258,22 @@ export function LicensesPanel(props: LicensesPanelProps) {
                     </datalist>
                   </div>
                 </CardHeader>
-                <CardContent className="p-0">
-                  <FilterTabs selectedTab={activationFilter} onSelect={onActivationFilterChange} />
-                  <ActivationsTable
-                    activations={filteredActivations}
-                    loading={loadingActivations}
-                    actionLoadingId={activationActionLoadingId}
-                    onApprove={(id) => {
-                      void onApproveActivation(id);
-                    }}
-                    onRevoke={(id) => {
-                      void onRevokeActivation(id);
-                    }}
-                    onGenerateLockedLicense={openLockedLicenseFromActivation}
-                  />
+                <CardContent className="px-8 pb-8 pt-0">
+                  <div className="overflow-hidden rounded-[1.25rem] border border-white/5 bg-white/5">
+                    <FilterTabs selectedTab={activationFilter} onSelect={onActivationFilterChange} />
+                    <ActivationsTable
+                      activations={filteredActivations}
+                      loading={loadingActivations}
+                      actionLoadingId={activationActionLoadingId}
+                      onApprove={(id) => {
+                        void onApproveActivation(id);
+                      }}
+                      onRevoke={(id) => {
+                        void onRevokeActivation(id);
+                      }}
+                      onGenerateLockedLicense={openLockedLicenseFromActivation}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             </>
@@ -324,6 +331,48 @@ export function LicensesPanel(props: LicensesPanelProps) {
         onLicenseChange={setEditingLicense}
         onSubmit={handleSubmitEditLicense}
       />
+
+      <Dialog
+        open={licenseToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setLicenseToDelete(null);
+        }}
+        title={t("licensing.deleteTitle")}
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-slate-300">{t("licensing.deleteDescription")}</p>
+          {licenseToDelete ? (
+            <div className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+              <div className="font-semibold text-white">{licenseToDelete.appName}</div>
+              <div className="mt-1 font-mono text-xs text-danger">{licenseToDelete.licenseKey}</div>
+            </div>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/10 text-white"
+              onClick={() => setLicenseToDelete(null)}
+            >
+              {t("clients.archiveCancel")}
+            </Button>
+            <Button
+              type="button"
+              className="bg-danger text-white hover:bg-danger/90"
+              disabled={!licenseToDelete || licenseActionLoadingId === licenseToDelete.id}
+              onClick={() => {
+                if (!licenseToDelete) return;
+                void onRemoveLicense(licenseToDelete.id).finally(() => {
+                  setLicenseToDelete(null);
+                });
+              }}
+            >
+              {t("licensing.deleteConfirm")}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
     </section>
   );
 }

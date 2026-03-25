@@ -14,7 +14,7 @@ export function FilterTabs({ selectedTab, onSelect }: FilterTabsProps) {
   const { t } = useI18n();
 
   return (
-    <div className="flex flex-wrap gap-2 border-b border-border/10 bg-white/5 px-6 py-4">
+    <div className="flex flex-wrap gap-2 border-b border-border/10 bg-transparent px-6 py-4">
       {TABS.map((tab) => (
         <Button
           key={tab}
