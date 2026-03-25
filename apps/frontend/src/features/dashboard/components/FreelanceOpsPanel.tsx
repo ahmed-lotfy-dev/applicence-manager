@@ -125,6 +125,10 @@ function buildInvoicePdfFileName(invoice: Invoice) {
   return `${safeNo}-${safeDate}.pdf`;
 }
 
+function getDisplayCurrency(profile: FreelancerProfile | null): string {
+  return profile?.defaultCurrency?.trim() || "USD";
+}
+
 export function FreelanceOpsPanel({
   view = 'all',
   error = '',
@@ -154,6 +158,7 @@ export function FreelanceOpsPanel({
   onSendInvoiceEmail,
 }: FreelanceOpsPanelProps) {
   const { t, locale } = useI18n();
+  const displayCurrency = getDisplayCurrency(freelancerProfile);
   const replaceVars = (template: string, vars: Record<string, string>) =>
     Object.entries(vars).reduce((result, [key, value]) => result.replace(`{${key}}`, value), template);
   const toOptional = (value: string): string | undefined => {
@@ -623,15 +628,15 @@ export function FreelanceOpsPanel({
           <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.invoiced")}</p>
-              <p className="metric-value mt-2 text-2xl font-bold text-white">{formatMoneyCents(billingStats.totalInvoiced)}</p>
+              <p className="metric-value mt-2 text-2xl font-bold text-white">{formatMoneyCents(billingStats.totalInvoiced, displayCurrency)}</p>
             </div>
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.paid")}</p>
-              <p className="metric-value mt-2 text-2xl font-bold text-emerald-300">{formatMoneyCents(billingStats.totalPaid)}</p>
+              <p className="metric-value mt-2 text-2xl font-bold text-emerald-300">{formatMoneyCents(billingStats.totalPaid, displayCurrency)}</p>
             </div>
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.outstanding")}</p>
-              <p className="metric-value mt-2 text-2xl font-bold text-amber-300">{formatMoneyCents(billingStats.totalOutstanding)}</p>
+              <p className="metric-value mt-2 text-2xl font-bold text-amber-300">{formatMoneyCents(billingStats.totalOutstanding, displayCurrency)}</p>
             </div>
           </CardContent>
         </Card>

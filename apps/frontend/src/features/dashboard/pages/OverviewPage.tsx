@@ -6,12 +6,14 @@ interface OverviewPageProps {
   billingStats: BillingStats;
   clientsCount: number;
   invoicesCount: number;
+  currency?: string | null;
 }
 
 export function OverviewPage({
   billingStats,
   clientsCount,
   invoicesCount,
+  currency,
 }: OverviewPageProps) {
   const { t } = useI18n();
   const asCount = (value: number) =>
@@ -19,7 +21,7 @@ export function OverviewPage({
   const asMoney = (cents: number) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: currency || "USD",
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(cents / 100);

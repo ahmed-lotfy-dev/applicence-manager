@@ -146,6 +146,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 billingStats={billingStats}
                 clientsCount={clients.length}
                 invoicesCount={invoices.length}
+                currency={freelancerProfile?.defaultCurrency}
               />
             )}
 
