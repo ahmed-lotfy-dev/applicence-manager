@@ -382,12 +382,31 @@ export async function updateClient(
   return data?.client || null;
 }
 
+export async function archiveClient(id: string): Promise<boolean> {
+  const response = await apiRequest(`/clients/${id}/archive`, {
+    method: 'PATCH',
+  });
+  if (response.status === 401) return false;
+  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to archive client'));
+  return true;
+}
+
+export async function restoreClient(id: string): Promise<Client | null> {
+  const response = await apiRequest(`/clients/${id}/restore`, {
+    method: 'PATCH',
+  });
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to restore client'));
+  const data = await parseJsonResponse<{ client?: Client }>(response);
+  return data?.client || null;
+}
+
 export async function deleteClient(id: string): Promise<boolean> {
   const response = await apiRequest(`/clients/${id}`, {
     method: 'DELETE',
   });
   if (response.status === 401) return false;
-  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to archive client'));
+  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to delete client'));
   return true;
 }
 

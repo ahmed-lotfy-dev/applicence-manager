@@ -113,19 +113,8 @@ h6 {
     display: inline-block;
     white-space: nowrap;
     font-variant-numeric: tabular-nums lining-nums;
-  }
-
-  html[lang="en"] .metric-value {
     direction: ltr;
     unicode-bidi: isolate;
     text-align: left;
-  }
-
-  html[lang="ar"] .metric-value {
-    direction: rtl;
-    unicode-bidi: plaintext;
-    text-align: right;
-    font-family: 'Noto Sans Arabic', var(--font-body);
-    line-height: 1.25;
   }
 }

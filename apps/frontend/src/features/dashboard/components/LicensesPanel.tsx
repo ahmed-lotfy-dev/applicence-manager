@@ -9,6 +9,7 @@ import { LicensesCreateLockedDialog } from "./LicensesCreateLockedDialog";
 import { LicensesEditAppDialog } from "./LicensesEditAppDialog";
 import { LicensesEditLicenseDialog } from "./LicensesEditLicenseDialog";
 import { LicensesInventoryCard } from "./LicensesInventoryCard";
+import { StatsCards } from "./StatsCards";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Button } from "../../../shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
@@ -32,6 +33,7 @@ export function LicensesPanel(props: LicensesPanelProps) {
     activations,
     licenses,
     apps,
+    stats,
     filterValue,
     onFilterChange,
     activationFilter,
@@ -159,28 +161,22 @@ export function LicensesPanel(props: LicensesPanelProps) {
   return (
     <section className="mb-6 space-y-4">
       <Card className="bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
-        <CardHeader className="space-y-4 border-b border-white/5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-xl text-white">{t("licensing.title")}</CardTitle>
-              <p className="mt-1 text-sm text-slate-400">{t("licensing.subtitle")}</p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={section === "licenses" ? "default" : "ghost"}
-                onClick={() => setSection("licenses")}
-                className={section === "licenses" ? "" : "text-slate-300 hover:text-white"}
-              >
-                {t("licensing.section.licenses")}
-              </Button>
-              <Button
-                variant={section === "activations" ? "default" : "ghost"}
-                onClick={() => setSection("activations")}
-                className={section === "activations" ? "" : "text-slate-300 hover:text-white"}
-              >
-                {t("licensing.section.activations")}
-              </Button>
-            </div>
+        <CardHeader className="border-b border-white/5">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={section === "licenses" ? "default" : "ghost"}
+              onClick={() => setSection("licenses")}
+              className={section === "licenses" ? "" : "text-slate-300 hover:text-white"}
+            >
+              {t("licensing.section.licenses")}
+            </Button>
+            <Button
+              variant={section === "activations" ? "default" : "ghost"}
+              onClick={() => setSection("activations")}
+              className={section === "activations" ? "" : "text-slate-300 hover:text-white"}
+            >
+              {t("licensing.section.activations")}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4 p-4 md:p-6">
@@ -215,58 +211,61 @@ export function LicensesPanel(props: LicensesPanelProps) {
               />
             </>
           ) : (
-            <Card className="bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
-              <CardHeader className="space-y-3 border-b border-white/5">
-                <CardTitle className="text-lg text-white">{t("licensing.activationsTitle")}</CardTitle>
-                <p className="text-sm text-slate-400">{t("licensing.activationsSubtitle")}</p>
-                {activationError && (
-                  <div className="rounded-lg border border-danger/30 bg-danger/20 p-3 text-sm text-danger">
-                    {activationError}
+            <>
+              <StatsCards stats={stats} />
+              <Card className="bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
+                <CardHeader className="space-y-3 border-b border-white/5">
+                  <CardTitle className="text-lg text-white">{t("licensing.activationsTitle")}</CardTitle>
+                  <p className="text-sm text-slate-400">{t("licensing.activationsSubtitle")}</p>
+                  {activationError && (
+                    <div className="rounded-lg border border-danger/30 bg-danger/20 p-3 text-sm text-danger">
+                      {activationError}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    <Input
+                      placeholder={t("licensing.searchPlaceholder")}
+                      value={activationQuery}
+                      onChange={(event) => setActivationQuery(event.target.value)}
+                    />
+                    <Input
+                      list="activation-app-options"
+                      placeholder={t("licensing.filterAppPlaceholder")}
+                      value={activationAppFilter === "all" ? "" : activationAppFilter}
+                      onChange={(event) => setActivationAppFilter(event.target.value.trim() || "all")}
+                    />
+                    <Input
+                      list="activation-license-options"
+                      placeholder={t("licensing.filterLicensePlaceholder")}
+                      value={activationLicenseFilter === "all" ? "" : activationLicenseFilter}
+                      onChange={(event) => setActivationLicenseFilter(event.target.value.trim() || "all")}
+                    />
+                    <datalist id="activation-app-options">
+                      {activationAppOptions.map((appName) => (
+                        <option key={appName} value={appName} />
+                      ))}
+                    </datalist>
+                    <datalist id="activation-license-options">
+                      {activationLicenseOptions.map((licenseKey) => (
+                        <option key={licenseKey} value={licenseKey} />
+                      ))}
+                    </datalist>
                   </div>
-                )}
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                  <Input
-                    placeholder={t("licensing.searchPlaceholder")}
-                    value={activationQuery}
-                    onChange={(event) => setActivationQuery(event.target.value)}
+                </CardHeader>
+                <CardContent className="p-0">
+                  <FilterTabs selectedTab={activationFilter} onSelect={onActivationFilterChange} />
+                  <ActivationsTable
+                    activations={filteredActivations}
+                    loading={loadingActivations}
+                    actionLoadingId={activationActionLoadingId}
+                    onRevoke={(id) => {
+                      void onRevokeActivation(id);
+                    }}
+                    onGenerateLockedLicense={openLockedLicenseFromActivation}
                   />
-                  <Input
-                    list="activation-app-options"
-                    placeholder={t("licensing.filterAppPlaceholder")}
-                    value={activationAppFilter === "all" ? "" : activationAppFilter}
-                    onChange={(event) => setActivationAppFilter(event.target.value.trim() || "all")}
-                  />
-                  <Input
-                    list="activation-license-options"
-                    placeholder={t("licensing.filterLicensePlaceholder")}
-                    value={activationLicenseFilter === "all" ? "" : activationLicenseFilter}
-                    onChange={(event) => setActivationLicenseFilter(event.target.value.trim() || "all")}
-                  />
-                  <datalist id="activation-app-options">
-                    {activationAppOptions.map((appName) => (
-                      <option key={appName} value={appName} />
-                    ))}
-                  </datalist>
-                  <datalist id="activation-license-options">
-                    {activationLicenseOptions.map((licenseKey) => (
-                      <option key={licenseKey} value={licenseKey} />
-                    ))}
-                  </datalist>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <FilterTabs selectedTab={activationFilter} onSelect={onActivationFilterChange} />
-                <ActivationsTable
-                  activations={filteredActivations}
-                  loading={loadingActivations}
-                  actionLoadingId={activationActionLoadingId}
-                  onRevoke={(id) => {
-                    void onRevokeActivation(id);
-                  }}
-                  onGenerateLockedLicense={openLockedLicenseFromActivation}
-                />
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </>
           )}
         </CardContent>
       </Card>

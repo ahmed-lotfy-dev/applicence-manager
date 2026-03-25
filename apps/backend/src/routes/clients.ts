@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { getAuthenticatedUserId } from "../lib/request-auth";
-import { createClient, deleteClient, listClients, updateClient } from "../services/clients";
+import { createClient, deleteClient, hardDeleteClient, listClients, restoreClient, updateClient } from "../services/clients";
 
 export const clientRoutes = new Elysia({
   name: "client-routes",
@@ -77,13 +77,39 @@ export const clientRoutes = new Elysia({
       }),
     },
   )
-  .delete("/:id", async ({ request, params, set }) => {
+  .patch("/:id/archive", async ({ request, params, set }) => {
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       set.status = 401;
       return { success: false, error: "Unauthorized" };
     }
     const result = await deleteClient(userId, params.id);
+    if (!result.ok) {
+      set.status = 400;
+      return { success: false, error: result.error };
+    }
+    return { success: true };
+  })
+  .patch("/:id/restore", async ({ request, params, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { success: false, error: "Unauthorized" };
+    }
+    const result = await restoreClient(userId, params.id);
+    if (!result.ok) {
+      set.status = 400;
+      return { success: false, error: result.error };
+    }
+    return { success: true, client: result.client };
+  })
+  .delete("/:id", async ({ request, params, set }) => {
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      set.status = 401;
+      return { success: false, error: "Unauthorized" };
+    }
+    const result = await hardDeleteClient(userId, params.id);
     if (!result.ok) {
       set.status = 400;
       return { success: false, error: result.error };

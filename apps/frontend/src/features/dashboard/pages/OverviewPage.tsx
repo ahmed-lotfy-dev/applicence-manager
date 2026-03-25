@@ -1,26 +1,23 @@
-import { StatsCards } from "../components/StatsCards";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
-import type { BillingStats, Stats } from "../types/dashboard";
+import type { BillingStats } from "../types/dashboard";
 
 interface OverviewPageProps {
-  stats: Stats;
   billingStats: BillingStats;
   clientsCount: number;
   invoicesCount: number;
 }
 
 export function OverviewPage({
-  stats,
   billingStats,
   clientsCount,
   invoicesCount,
 }: OverviewPageProps) {
-  const { locale, t } = useI18n();
+  const { t } = useI18n();
   const asCount = (value: number) =>
-    new Intl.NumberFormat(locale === "ar" ? "ar-EG-u-nu-arab" : "en-US").format(value);
+    new Intl.NumberFormat("en-US").format(value);
   const asMoney = (cents: number) =>
-    new Intl.NumberFormat(locale === "ar" ? "ar-EG-u-nu-arab" : "en-US", {
+    new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: 2,
@@ -29,8 +26,6 @@ export function OverviewPage({
 
   return (
     <section className="space-y-8">
-      <StatsCards stats={stats} />
-
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">

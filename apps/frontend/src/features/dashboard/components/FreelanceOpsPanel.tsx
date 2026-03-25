@@ -7,7 +7,6 @@ import { Input } from '../../../shared/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/ui/select';
 import { Table, TableWrapper, Td, Th } from '../../../shared/ui/table';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
-import type { Locale } from '../../../shared/i18n/translations';
 import type { BillingStats, Client, FreelancerProfile, Invoice, InvoicePdfJob } from '../types/dashboard';
 import { z } from 'zod';
 
@@ -65,7 +64,9 @@ interface FreelanceOpsPanelProps {
   isCreatingClient: boolean;
   isCreatingInvoice: boolean;
   onCreateClient: (input: { name: string; email?: string; phone?: string; notes?: string }) => Promise<Client | null>;
+  onHardDeleteClient: (id: string) => Promise<{ ok: boolean; error?: string }>;
   onRemoveClient: (id: string) => Promise<boolean>;
+  onRestoreClient: (id: string) => Promise<Client | null>;
   onUpdateClient: (id: string, input: { name?: string; email?: string; phone?: string; notes?: string; status?: 'active' | 'inactive' }) => Promise<Client | null>;
   onCreateInvoice: (input: {
     clientId: string;
@@ -98,8 +99,8 @@ interface FreelanceOpsPanelProps {
   onRefreshInvoicePdfJob: (invoiceId: string) => Promise<void>;
 }
 
-function formatMoneyCents(cents: number, locale: Locale, currency = 'USD'): string {
-  return new Intl.NumberFormat(locale === 'ar' ? 'ar-EG' : 'en-US', {
+function formatMoneyCents(cents: number, currency = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
@@ -128,7 +129,9 @@ export function FreelanceOpsPanel({
   isCreatingClient,
   isCreatingInvoice,
   onCreateClient,
+  onHardDeleteClient,
   onRemoveClient,
+  onRestoreClient,
   onUpdateClient,
   onCreateInvoice,
   onUpdateInvoice,
@@ -209,6 +212,8 @@ export function FreelanceOpsPanel({
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [clientToArchive, setClientToArchive] = useState<Client | null>(null);
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [clientToRestore, setClientToRestore] = useState<Client | null>(null);
   const [editClientName, setEditClientName] = useState('');
   const [editClientEmail, setEditClientEmail] = useState('');
   const [editClientPhone, setEditClientPhone] = useState('');
@@ -382,6 +387,34 @@ export function FreelanceOpsPanel({
     }
   };
 
+  const handleRestoreClient = async () => {
+    if (!clientToRestore) return;
+    setClientStatus(null);
+    const restored = await onRestoreClient(clientToRestore.id);
+    if (restored) {
+      setClientStatus({ tone: 'success', message: t("clients.restoreSuccess") });
+      setClientToRestore(null);
+    }
+  };
+
+  const handleHardDeleteClient = async () => {
+    if (!clientToDelete) return;
+    setClientStatus(null);
+    const result = await onHardDeleteClient(clientToDelete.id);
+    if (result.ok) {
+      setClientStatus({ tone: 'success', message: t("clients.deleteSuccess") });
+      setClientToDelete(null);
+      return;
+    }
+    setClientStatus({
+      tone: 'error',
+      message: result.error === 'This client has receipts or invoice history and can only be archived.'
+        ? t("clients.deleteBlocked")
+        : result.error || t("clients.deleteBlocked"),
+    });
+    setClientToDelete(null);
+  };
+
   const handleCreateInvoiceSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isCreatingInvoice || !hasClients) return;
@@ -449,25 +482,27 @@ export function FreelanceOpsPanel({
 
   return (
     <section className="space-y-4">
-      <Card className="bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
-        <CardHeader>
-          <CardTitle className="text-xl text-white">{t("freelance.title")}</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.invoiced")}</p>
-            <p className="metric-value text-2xl font-bold text-white mt-2">{formatMoneyCents(billingStats.totalInvoiced, locale)}</p>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.paid")}</p>
-            <p className="metric-value text-2xl font-bold text-emerald-300 mt-2">{formatMoneyCents(billingStats.totalPaid, locale)}</p>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.outstanding")}</p>
-            <p className="metric-value text-2xl font-bold text-amber-300 mt-2">{formatMoneyCents(billingStats.totalOutstanding, locale)}</p>
-          </div>
-        </CardContent>
-      </Card>
+      {showInvoices && (
+        <Card className="bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
+          <CardHeader>
+            <CardTitle className="text-xl text-white">{t("freelance.title")}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.invoiced")}</p>
+              <p className="metric-value mt-2 text-2xl font-bold text-white">{formatMoneyCents(billingStats.totalInvoiced)}</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.paid")}</p>
+              <p className="metric-value mt-2 text-2xl font-bold text-emerald-300">{formatMoneyCents(billingStats.totalPaid)}</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.outstanding")}</p>
+              <p className="metric-value mt-2 text-2xl font-bold text-amber-300">{formatMoneyCents(billingStats.totalOutstanding)}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {showBranding && (
         <Card className="bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
@@ -659,7 +694,30 @@ export function FreelanceOpsPanel({
                       </Td>
                       <Td className="text-right">
                         {client.isDeleted ? (
-                          <span className="text-xs text-slate-500">{t("clients.archivedBadge")}</span>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-white/10 text-white"
+                              onClick={() => {
+                                setClientStatus(null);
+                                setClientToRestore(client);
+                              }}
+                            >
+                              {t("clients.restore")}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-danger/30 text-danger hover:bg-danger/10"
+                              onClick={() => {
+                                setClientStatus(null);
+                                setClientToDelete(client);
+                              }}
+                            >
+                              {t("clients.delete")}
+                            </Button>
+                          </div>
                         ) : (
                           <div className="flex justify-end gap-2">
                             <Button
@@ -680,6 +738,17 @@ export function FreelanceOpsPanel({
                               }}
                             >
                               {t("clients.archive")}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-danger/30 text-danger hover:bg-danger/10"
+                              onClick={() => {
+                                setClientStatus(null);
+                                setClientToDelete(client);
+                              }}
+                            >
+                              {t("clients.delete")}
                             </Button>
                           </div>
                         )}
@@ -966,6 +1035,34 @@ export function FreelanceOpsPanel({
       </Dialog>
 
       <Dialog
+        open={clientToRestore !== null}
+        onOpenChange={(open) => {
+          if (!open) setClientToRestore(null);
+        }}
+        title={t("clients.restoreTitle")}
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-slate-300">
+            {t("clients.restoreDescription")}
+          </p>
+          {clientToRestore && (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-100">
+              {clientToRestore.name}
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" className="border-white/10 text-white" onClick={() => setClientToRestore(null)}>
+              {t("clients.archiveCancel")}
+            </Button>
+            <Button type="button" onClick={() => void handleRestoreClient()}>
+              {t("clients.restoreConfirm")}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
         open={clientToArchive !== null}
         onOpenChange={(open) => {
           if (!open) setClientToArchive(null);
@@ -1003,6 +1100,34 @@ export function FreelanceOpsPanel({
             </div>
           </div>
         </Dialog>
+
+      <Dialog
+        open={clientToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setClientToDelete(null);
+        }}
+        title={t("clients.deleteTitle")}
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-slate-300">
+            {t("clients.deleteDescription")}
+          </p>
+          {clientToDelete && (
+            <div className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+              {clientToDelete.name}
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" className="border-white/10 text-white" onClick={() => setClientToDelete(null)}>
+              {t("clients.archiveCancel")}
+            </Button>
+            <Button type="button" className="bg-danger text-white hover:bg-danger/90" onClick={() => void handleHardDeleteClient()}>
+              {t("clients.deleteConfirm")}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
       </div>
     </section>
   );

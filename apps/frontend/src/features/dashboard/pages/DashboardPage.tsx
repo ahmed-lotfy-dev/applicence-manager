@@ -64,7 +64,9 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     setLicenseFilter,
     changeStatus,
     createNewClient,
+    hardDeleteClient,
     removeClient,
+    restoreExistingClient,
     updateExistingClient,
     createNewInvoice,
     updateExistingInvoice,
@@ -138,7 +140,6 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
           <Suspense fallback={pageLoadingFallback}>
             {page === "overview" && (
               <OverviewPage
-                stats={stats}
                 billingStats={billingStats}
                 clientsCount={clients.length}
                 invoicesCount={invoices.length}
@@ -159,7 +160,9 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 isCreatingClient={isCreatingClient}
                 isCreatingInvoice={isCreatingInvoice}
                 onCreateClient={createNewClient}
+                onHardDeleteClient={hardDeleteClient}
                 onRemoveClient={removeClient}
+                onRestoreClient={restoreExistingClient}
                 onUpdateClient={updateExistingClient}
                 onCreateInvoice={createNewInvoice}
                 onUpdateInvoice={updateExistingInvoice}
@@ -176,6 +179,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 licenses={licenses}
                 activations={filteredActivations}
                 apps={apps}
+                stats={stats}
                 filterValue={licenseFilter}
                 onFilterChange={setLicenseFilter}
                 activationFilter={selectedTab}

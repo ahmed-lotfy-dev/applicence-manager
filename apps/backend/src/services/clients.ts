@@ -1,6 +1,6 @@
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "../db/db";
-import { clients } from "../db/auth-schema";
+import { clients, invoices } from "../db/auth-schema";
 
 export async function listClients(userId: string) {
   return db
@@ -101,4 +101,46 @@ export async function deleteClient(userId: string, id: string) {
   const archived = await getClientById(userId, id);
   if (!archived) return { ok: false as const, error: "Failed to archive client" };
   return { ok: true as const, client: archived };
+}
+
+export async function restoreClient(userId: string, id: string) {
+  const existing = await getClientById(userId, id);
+  if (!existing) return { ok: false as const, error: "Client not found" };
+  if (!existing.isDeleted) return { ok: false as const, error: "Client is already active" };
+
+  await db
+    .update(clients)
+    .set({
+      isDeleted: false,
+      status: "active",
+      updatedAt: new Date(),
+    })
+    .where(and(eq(clients.userId, userId), eq(clients.id, id)));
+
+  const restored = await getClientById(userId, id);
+  if (!restored) return { ok: false as const, error: "Failed to restore client" };
+  return { ok: true as const, client: restored };
+}
+
+export async function hardDeleteClient(userId: string, id: string) {
+  const existing = await getClientById(userId, id);
+  if (!existing) return { ok: false as const, error: "Client not found" };
+
+  const [relatedInvoice] = await db
+    .select({ id: invoices.id })
+    .from(invoices)
+    .where(and(eq(invoices.userId, userId), eq(invoices.clientId, id)));
+
+  if (relatedInvoice) {
+    return {
+      ok: false as const,
+      error: "This client has receipts or invoice history and can only be archived.",
+    };
+  }
+
+  await db
+    .delete(clients)
+    .where(and(eq(clients.userId, userId), eq(clients.id, id)));
+
+  return { ok: true as const };
 }

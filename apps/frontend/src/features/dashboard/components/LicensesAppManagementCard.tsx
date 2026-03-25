@@ -4,7 +4,7 @@ import type { ManagedApp } from "../types/dashboard";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Badge } from "../../../shared/ui/badge";
 import { Button } from "../../../shared/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
+import { Card, CardContent, CardHeader } from "../../../shared/ui/card";
 import { Input } from "../../../shared/ui/input";
 
 interface LicensesAppManagementCardProps {
@@ -38,43 +38,36 @@ export function LicensesAppManagementCard({
 
   return (
     <Card>
-      <CardHeader className="flex flex-col gap-3 border-b border-white/5 px-8 py-6 md:flex-row md:items-center md:justify-between">
-        <div>
-          <CardTitle className="text-xl text-white">{t("licensing.appsTitle")}</CardTitle>
-          <p className="mt-1 text-sm text-slate-400">{t("licensing.appsSubtitle")}</p>
-        </div>
-        <div className="w-full md:w-auto">
+      <CardHeader className="border-b border-white/5 px-8 py-6">
+        <form
+          onSubmit={onCreateAppSubmit}
+          className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_auto] md:items-center"
+        >
           <Input
             value={filterValue}
             onChange={(event) => onFilterChange(event.target.value)}
             placeholder={t("licensing.appFilterPlaceholder")}
-            className="h-10 w-full rounded-xl border-white/10 bg-white/5 text-white placeholder:text-slate-500 md:w-72"
+            className="h-10 rounded-xl border-white/10 bg-white/5 text-white placeholder:text-slate-500"
           />
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-5">
-        <form
-          onSubmit={onCreateAppSubmit}
-          className="grid grid-cols-1 gap-3 rounded-2xl border border-white/5 bg-white/2 p-4 md:grid-cols-[1fr_auto]"
-        >
           <Input
             value={newAppName}
             onChange={(event) => onNewAppNameChange(event.target.value)}
             placeholder={t("licensing.appNewPlaceholder")}
-            className="border-white/10 bg-white/5"
+            className="h-10 border-white/10 bg-white/5"
             required
           />
           <Button
             type="submit"
             variant="secondary"
             disabled={isCreatingApp}
-            className="rounded-xl bg-success px-6 !text-white hover:bg-success/90"
+            className="h-10 rounded-xl bg-success px-6 !text-white hover:bg-success/90"
           >
             {isCreatingApp ? t("licensing.appAdding") : t("licensing.addApp")}
           </Button>
         </form>
+      </CardHeader>
 
+      <CardContent className="space-y-5">
         <div className="flex flex-wrap gap-3">
           {apps.length === 0 && <p className="ml-1 text-sm italic text-text-muted">{t("licensing.noApps")}</p>}
           {apps.map((app) => (

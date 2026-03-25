@@ -14,9 +14,9 @@ const ITEMS = [
 ] as const;
 
 export function StatsCards({ stats }: StatsCardsProps) {
-  const { locale, t } = useI18n();
+  const { t } = useI18n();
   const asCount = (value: number) =>
-    new Intl.NumberFormat(locale === "ar" ? "ar-EG-u-nu-arab" : "en-US").format(value);
+    new Intl.NumberFormat("en-US").format(value);
 
   return (
     <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4 mb-6">

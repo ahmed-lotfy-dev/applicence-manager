@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  archiveClient,
   buildInvoicePdfUrl,
   createClient,
   createInvoice,
@@ -21,6 +22,7 @@ import {
   fetchStats,
   fetchUserEmail,
   queueInvoicePdf,
+  restoreClient,
   setLicenseStatus,
   uploadFreelancerLogo,
   updateFreelancerProfile,
@@ -81,6 +83,8 @@ interface UseDashboardDataResult {
     notes?: string;
   }) => Promise<Client | null>;
   removeClient: (id: string) => Promise<boolean>;
+  restoreExistingClient: (id: string) => Promise<Client | null>;
+  hardDeleteClient: (id: string) => Promise<{ ok: boolean; error?: string }>;
   updateExistingClient: (id: string, input: {
     name?: string;
     email?: string;
@@ -418,13 +422,49 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
     async (id: string) => {
       setError("");
       try {
-        const ok = await deleteClient(id);
+        const ok = await archiveClient(id);
         if (!ok) throw new UnauthorizedError();
         await queryClient.invalidateQueries({ queryKey: queryKeys.clients });
         return true;
       } catch (mutationError) {
         onQueryError(mutationError, "Could not archive client right now.");
         return false;
+      }
+    },
+    [onQueryError, queryClient],
+  );
+
+  const restoreExistingClient = useCallback(
+    async (id: string) => {
+      setError("");
+      try {
+        const restored = await restoreClient(id);
+        if (!restored) throw new UnauthorizedError();
+        await queryClient.invalidateQueries({ queryKey: queryKeys.clients });
+        return restored;
+      } catch (mutationError) {
+        onQueryError(mutationError, "Could not restore client right now.");
+        return null;
+      }
+    },
+    [onQueryError, queryClient],
+  );
+
+  const hardDeleteExistingClient = useCallback(
+    async (id: string) => {
+      setError("");
+      try {
+        const ok = await deleteClient(id);
+        if (!ok) throw new UnauthorizedError();
+        await queryClient.invalidateQueries({ queryKey: queryKeys.clients });
+        return { ok: true as const };
+      } catch (mutationError) {
+        const message =
+          mutationError instanceof Error && mutationError.message
+            ? mutationError.message
+            : "Could not permanently delete client right now.";
+        onQueryError(mutationError, message);
+        return { ok: false as const, error: message };
       }
     },
     [onQueryError, queryClient],
@@ -732,6 +772,8 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
     createNewApp,
     createNewClient,
     removeClient,
+    restoreExistingClient,
+    hardDeleteClient: hardDeleteExistingClient,
     updateExistingClient,
     createNewInvoice,
     updateExistingInvoice,

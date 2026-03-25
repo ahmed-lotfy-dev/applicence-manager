@@ -1,9 +1,10 @@
-import type { Activation, ActivationFilter, License, ManagedApp } from "../types/dashboard";
+import type { Activation, ActivationFilter, License, ManagedApp, Stats } from "../types/dashboard";
 
 export interface LicensesPanelProps {
   activations: Activation[];
   licenses: License[];
   apps: ManagedApp[];
+  stats: Stats;
   filterValue: string;
   onFilterChange: (value: string) => void;
   activationFilter: ActivationFilter;
