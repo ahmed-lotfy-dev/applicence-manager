@@ -88,6 +88,7 @@ export function useLicensingPanel(props: LicensesPanelProps) {
   };
 
   const [newAppName, setNewAppName] = useState("");
+  const [appFilter, setAppFilter] = useState("");
   const [createLicenseOpen, setCreateLicenseOpen] = useState(false);
   const [createLockedLicenseOpen, setCreateLockedLicenseOpen] = useState(false);
   const [createLicenseAppId, setCreateLicenseAppId] = useState("");
@@ -211,11 +212,20 @@ export function useLicensingPanel(props: LicensesPanelProps) {
     });
   }, [activationFilter, activationQuery, activations]);
 
+  const filteredApps = useMemo(() => {
+    const query = appFilter.trim().toLowerCase();
+    if (!query) return apps;
+    return apps.filter((app) =>
+      app.name.toLowerCase().includes(query),
+    );
+  }, [appFilter, apps]);
+
   return {
     summaries,
     section,
     activationQuery,
     filteredActivations,
+    filteredApps,
     newAppName,
     createLicenseOpen,
     createLockedLicenseOpen,
@@ -236,6 +246,7 @@ export function useLicensingPanel(props: LicensesPanelProps) {
     handleFilterChange,
     handleQueryChange,
     setNewAppName,
+    setAppFilter,
     setCreateLicenseOpen,
     setCreateLockedLicenseOpen,
     setCreateLicenseAppId,

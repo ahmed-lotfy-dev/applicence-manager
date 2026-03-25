@@ -8,6 +8,7 @@ export function LicensesAppManagementCard() {
   const { t } = useI18n();
   const state = useLicensingPanelContext();
   const { apps, isCreatingApp, appActionLoadingId, onFilterChange, filterValue } = state.props;
+  const displayApps = state.filteredApps ?? apps;
 
   return (
     <Card className="rounded-[1.5rem] bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
@@ -44,7 +45,7 @@ export function LicensesAppManagementCard() {
         </form>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {apps.map((app) => (
+          {displayApps.map((app) => (
             <div
               key={app.id}
               className="group relative flex flex-col justify-between rounded-2xl border border-white/5 bg-white/[0.02] p-5 transition-all hover:bg-white/[0.04] hover:shadow-lg"
