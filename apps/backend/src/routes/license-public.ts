@@ -27,11 +27,11 @@ async function handleActivationRequest(
 ) {
   const ownerApp = await resolveAppOwnerByIdentifier(body.appName);
   if (!ownerApp?.userId) {
-    console.error(`[Activation] App not found: "${body.appName}"`);
-    const allApps = await db.select().from(managedApps);
-    console.log(`[Activation] Available apps: ${allApps.map((a: typeof managedApps.$inferSelect) => a.name).join(", ")}`);
     set.status = 404;
-    return { success: false, error: "App not found" };
+    return { 
+      success: false, 
+      error: "App not found or incomplete backend setup",
+    };
   }
 
   const result = await submitRequest({
@@ -221,14 +221,14 @@ export const licensePublicRoutes = new Elysia({
     }, set),
     {
       body: t.Object({
-        appName: t.String({ minLength: 2, maxLength: 120 }),
-        appVersion: t.String({ minLength: 1, maxLength: 64 }),
-        machineId: t.String({ minLength: 6, maxLength: 256 }),
-        shopName: t.String({ minLength: 2, maxLength: 256 }),
-        phone: t.String({ minLength: 5, maxLength: 32 }),
-        notes: t.Optional(t.Union([t.String({ maxLength: 1000 }), t.Null()])),
-        platform: t.Optional(t.Union([t.String({ maxLength: 120 }), t.Null()])),
-        userAgent: t.Optional(t.Union([t.String({ maxLength: 500 }), t.Null()])),
+        appName: t.String(),
+        appVersion: t.String(),
+        machineId: t.String(),
+        shopName: t.String(),
+        phone: t.String(),
+        notes: t.Optional(t.Any()),
+        platform: t.Optional(t.Any()),
+        userAgent: t.Optional(t.Any()),
       }),
     },
   );

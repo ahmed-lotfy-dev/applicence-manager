@@ -16,16 +16,38 @@ export interface CreateActivationRequestInput {
 }
 
 export async function createActivationRequest(input: CreateActivationRequestInput) {
+  const userId = String(input.userId).trim();
+  const appName = input.appName.trim();
+  const machineId = input.machineId.trim();
+
+  // Idempotency: return existing pending request if any
+  const [existing] = await db
+    .select({ id: activationRequests.id })
+    .from(activationRequests)
+    .where(
+      and(
+        eq(activationRequests.userId, userId),
+        eq(activationRequests.appName, appName),
+        eq(activationRequests.machineId, machineId),
+        eq(activationRequests.status, "pending"),
+      ),
+    )
+    .limit(1);
+
+  if (existing) {
+    return { ok: true as const, id: existing.id };
+  }
+
   const id = crypto.randomUUID();
   const now = new Date();
 
   try {
     await db.insert(activationRequests).values({
       id,
-      userId: String(input.userId).trim(),
-      appName: input.appName.trim(),
+      userId,
+      appName,
       appVersion: input.appVersion.trim(),
-      machineId: input.machineId.trim(),
+      machineId,
       shopName: input.shopName.trim(),
       phone: input.phone.trim(),
       notes: input.notes?.trim() || null,

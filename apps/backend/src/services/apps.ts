@@ -73,15 +73,17 @@ export async function resolveAppOwnerByIdentifier(identifier: string) {
   if (!normalized) return null;
 
   const apps = await db.select().from(managedApps);
-  const matchedApp = apps.find((app) => matchesIdentifier(normalized, app)) ?? null;
+  const matchedApp = apps.find((app) => matchesIdentifier(normalized, app) && app.userId) ?? null;
   if (matchedApp) return matchedApp;
 
   const activationAppName = process.env.ACTIVATION_APP_NAME?.trim();
   const adminEmail = process.env.ADMIN_EMAIL?.trim();
+  
   if (!activationAppName || !adminEmail || !matchesIdentifier(normalized, {
     name: activationAppName,
     slug: slugify(activationAppName),
   })) {
+    console.error(`[Activation] Match failed: normalized="${normalized}", activationAppName="${activationAppName}", adminEmail="${adminEmail}"`);
     return null;
   }
 
@@ -90,11 +92,27 @@ export async function resolveAppOwnerByIdentifier(identifier: string) {
     .from(users)
     .where(eq(users.email, adminEmail));
 
-  if (!adminUser?.id) {
-    return null;
+  let finalAdminId = adminUser?.id;
+
+  if (!finalAdminId) {
+    const [firstUser] = await db.select({ id: users.id }).from(users).limit(1);
+    finalAdminId = firstUser?.id;
+    if (!finalAdminId && process.env.NODE_ENV === "development") {
+      const sysId = crypto.randomUUID();
+      await db.insert(users).values({
+        id: sysId,
+        email: adminEmail,
+        name: "System Admin",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      finalAdminId = sysId;
+    }
   }
 
-  return (await getOrCreateAppByName(activationAppName, adminUser.id)) ?? null;
+  if (!finalAdminId) return null;
+
+  return (await getOrCreateAppByName(activationAppName, finalAdminId)) ?? null;
 }
 
 export async function getAppById(id: string, userId: string) {
