@@ -274,7 +274,7 @@ export function FreelanceOpsPanel({
     if (!parsed.success) {
       setBrandingStatus({
         tone: 'error',
-        message: parsed.error.issues[0]?.message || 'Please check branding fields and try again.',
+        message: translateValidationMessage(parsed.error.issues[0]?.message || '') || t('branding.validationCheck'),
       });
       return;
     }
@@ -305,10 +305,10 @@ export function FreelanceOpsPanel({
       taxId: toOptional(parsed.data.taxId),
     });
     if (result) {
-      setBrandingStatus({ tone: 'success', message: 'Branding saved.' });
+      setBrandingStatus({ tone: 'success', message: t('branding.saved') });
       setIsBrandingModalOpen(false);
     } else {
-      setBrandingStatus({ tone: 'error', message: 'Could not save branding. Check your inputs and try again.' });
+      setBrandingStatus({ tone: 'error', message: t('branding.saveError') });
     }
     setIsSavingBranding(false);
   };
@@ -365,7 +365,7 @@ export function FreelanceOpsPanel({
     if (!parsed.success) {
       setInvoiceCreateStatus({
         tone: 'error',
-        message: parsed.error.issues[0]?.message || 'Invalid invoice input',
+        message: translateValidationMessage(parsed.error.issues[0]?.message || '') || t('invoice.invalidInput'),
       });
       return;
     }
@@ -382,9 +382,9 @@ export function FreelanceOpsPanel({
       setInvoicePaid('0');
       setInvoiceClientId('');
       setInvoiceDueDate(new Date().toISOString().slice(0, 10));
-      setInvoiceCreateStatus({ tone: 'success', message: 'Invoice created.' });
+      setInvoiceCreateStatus({ tone: 'success', message: t('invoice.created') });
     } else {
-      setInvoiceCreateStatus({ tone: 'error', message: 'Could not create invoice. Try again.' });
+      setInvoiceCreateStatus({ tone: 'error', message: t('invoice.createError') });
     }
   };
 
@@ -401,7 +401,9 @@ export function FreelanceOpsPanel({
     if (!parsed.success) {
       setInvoiceRowStatus({
         tone: 'error',
-        message: parsed.error.issues[0]?.message || `Invalid values for ${invoice.invoiceNo}`,
+        message:
+          translateValidationMessage(parsed.error.issues[0]?.message || '') ||
+          replaceVars(t('invoice.invalidValues'), { invoiceNo: invoice.invoiceNo }),
       });
       return;
     }
@@ -410,7 +412,7 @@ export function FreelanceOpsPanel({
       totalAmount: parsed.data.totalAmount,
       paidAmount: parsed.data.paidAmount,
     });
-    setInvoiceRowStatus({ tone: 'success', message: `Invoice ${invoice.invoiceNo} updated.` });
+    setInvoiceRowStatus({ tone: 'success', message: replaceVars(t('invoice.updated'), { invoiceNo: invoice.invoiceNo }) });
   };
 
   return (
@@ -422,15 +424,15 @@ export function FreelanceOpsPanel({
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.invoiced")}</p>
-            <p className="metric-value text-2xl font-bold text-white mt-2">{formatMoneyCents(billingStats.totalInvoiced)}</p>
+            <p className="metric-value text-2xl font-bold text-white mt-2">{formatMoneyCents(billingStats.totalInvoiced, locale)}</p>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.paid")}</p>
-            <p className="metric-value text-2xl font-bold text-emerald-300 mt-2">{formatMoneyCents(billingStats.totalPaid)}</p>
+            <p className="metric-value text-2xl font-bold text-emerald-300 mt-2">{formatMoneyCents(billingStats.totalPaid, locale)}</p>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.outstanding")}</p>
-            <p className="metric-value text-2xl font-bold text-amber-300 mt-2">{formatMoneyCents(billingStats.totalOutstanding)}</p>
+            <p className="metric-value text-2xl font-bold text-amber-300 mt-2">{formatMoneyCents(billingStats.totalOutstanding, locale)}</p>
           </div>
         </CardContent>
       </Card>
@@ -485,7 +487,7 @@ export function FreelanceOpsPanel({
                 <p className="mb-2 text-xs uppercase tracking-widest text-slate-400">{t("branding.currentLogo")}</p>
                 <img
                   src={logoPreviewUrl}
-                  alt="Freelancer logo"
+                  alt={t('branding.logoAlt')}
                   className="max-h-24 w-auto rounded-lg border border-white/10 bg-white/5"
                 />
               </div>
@@ -513,7 +515,7 @@ export function FreelanceOpsPanel({
         maxWidthClassName="max-w-2xl"
       >
         <form className="grid grid-cols-1 md:grid-cols-2 gap-3" onSubmit={handleBrandingSubmit}>
-          <Input placeholder="Business name" value={profileBusinessName} onChange={(e) => setProfileBusinessName(e.target.value)} />
+          <Input placeholder={t('branding.placeholder.business')} value={profileBusinessName} onChange={(e) => setProfileBusinessName(e.target.value)} />
           <label className="flex h-11 items-center rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-slate-200">
             <input
               type="file"
@@ -523,14 +525,14 @@ export function FreelanceOpsPanel({
               onChange={handleLogoSelect}
             />
           </label>
-          <Input placeholder="Contact email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} />
-          <Input placeholder="Contact phone" value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} />
-          <Input placeholder="Address line 1" value={profileAddress1} onChange={(e) => setProfileAddress1(e.target.value)} />
-          <Input placeholder="Address line 2" value={profileAddress2} onChange={(e) => setProfileAddress2(e.target.value)} />
-          <Input placeholder="Tax ID" value={profileTaxId} onChange={(e) => setProfileTaxId(e.target.value)} />
+          <Input placeholder={t('branding.placeholder.email')} value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} />
+          <Input placeholder={t('branding.placeholder.phone')} value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} />
+          <Input placeholder={t('branding.placeholder.address1')} value={profileAddress1} onChange={(e) => setProfileAddress1(e.target.value)} />
+          <Input placeholder={t('branding.placeholder.address2')} value={profileAddress2} onChange={(e) => setProfileAddress2(e.target.value)} />
+          <Input placeholder={t('branding.placeholder.taxId')} value={profileTaxId} onChange={(e) => setProfileTaxId(e.target.value)} />
           <div className="md:col-span-2 flex items-center justify-between gap-3">
             <p className="text-xs text-slate-400">
-              {selectedLogoFile ? `Selected logo: ${selectedLogoFile.name}` : t("branding.logoWillUploadOnSave")}
+              {selectedLogoFile ? replaceVars(t('branding.logoSelected'), { fileName: selectedLogoFile.name }) : t("branding.logoWillUploadOnSave")}
             </p>
             <Button type="submit" disabled={isSavingBranding || isUploadingLogo}>
               {isSavingBranding || isUploadingLogo ? t("branding.saving") : t("branding.save")}
@@ -659,7 +661,7 @@ export function FreelanceOpsPanel({
               <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
                 <Select value={invoiceClientId} onValueChange={setInvoiceClientId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Client" />
+                    <SelectValue placeholder={t('invoice.client')} />
                   </SelectTrigger>
                   <SelectContent>
                   {activeClients.map((client) => (
@@ -670,20 +672,20 @@ export function FreelanceOpsPanel({
                   </SelectContent>
                 </Select>
                 <Input
-                  placeholder="Auto invoice number"
+                  placeholder={t('invoice.autoNo')}
                   value={nextInvoiceNo}
                   disabled
                   readOnly
                 />
                 <Input
                   type="number"
-                  placeholder="Total"
+                  placeholder={t('invoice.total')}
                   value={invoiceTotal}
                   onChange={(event) => setInvoiceTotal(event.target.value)}
                 />
                 <Input
                   type="number"
-                  placeholder="Paid"
+                  placeholder={t('invoice.paidLabel')}
                   value={invoicePaid}
                   onChange={(event) => setInvoicePaid(event.target.value)}
                 />
@@ -700,10 +702,10 @@ export function FreelanceOpsPanel({
                   type="submit"
                   disabled={isCreatingInvoice || !hasClients}
                 >
-                  {isCreatingInvoice ? 'Adding...' : 'Add Invoice'}
+                  {isCreatingInvoice ? t('invoice.adding') : t('invoice.add')}
                 </Button>
               </div>
-              <DatePicker value={invoiceDueDate} onChange={setInvoiceDueDate} placeholder="Pick due date" />
+              <DatePicker value={invoiceDueDate} onChange={setInvoiceDueDate} placeholder={t('invoice.pickDueDate')} />
             </form>
             {invoiceCreateStatus && (
               <div
@@ -732,7 +734,7 @@ export function FreelanceOpsPanel({
               <Table>
                 <thead>
                   <tr className="border-b border-white/10">
-                    <Th>Invoice</Th>
+                    <Th>{t('invoice.number')}</Th>
                     <Th>{t("invoice.client")}</Th>
                     <Th>{t("invoice.total")}</Th>
                     <Th>{t("invoice.paidLabel")}</Th>
@@ -789,18 +791,18 @@ export function FreelanceOpsPanel({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="draft">draft</SelectItem>
-                            <SelectItem value="sent">sent</SelectItem>
-                            <SelectItem value="partially_paid">partially_paid</SelectItem>
-                            <SelectItem value="paid">paid</SelectItem>
-                            <SelectItem value="overdue">overdue</SelectItem>
+                            <SelectItem value="draft">{invoiceStatusLabel('draft')}</SelectItem>
+                            <SelectItem value="sent">{invoiceStatusLabel('sent')}</SelectItem>
+                            <SelectItem value="partially_paid">{invoiceStatusLabel('partially_paid')}</SelectItem>
+                            <SelectItem value="paid">{invoiceStatusLabel('paid')}</SelectItem>
+                            <SelectItem value="overdue">{invoiceStatusLabel('overdue')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </Td>
                       <Td>
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-slate-300">
-                            {invoicePdfJobs[invoice.id]?.status || t("invoice.none")}
+                            {invoicePdfJobStatusLabel(invoicePdfJobs[invoice.id]?.status)}
                           </span>
                           {(invoicePdfJobs[invoice.id]?.status === 'pending' ||
                             invoicePdfJobs[invoice.id]?.status === 'processing') && (
@@ -850,7 +852,7 @@ export function FreelanceOpsPanel({
                             void handleInvoiceRowSave(invoice);
                           }}
                         >
-                          Save
+                          {t('invoice.save')}
                         </Button>
                         <Button
                           variant="outline"
@@ -860,7 +862,7 @@ export function FreelanceOpsPanel({
                             void onRemoveInvoice(invoice.id);
                           }}
                         >
-                          Delete
+                          {t('invoice.delete')}
                         </Button>
                       </Td>
                     </tr>
@@ -921,10 +923,3 @@ export function FreelanceOpsPanel({
     </section>
   );
 }
-  const buildInvoicePdfFileName = (invoice: Invoice) => {
-    const safeNo = (invoice.invoiceNo || "invoice").trim().replace(/[^a-zA-Z0-9_-]+/g, "-");
-    const date = invoice.issuedAt ? new Date(invoice.issuedAt) : null;
-    if (!date || Number.isNaN(date.getTime())) return `${safeNo}.pdf`;
-    const safeDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    return `${safeNo}-${safeDate}.pdf`;
-  };
