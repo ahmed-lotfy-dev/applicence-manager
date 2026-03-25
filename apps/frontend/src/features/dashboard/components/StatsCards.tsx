@@ -21,8 +21,8 @@ export function StatsCards({ stats }: StatsCardsProps) {
   return (
     <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4 mb-6">
       {ITEMS.map((item) => (
-        <Card key={item.key} className="overflow-hidden">
-          <CardContent className="relative py-8">
+        <Card key={item.key} className="overflow-hidden rounded-[1.375rem]">
+          <CardContent className="relative px-8 py-7">
             <div className={`absolute left-8 top-0 h-1.5 w-16 rounded-b-full ${item.accent}`} />
             <p className="mb-3 text-[11px] uppercase font-semibold tracking-[0.18em] text-text-muted/70">{t(item.labelKey)}</p>
             <p className={`metric-value text-5xl font-black tracking-tight ${item.tone}`}>{asCount(stats[item.key])}</p>

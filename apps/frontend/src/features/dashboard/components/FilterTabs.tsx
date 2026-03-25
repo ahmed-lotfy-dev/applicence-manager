@@ -14,7 +14,7 @@ export function FilterTabs({ selectedTab, onSelect }: FilterTabsProps) {
   const { t } = useI18n();
 
   return (
-    <div className="border-b border-border/10 px-6 py-4 flex flex-wrap gap-2 bg-white/5">
+    <div className="flex flex-wrap gap-2 border-b border-border/10 bg-white/5 px-6 py-4">
       {TABS.map((tab) => (
         <Button
           key={tab}
@@ -22,10 +22,10 @@ export function FilterTabs({ selectedTab, onSelect }: FilterTabsProps) {
           variant={selectedTab === tab ? 'default' : 'ghost'}
           onClick={() => onSelect(tab)}
           className={cn(
-            "capitalize rounded-full px-5 text-xs font-bold transition-all",
+            "capitalize rounded-xl px-5 text-xs font-bold transition-all",
             selectedTab === tab
-              ? "shadow-soft ring-4 ring-primary/10 bg-primary text-white"
-              : "text-slate-400 hover:text-white hover:bg-white/10"
+              ? "bg-primary text-white shadow-soft ring-2 ring-primary/15"
+              : "text-slate-400 hover:bg-white/10 hover:text-white"
           )}
         >
           {t(`licensing.filter.${tab}`)}

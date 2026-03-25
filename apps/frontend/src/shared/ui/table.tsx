@@ -2,7 +2,7 @@ import type { HTMLAttributes, TableHTMLAttributes, TdHTMLAttributes, ThHTMLAttri
 import { cn } from '../../lib/utils';
 
 export function TableWrapper({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('overflow-x-auto rounded-[1.5rem]', className)} {...props} />;
+  return <div className={cn('overflow-x-auto rounded-[1.25rem]', className)} {...props} />;
 }
 
 export function Table({ className, ...props }: TableHTMLAttributes<HTMLTableElement>) {

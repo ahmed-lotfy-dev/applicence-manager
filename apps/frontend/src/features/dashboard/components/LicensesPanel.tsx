@@ -161,20 +161,20 @@ export function LicensesPanel(props: LicensesPanelProps) {
 
   return (
     <section className="mb-6 space-y-4">
-      <Card className="bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
+      <Card className="rounded-[1.75rem] bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
         <CardHeader className="border-b border-white/5">
           <div className="flex flex-wrap gap-2">
             <Button
               variant={section === "licenses" ? "default" : "ghost"}
               onClick={() => setSection("licenses")}
-              className={section === "licenses" ? "" : "text-slate-300 hover:text-white"}
+              className={section === "licenses" ? "rounded-xl" : "rounded-xl text-slate-300 hover:text-white"}
             >
               {t("licensing.section.licenses")}
             </Button>
             <Button
               variant={section === "activations" ? "default" : "ghost"}
               onClick={() => setSection("activations")}
-              className={section === "activations" ? "" : "text-slate-300 hover:text-white"}
+              className={section === "activations" ? "rounded-xl" : "rounded-xl text-slate-300 hover:text-white"}
             >
               {t("licensing.section.activations")}
             </Button>
@@ -214,8 +214,8 @@ export function LicensesPanel(props: LicensesPanelProps) {
           ) : (
             <>
               <StatsCards stats={stats} />
-              <Card className="bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
-                <CardHeader className="space-y-3 border-b border-white/5">
+              <Card className="rounded-[1.5rem] bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
+                <CardHeader className="space-y-3 border-b border-white/5 px-8 py-7">
                   <CardTitle className="text-lg text-white">{t("licensing.activationsTitle")}</CardTitle>
                   <p className="text-sm text-slate-400">{t("licensing.activationsSubtitle")}</p>
                   {activationError && (
