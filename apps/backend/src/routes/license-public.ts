@@ -19,9 +19,9 @@ async function handleActivationRequest(
     machineId: string;
     shopName: string;
     phone: string;
-    notes?: string;
-    platform?: string;
-    userAgent?: string;
+    notes?: string | null;
+    platform?: string | null;
+    userAgent?: string | null;
   },
   set: { status?: number | string },
 ) {
@@ -35,9 +35,15 @@ async function handleActivationRequest(
   }
 
   const result = await submitRequest({
-    ...body,
     userId: ownerApp.userId,
     appName: ownerApp.name,
+    appVersion: body.appVersion,
+    machineId: body.machineId,
+    shopName: body.shopName,
+    phone: body.phone,
+    notes: body.notes ?? undefined,
+    platform: body.platform ?? undefined,
+    userAgent: body.userAgent ?? undefined,
   });
 
   if (!result.ok) {
@@ -69,9 +75,9 @@ export const licensePublicRoutes = new Elysia({
       machineId: string;
       shopName: string;
       phone: string;
-      notes?: string;
-      platform?: string;
-      userAgent?: string;
+      notes?: string | null;
+      platform?: string | null;
+      userAgent?: string | null;
     }, set),
     {
       body: t.Object({
@@ -80,9 +86,9 @@ export const licensePublicRoutes = new Elysia({
         machineId: t.String({ minLength: 6, maxLength: 256 }),
         shopName: t.String({ minLength: 2, maxLength: 160 }),
         phone: t.String({ minLength: 6, maxLength: 60 }),
-        notes: t.Optional(t.String({ maxLength: 2000 })),
-        platform: t.Optional(t.String({ maxLength: 120 })),
-        userAgent: t.Optional(t.String({ maxLength: 500 })),
+        notes: t.Optional(t.Union([t.String({ maxLength: 2000 }), t.Null()])),
+        platform: t.Optional(t.Union([t.String({ maxLength: 120 }), t.Null()])),
+        userAgent: t.Optional(t.Union([t.String({ maxLength: 500 }), t.Null()])),
       }),
     },
   )
@@ -209,9 +215,9 @@ export const licensePublicRoutes = new Elysia({
       machineId: string;
       shopName: string;
       phone: string;
-      notes?: string;
-      platform?: string;
-      userAgent?: string;
+      notes?: string | null;
+      platform?: string | null;
+      userAgent?: string | null;
     }, set),
     {
       body: t.Object({
@@ -220,9 +226,9 @@ export const licensePublicRoutes = new Elysia({
         machineId: t.String({ minLength: 6, maxLength: 256 }),
         shopName: t.String({ minLength: 2, maxLength: 256 }),
         phone: t.String({ minLength: 5, maxLength: 32 }),
-        notes: t.Optional(t.String({ maxLength: 1000 })),
-        platform: t.Optional(t.String()),
-        userAgent: t.Optional(t.String()),
+        notes: t.Optional(t.Union([t.String({ maxLength: 1000 }), t.Null()])),
+        platform: t.Optional(t.Union([t.String({ maxLength: 120 }), t.Null()])),
+        userAgent: t.Optional(t.Union([t.String({ maxLength: 500 }), t.Null()])),
       }),
     },
   );

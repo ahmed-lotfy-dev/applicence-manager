@@ -3,7 +3,7 @@ import { and, count, desc, eq } from "drizzle-orm";
 import { db } from "../db/db";
 import { activationLogs, activationRequests, activations } from "../db/auth-schema";
 import { getAuthenticatedUserId } from "../lib/request-auth";
-import { approveActivationRequest } from "../services/activation-requests";
+import { approveActivationRequest, revokeActivationRequest } from "../services/activation-requests";
 
 function mapActivationRequest(request: typeof activationRequests.$inferSelect) {
   return {
@@ -227,10 +227,11 @@ export const activationRoutes = new Elysia({
       .where(and(eq(activationRequests.id, id), eq(activationRequests.userId, userId)));
 
     if (activationRequest) {
-      await db
-        .update(activationRequests)
-        .set({ status: "dismissed", updatedAt: new Date() })
-        .where(and(eq(activationRequests.id, id), eq(activationRequests.userId, userId)));
+      const result = await revokeActivationRequest({ id, userId });
+      if (!result.ok) {
+        set.status = result.status;
+        return { error: result.error };
+      }
       return { success: true, message: "Activation request dismissed" };
     }
 

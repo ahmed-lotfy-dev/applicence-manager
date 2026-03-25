@@ -236,8 +236,8 @@ export function FreelanceOpsPanel({
   const [editClientName, setEditClientName] = useState('');
   const [editClientEmail, setEditClientEmail] = useState('');
   const [editClientPhone, setEditClientPhone] = useState('');
-  const [clientFilter, setClientFilter] = useState<ClientFilter>('active');
-  const [invoiceFilter, setInvoiceFilter] = useState<InvoiceFilter>('active');
+  const [clientFilter, setClientFilter] = useState<ClientFilter>('all');
+  const [invoiceFilter, setInvoiceFilter] = useState<InvoiceFilter>('all');
   const [invoiceToArchive, setInvoiceToArchive] = useState<Invoice | null>(null);
   const [invoiceToRestore, setInvoiceToRestore] = useState<Invoice | null>(null);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);

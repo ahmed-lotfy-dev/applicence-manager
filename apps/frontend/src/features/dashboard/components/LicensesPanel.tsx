@@ -70,10 +70,11 @@ export function LicensesPanel(props: LicensesPanelProps) {
   const [createdLockedLicenseKey, setCreatedLockedLicenseKey] = useState("");
   const [editingApp, setEditingApp] = useState<EditAppState | null>(null);
   const [editingLicense, setEditingLicense] = useState<EditLicenseState | null>(null);
+  const [appToDelete, setAppToDelete] = useState<LicensesPanelProps["apps"][number] | null>(null);
   const [licenseToDelete, setLicenseToDelete] = useState<LicensesPanelProps["licenses"][number] | null>(null);
+  const [licenseToRevoke, setLicenseToRevoke] = useState<LicensesPanelProps["licenses"][number] | null>(null);
+  const [activationToRevoke, setActivationToRevoke] = useState<LicensesPanelProps["activations"][number] | null>(null);
   const [activationQuery, setActivationQuery] = useState("");
-  const [activationAppFilter, setActivationAppFilter] = useState<string>("all");
-  const [activationLicenseFilter, setActivationLicenseFilter] = useState<string>("all");
 
   const openLockedLicenseFromActivation = (activation: LicensesPanelProps["activations"][number]) => {
     const matchingApp = apps.find((app) => app.name === activation.appName);
@@ -133,20 +134,10 @@ export function LicensesPanel(props: LicensesPanelProps) {
     setEditingLicense(null);
   };
 
-  const activationAppOptions = useMemo(
-    () => Array.from(new Set(activations.map((activation) => activation.appName))).sort((a, b) => a.localeCompare(b)),
-    [activations],
-  );
-  const activationLicenseOptions = useMemo(
-    () => Array.from(new Set(activations.map((activation) => activation.licenseKey))).sort((a, b) => a.localeCompare(b)),
-    [activations],
-  );
   const filteredActivations = useMemo(() => {
     const query = activationQuery.trim().toLowerCase();
     return activations.filter((activation) => {
       if (activationFilter !== "all" && activation.status !== activationFilter) return false;
-      if (activationAppFilter !== "all" && activation.appName !== activationAppFilter) return false;
-      if (activationLicenseFilter !== "all" && activation.licenseKey !== activationLicenseFilter) return false;
       if (!query) return true;
       return (
         activation.appName.toLowerCase().includes(query) ||
@@ -159,7 +150,7 @@ export function LicensesPanel(props: LicensesPanelProps) {
         (activation.requestPlatform || "").toLowerCase().includes(query)
       );
     });
-  }, [activationAppFilter, activationFilter, activationLicenseFilter, activationQuery, activations]);
+  }, [activationFilter, activationQuery, activations]);
 
   return (
     <section className="mb-6 space-y-4">
@@ -196,7 +187,10 @@ export function LicensesPanel(props: LicensesPanelProps) {
                 onNewAppNameChange={setNewAppName}
                 onCreateAppSubmit={handleCreateApp}
                 onEditApp={setEditingApp}
-                onRemoveApp={(id) => void onRemoveApp(id)}
+                onRemoveApp={(id) => {
+                  const target = apps.find((app) => app.id === id) ?? null;
+                  setAppToDelete(target);
+                }}
               />
 
               <LicensesInventoryCard
@@ -209,7 +203,14 @@ export function LicensesPanel(props: LicensesPanelProps) {
                   setCreateLockedLicenseOpen(true);
                 }}
                 onEditLicense={(id, maxActivations, status) => setEditingLicense({ id, maxActivations: String(maxActivations), status })}
-                onChangeLicenseStatus={(id, nextStatus) => void onChangeLicenseStatus(id, nextStatus)}
+                onChangeLicenseStatus={(id, nextStatus) => {
+                  if (nextStatus === "revoked") {
+                    const target = licenses.find((license) => license.id === id) ?? null;
+                    setLicenseToRevoke(target);
+                    return;
+                  }
+                  void onChangeLicenseStatus(id, nextStatus);
+                }}
                 onRemoveLicense={(id) => {
                   const target = licenses.find((license) => license.id === id) ?? null;
                   setLicenseToDelete(target);
@@ -228,39 +229,22 @@ export function LicensesPanel(props: LicensesPanelProps) {
                       {activationError}
                     </div>
                   )}
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <Input
-                      placeholder={t("licensing.searchPlaceholder")}
-                      value={activationQuery}
-                      onChange={(event) => setActivationQuery(event.target.value)}
-                    />
-                    <Input
-                      list="activation-app-options"
-                      placeholder={t("licensing.filterAppPlaceholder")}
-                      value={activationAppFilter === "all" ? "" : activationAppFilter}
-                      onChange={(event) => setActivationAppFilter(event.target.value.trim() || "all")}
-                    />
-                    <Input
-                      list="activation-license-options"
-                      placeholder={t("licensing.filterLicensePlaceholder")}
-                      value={activationLicenseFilter === "all" ? "" : activationLicenseFilter}
-                      onChange={(event) => setActivationLicenseFilter(event.target.value.trim() || "all")}
-                    />
-                    <datalist id="activation-app-options">
-                      {activationAppOptions.map((appName) => (
-                        <option key={appName} value={appName} />
-                      ))}
-                    </datalist>
-                    <datalist id="activation-license-options">
-                      {activationLicenseOptions.map((licenseKey) => (
-                        <option key={licenseKey} value={licenseKey} />
-                      ))}
-                    </datalist>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_14rem]">
+                    <div>
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted/70">
+                        {t("licensing.filterSearchLabel")}
+                      </p>
+                      <Input
+                        placeholder={t("licensing.searchPlaceholder")}
+                        value={activationQuery}
+                        onChange={(event) => setActivationQuery(event.target.value)}
+                      />
+                    </div>
+                    <FilterTabs selectedTab={activationFilter} onSelect={onActivationFilterChange} />
                   </div>
                 </CardHeader>
                 <CardContent className="px-8 pb-8 pt-0">
                   <div className="overflow-hidden rounded-[1.25rem] border border-white/5 bg-white/5">
-                    <FilterTabs selectedTab={activationFilter} onSelect={onActivationFilterChange} />
                     <ActivationsTable
                       activations={filteredActivations}
                       loading={loadingActivations}
@@ -269,7 +253,8 @@ export function LicensesPanel(props: LicensesPanelProps) {
                         void onApproveActivation(id);
                       }}
                       onRevoke={(id) => {
-                        void onRevokeActivation(id);
+                        const target = activations.find((activation) => activation.id === id) ?? null;
+                        setActivationToRevoke(target);
                       }}
                       onGenerateLockedLicense={openLockedLicenseFromActivation}
                     />
@@ -333,6 +318,89 @@ export function LicensesPanel(props: LicensesPanelProps) {
       />
 
       <Dialog
+        open={appToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setAppToDelete(null);
+        }}
+        title={t("licensing.appDeleteTitle")}
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-slate-300">{t("licensing.appDeleteDescription")}</p>
+          {appToDelete ? (
+            <div className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+              <div className="font-semibold text-white">{appToDelete.name}</div>
+            </div>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/10 text-white"
+              onClick={() => setAppToDelete(null)}
+            >
+              {t("clients.archiveCancel")}
+            </Button>
+            <Button
+              type="button"
+              className="bg-danger text-white hover:bg-danger/90"
+              disabled={!appToDelete || appActionLoadingId === appToDelete.id}
+              onClick={() => {
+                if (!appToDelete) return;
+                void onRemoveApp(appToDelete.id).finally(() => {
+                  setAppToDelete(null);
+                });
+              }}
+            >
+              {t("licensing.appDeleteConfirm")}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={licenseToRevoke !== null}
+        onOpenChange={(open) => {
+          if (!open) setLicenseToRevoke(null);
+        }}
+        title={t("licensing.revokeTitle")}
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-slate-300">{t("licensing.revokeDescription")}</p>
+          {licenseToRevoke ? (
+            <div className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+              <div className="font-semibold text-white">{licenseToRevoke.appName}</div>
+              <div className="mt-1 font-mono text-xs text-danger">{licenseToRevoke.licenseKey}</div>
+            </div>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/10 text-white"
+              onClick={() => setLicenseToRevoke(null)}
+            >
+              {t("clients.archiveCancel")}
+            </Button>
+            <Button
+              type="button"
+              className="bg-danger text-white hover:bg-danger/90"
+              disabled={!licenseToRevoke || licenseActionLoadingId === licenseToRevoke.id}
+              onClick={() => {
+                if (!licenseToRevoke) return;
+                void onChangeLicenseStatus(licenseToRevoke.id, "revoked").finally(() => {
+                  setLicenseToRevoke(null);
+                });
+              }}
+            >
+              {t("licensing.revokeConfirm")}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
         open={licenseToDelete !== null}
         onOpenChange={(open) => {
           if (!open) setLicenseToDelete(null);
@@ -369,6 +437,61 @@ export function LicensesPanel(props: LicensesPanelProps) {
               }}
             >
               {t("licensing.deleteConfirm")}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={activationToRevoke !== null}
+        onOpenChange={(open) => {
+          if (!open) setActivationToRevoke(null);
+        }}
+        title={
+          activationToRevoke?.status === "pending"
+            ? t("activations.dismissTitle")
+            : t("activations.revokeTitle")
+        }
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-slate-300">
+            {activationToRevoke?.status === "pending"
+              ? t("activations.dismissDescription")
+              : t("activations.revokeDescription")}
+          </p>
+          {activationToRevoke ? (
+            <div className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+              <div className="font-semibold text-white">{activationToRevoke.appName}</div>
+              <div className="mt-1 text-xs text-slate-300">{activationToRevoke.shopName || activationToRevoke.machineId}</div>
+              <div className="mt-1 font-mono text-xs text-danger">
+                {activationToRevoke.licenseKey || t("activations.noLicense")}
+              </div>
+            </div>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/10 text-white"
+              onClick={() => setActivationToRevoke(null)}
+            >
+              {t("clients.archiveCancel")}
+            </Button>
+            <Button
+              type="button"
+              className="bg-danger text-white hover:bg-danger/90"
+              disabled={!activationToRevoke || activationActionLoadingId === activationToRevoke.id}
+              onClick={() => {
+                if (!activationToRevoke) return;
+                void onRevokeActivation(activationToRevoke.id).finally(() => {
+                  setActivationToRevoke(null);
+                });
+              }}
+            >
+              {activationToRevoke?.status === "pending"
+                ? t("activations.dismissConfirm")
+                : t("activations.revokeConfirm")}
             </Button>
           </div>
         </div>

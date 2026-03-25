@@ -1,7 +1,7 @@
 import { db } from "../db/db";
 import { activationRequests } from "../db/auth-schema";
 import { and, eq } from "drizzle-orm";
-import { activateLicense, issueLicense } from "./licensing";
+import { activateLicense, deactivateActivation, issueLicense } from "./licensing";
 
 export interface CreateActivationRequestInput {
   userId: string;
@@ -103,10 +103,6 @@ export async function approveActivationRequest(input: {
     return { ok: false as const, status: 404 as const, error: "Activation request not found" };
   }
 
-  if (request.status === "dismissed") {
-    return { ok: false as const, status: 409 as const, error: "Dismissed requests cannot be approved" };
-  }
-
   if (
     request.status === "approved" &&
     request.activationToken &&
@@ -124,21 +120,25 @@ export async function approveActivationRequest(input: {
     };
   }
 
-  const issuedLicense = await issueLicense(input.userId, {
-    appName: request.appName,
-    maxActivations: 1,
-    lockedMachineId: request.machineId,
-    metadata: {
-      source: "approved_activation_request",
-      requestId: request.id,
-      shopName: request.shopName,
-      phone: request.phone,
-    },
-  });
+  const licenseKey =
+    request.resolvedLicenseKey?.trim() ||
+    (
+      await issueLicense(input.userId, {
+        appName: request.appName,
+        maxActivations: 1,
+        lockedMachineId: request.machineId,
+        metadata: {
+          source: "approved_activation_request",
+          requestId: request.id,
+          shopName: request.shopName,
+          phone: request.phone,
+        },
+      })
+    ).licenseKey;
 
   const activationResult = await activateLicense({
     appName: request.appName,
-    licenseKey: issuedLicense.licenseKey,
+    licenseKey,
     machineId: request.machineId,
     appVersion: request.appVersion,
     metadata: {
@@ -164,7 +164,7 @@ export async function approveActivationRequest(input: {
     .update(activationRequests)
     .set({
       status: "approved",
-      resolvedLicenseKey: issuedLicense.licenseKey,
+      resolvedLicenseKey: licenseKey,
       activationId: activationResult.data.activation.id,
       activationToken: activationResult.data.activationToken,
       tokenExpiresAt: new Date(activationResult.data.tokenExpiresAt),
@@ -184,7 +184,53 @@ export async function approveActivationRequest(input: {
       activationId: activationResult.data.activation.id,
       activationToken: activationResult.data.activationToken,
       tokenExpiresAt: activationResult.data.tokenExpiresAt,
-      licenseKey: issuedLicense.licenseKey,
+      licenseKey,
     },
   };
+}
+
+export async function revokeActivationRequest(input: {
+  id: string;
+  userId: string;
+}) {
+  const [request] = await db
+    .select()
+    .from(activationRequests)
+    .where(
+      and(
+        eq(activationRequests.id, input.id),
+        eq(activationRequests.userId, input.userId),
+      ),
+    );
+
+  if (!request) {
+    return { ok: false as const, status: 404 as const, error: "Activation request not found" };
+  }
+
+  if (request.activationToken) {
+    const revokeResult = await deactivateActivation({
+      appName: request.appName,
+      machineId: request.machineId,
+      activationToken: request.activationToken,
+    });
+
+    if (!revokeResult.ok) {
+      return { ok: false as const, status: 409 as const, error: revokeResult.reason };
+    }
+  }
+
+  await db
+    .update(activationRequests)
+    .set({
+      status: "dismissed",
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(activationRequests.id, input.id),
+        eq(activationRequests.userId, input.userId),
+      ),
+    );
+
+  return { ok: true as const };
 }

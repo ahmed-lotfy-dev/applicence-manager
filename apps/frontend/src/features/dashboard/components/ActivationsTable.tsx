@@ -27,6 +27,16 @@ function statusVariant(status: Activation["status"]): BadgeVariant {
   }
 }
 
+function formatActionSet(activation: Activation) {
+  if (activation.status === "pending") {
+    return "pending";
+  }
+  if (activation.status === "active") {
+    return "active";
+  }
+  return "revoked";
+}
+
 export function ActivationsTable({
   activations,
   loading,
@@ -93,25 +103,24 @@ export function ActivationsTable({
                   </Badge>
                 </Td>
                 <Td>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <div className="text-sm text-slate-200">
                       {activation.requestReason || t("activations.noDetails")}
                     </div>
-                    {activation.notes ? (
-                      <div className="text-xs text-slate-400">
-                        {activation.notes}
+                    <div className="grid gap-1 text-xs text-slate-400">
+                      {activation.notes ? <div>{activation.notes}</div> : null}
+                      {activation.requestPlatform ? (
+                        <div className="uppercase tracking-wider text-slate-500">{activation.requestPlatform}</div>
+                      ) : null}
+                      <div className="text-slate-500">
+                        {new Date(activation.createdAt).toLocaleString()}
                       </div>
-                    ) : null}
-                    {activation.requestPlatform ? (
-                      <div className="text-xs uppercase tracking-wider text-slate-500">
-                        {activation.requestPlatform}
-                      </div>
-                    ) : null}
+                    </div>
                   </div>
                 </Td>
                 <Td>
                   <div className="flex flex-wrap gap-2">
-                    {activation.status === "pending" ? (
+                    {formatActionSet(activation) === "pending" ? (
                       <>
                         <Button
                           size="sm"
@@ -137,17 +146,27 @@ export function ActivationsTable({
                           {t("activations.dismiss")}
                         </Button>
                       </>
-                    ) : activation.status === "active" ? (
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        disabled={actionLoadingId === activation.id}
-                        onClick={() => onRevoke(activation.id)}
-                      >
-                        {t("licensing.action.revoke")}
-                      </Button>
                     ) : (
-                      <span className="text-xs text-text-muted">{t("activations.noAction")}</span>
+                      <>
+                        <Button
+                          size="sm"
+                          variant={activation.status === "active" ? "destructive" : "default"}
+                          disabled={actionLoadingId === activation.id}
+                          onClick={() =>
+                            activation.status === "active" ? onRevoke(activation.id) : onApprove(activation.id)
+                          }
+                        >
+                          {activation.status === "active" ? t("licensing.action.revoke") : t("licensing.action.activate")}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => onGenerateLockedLicense(activation)}
+                          disabled={actionLoadingId === activation.id}
+                        >
+                          {t("activations.createLocked")}
+                        </Button>
+                      </>
                     )}
                   </div>
                 </Td>

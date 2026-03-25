@@ -1,6 +1,12 @@
 import { cn } from "../../../lib/utils";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
-import { Button } from "../../../shared/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../shared/ui/select";
 import type { ActivationFilter } from "../types/dashboard";
 
 interface FilterTabsProps {
@@ -14,23 +20,22 @@ export function FilterTabs({ selectedTab, onSelect }: FilterTabsProps) {
   const { t } = useI18n();
 
   return (
-    <div className="flex flex-wrap gap-2 border-b border-border/10 bg-transparent px-6 py-4">
-      {TABS.map((tab) => (
-        <Button
-          key={tab}
-          size="sm"
-          variant={selectedTab === tab ? 'default' : 'ghost'}
-          onClick={() => onSelect(tab)}
-          className={cn(
-            "capitalize rounded-xl px-5 text-xs font-bold transition-all",
-            selectedTab === tab
-              ? "bg-primary text-white shadow-soft ring-2 ring-primary/15"
-              : "text-slate-400 hover:bg-white/10 hover:text-white"
-          )}
-        >
-          {t(`licensing.filter.${tab}`)}
-        </Button>
-      ))}
+    <div className="w-full md:max-w-[14rem]">
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted/70">
+        {t("licensing.filterStatusLabel")}
+      </p>
+      <Select value={selectedTab} onValueChange={(value) => onSelect(value as ActivationFilter)}>
+        <SelectTrigger className={cn("h-11 rounded-xl bg-white/5")}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {TABS.map((tab) => (
+            <SelectItem key={tab} value={tab}>
+              {t(`licensing.filter.${tab}`)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
