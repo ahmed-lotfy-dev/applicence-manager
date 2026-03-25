@@ -1,4 +1,6 @@
 import { Elysia, t } from "elysia";
+import { activationRequests, activations, managedApps } from "../db/auth-schema";
+import { db } from "../db/db";
 import {
   activateLicense,
   deactivateActivation,
@@ -22,6 +24,9 @@ async function handleActivationRequest(
 ) {
   const ownerApp = await resolveAppOwnerByIdentifier(body.appName);
   if (!ownerApp?.userId) {
+    console.error(`[Activation] App not found: "${body.appName}"`);
+    const allApps = await db.select().from(managedApps);
+    console.log(`[Activation] Available apps: ${allApps.map((a: typeof managedApps.$inferSelect) => a.name).join(", ")}`);
     set.status = 404;
     return { success: false, error: "App not found" };
   }

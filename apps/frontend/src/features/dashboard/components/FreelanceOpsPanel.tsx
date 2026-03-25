@@ -66,6 +66,7 @@ interface FreelanceOpsPanelProps {
   isCreatingInvoice: boolean;
   onCreateClient: (input: { name: string; email?: string; phone?: string; notes?: string }) => Promise<Client | null>;
   onRemoveClient: (id: string) => Promise<boolean>;
+  onUpdateClient: (id: string, input: { name?: string; email?: string; phone?: string; notes?: string; status?: 'active' | 'inactive' }) => Promise<Client | null>;
   onCreateInvoice: (input: {
     clientId: string;
     invoiceNo: string;
@@ -128,6 +129,7 @@ export function FreelanceOpsPanel({
   isCreatingInvoice,
   onCreateClient,
   onRemoveClient,
+  onUpdateClient,
   onCreateInvoice,
   onUpdateInvoice,
   onRemoveInvoice,
@@ -168,6 +170,7 @@ export function FreelanceOpsPanel({
 
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
   const [invoiceClientId, setInvoiceClientId] = useState('');
   const [invoiceTotal, setInvoiceTotal] = useState('');
   const [invoicePaid, setInvoicePaid] = useState('0');
@@ -205,6 +208,10 @@ export function FreelanceOpsPanel({
   const [isSavingBranding, setIsSavingBranding] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [clientToArchive, setClientToArchive] = useState<Client | null>(null);
+  const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
+  const [editClientName, setEditClientName] = useState('');
+  const [editClientEmail, setEditClientEmail] = useState('');
+  const [editClientPhone, setEditClientPhone] = useState('');
   const [clientFilter, setClientFilter] = useState<ClientFilter>('active');
 
   const activeClients = useMemo(
@@ -333,10 +340,35 @@ export function FreelanceOpsPanel({
     const result = await onCreateClient({
       name: clientName,
       email: clientEmail || undefined,
+      phone: clientPhone || undefined,
     });
     if (result) {
       setClientName('');
       setClientEmail('');
+      setClientPhone('');
+    }
+  };
+
+  const openEditClient = (client: Client) => {
+    setClientStatus(null);
+    setClientToEdit(client);
+    setEditClientName(client.name || '');
+    setEditClientEmail(client.email || '');
+    setEditClientPhone(client.phone || '');
+  };
+
+  const handleUpdateClientSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!clientToEdit || !editClientName.trim()) return;
+    setClientStatus(null);
+    const updated = await onUpdateClient(clientToEdit.id, {
+      name: editClientName.trim(),
+      email: editClientEmail || undefined,
+      phone: editClientPhone || undefined,
+    });
+    if (updated) {
+      setClientStatus({ tone: 'success', message: t("clients.updated") });
+      setClientToEdit(null);
     }
   };
 
@@ -559,6 +591,11 @@ export function FreelanceOpsPanel({
                 value={clientEmail}
                 onChange={(event) => setClientEmail(event.target.value)}
               />
+              <Input
+                placeholder={t("clients.phonePlaceholder")}
+                value={clientPhone}
+                onChange={(event) => setClientPhone(event.target.value)}
+              />
               <Button type="submit" disabled={isCreatingClient || !clientName.trim()}>
                 {isCreatingClient ? t("clients.adding") : t("clients.add")}
               </Button>
@@ -597,6 +634,7 @@ export function FreelanceOpsPanel({
                   <tr className="border-b border-white/10">
                     <Th>{t("clients.name")}</Th>
                     <Th>{t("clients.email")}</Th>
+                    <Th>{t("clients.phone")}</Th>
                     <Th>{t("clients.status")}</Th>
                     <Th className="text-right">{t("clients.action")}</Th>
                   </tr>
@@ -615,6 +653,7 @@ export function FreelanceOpsPanel({
                         </div>
                       </Td>
                       <Td className="text-slate-300">{client.email || '-'}</Td>
+                      <Td className="text-slate-300">{client.phone || '-'}</Td>
                       <Td className="text-slate-300">
                         {client.isDeleted ? t("clients.archivedBadge") : client.status}
                       </Td>
@@ -622,24 +661,34 @@ export function FreelanceOpsPanel({
                         {client.isDeleted ? (
                           <span className="text-xs text-slate-500">{t("clients.archivedBadge")}</span>
                         ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-white/10 text-white"
-                            onClick={() => {
-                              setClientStatus(null);
-                              setClientToArchive(client);
-                            }}
-                          >
-                            {t("clients.archive")}
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-white/10 text-white"
+                              onClick={() => openEditClient(client)}
+                            >
+                              {t("clients.edit")}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-white/10 text-white"
+                              onClick={() => {
+                                setClientStatus(null);
+                                setClientToArchive(client);
+                              }}
+                            >
+                              {t("clients.archive")}
+                            </Button>
+                          </div>
                         )}
                       </Td>
                     </tr>
                   ))}
                   {filteredClients.length === 0 && (
                     <tr>
-                      <Td colSpan={4} className="text-slate-400 text-center py-8">
+                      <Td colSpan={5} className="text-slate-400 text-center py-8">
                         {t("clients.empty")}
                       </Td>
                     </tr>
@@ -881,10 +930,45 @@ export function FreelanceOpsPanel({
           </Card>
         )}
 
-        <Dialog
-          open={clientToArchive !== null}
-          onOpenChange={(open) => {
-            if (!open) setClientToArchive(null);
+      <Dialog
+        open={clientToEdit !== null}
+        onOpenChange={(open) => {
+          if (!open) setClientToEdit(null);
+        }}
+        title={t("clients.editTitle")}
+        maxWidthClassName="max-w-md"
+      >
+        <form className="space-y-4" onSubmit={handleUpdateClientSubmit}>
+          <Input
+            placeholder={t("clients.namePlaceholder")}
+            value={editClientName}
+            onChange={(event) => setEditClientName(event.target.value)}
+          />
+          <Input
+            placeholder={t("clients.emailPlaceholder")}
+            value={editClientEmail}
+            onChange={(event) => setEditClientEmail(event.target.value)}
+          />
+          <Input
+            placeholder={t("clients.phonePlaceholder")}
+            value={editClientPhone}
+            onChange={(event) => setEditClientPhone(event.target.value)}
+          />
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" className="border-white/10 text-white" onClick={() => setClientToEdit(null)}>
+              {t("clients.archiveCancel")}
+            </Button>
+            <Button type="submit">
+              {t("clients.save")}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+
+      <Dialog
+        open={clientToArchive !== null}
+        onOpenChange={(open) => {
+          if (!open) setClientToArchive(null);
           }}
           title={t("clients.archiveTitle")}
           maxWidthClassName="max-w-md"

@@ -16,9 +16,11 @@ export function OverviewPage({
   clientsCount,
   invoicesCount,
 }: OverviewPageProps) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const asCount = (value: number) =>
+    new Intl.NumberFormat(locale === "ar" ? "ar-EG-u-nu-arab" : "en-US").format(value);
   const asMoney = (cents: number) =>
-    new Intl.NumberFormat("en-US", {
+    new Intl.NumberFormat(locale === "ar" ? "ar-EG-u-nu-arab" : "en-US", {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: 2,
@@ -35,7 +37,7 @@ export function OverviewPage({
             <CardTitle className="text-sm text-text-muted">{t("overview.clients")}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <p className="metric-value text-4xl font-black text-text">{clientsCount}</p>
+            <p className="metric-value text-4xl font-black text-text">{asCount(clientsCount)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -43,7 +45,7 @@ export function OverviewPage({
             <CardTitle className="text-sm text-text-muted">{t("overview.invoices")}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <p className="metric-value text-4xl font-black text-text">{invoicesCount}</p>
+            <p className="metric-value text-4xl font-black text-text">{asCount(invoicesCount)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -102,11 +104,11 @@ export function OverviewPage({
           <CardContent className="space-y-4">
             <div className="rounded-[1.4rem] bg-bg-light p-5">
               <p className="text-[11px] uppercase tracking-[0.16em] text-text-muted/70">{t("overview.clientBase")}</p>
-              <p className="mt-3 text-lg font-semibold text-text">{t("overview.clientBaseValue").replace("{count}", String(clientsCount))}</p>
+              <p className="mt-3 text-lg font-semibold text-text">{t("overview.clientBaseValue").replace("{count}", asCount(clientsCount))}</p>
             </div>
             <div className="rounded-[1.4rem] bg-bg-light p-5">
               <p className="text-[11px] uppercase tracking-[0.16em] text-text-muted/70">{t("overview.invoiceThroughput")}</p>
-              <p className="mt-3 text-lg font-semibold text-text">{t("overview.invoiceThroughputValue").replace("{count}", String(invoicesCount))}</p>
+              <p className="mt-3 text-lg font-semibold text-text">{t("overview.invoiceThroughputValue").replace("{count}", asCount(invoicesCount))}</p>
             </div>
           </CardContent>
         </Card>

@@ -28,6 +28,7 @@ import {
   updateLicense,
   updateManagedApp,
   updateActivationStatus,
+  updateClient,
 } from "../../../lib/api-client";
 import type {
   Activation,
@@ -80,6 +81,13 @@ interface UseDashboardDataResult {
     notes?: string;
   }) => Promise<Client | null>;
   removeClient: (id: string) => Promise<boolean>;
+  updateExistingClient: (id: string, input: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    notes?: string;
+    status?: "active" | "inactive";
+  }) => Promise<Client | null>;
   createNewInvoice: (input: {
     clientId: string;
     invoiceNo: string;
@@ -422,6 +430,25 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
     [onQueryError, queryClient],
   );
 
+  const updateExistingClient = useCallback(
+    async (
+      id: string,
+      input: { name?: string; email?: string; phone?: string; notes?: string; status?: "active" | "inactive" },
+    ) => {
+      setError("");
+      try {
+        const updated = await updateClient(id, input);
+        if (!updated) throw new UnauthorizedError();
+        await queryClient.invalidateQueries({ queryKey: queryKeys.clients });
+        return updated;
+      } catch (mutationError) {
+        onQueryError(mutationError, "Could not update client right now.");
+        return null;
+      }
+    },
+    [onQueryError, queryClient],
+  );
+
   const createNewInvoice = useCallback(
     async (input: {
       clientId: string;
@@ -705,6 +732,7 @@ export function useDashboardData(onUnauthorized: () => void): UseDashboardDataRe
     createNewApp,
     createNewClient,
     removeClient,
+    updateExistingClient,
     createNewInvoice,
     updateExistingInvoice,
     removeInvoice,

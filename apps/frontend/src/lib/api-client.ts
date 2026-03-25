@@ -360,6 +360,28 @@ export async function createClient(input: {
   return data?.client || null;
 }
 
+export async function updateClient(
+  id: string,
+  input: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    notes?: string;
+    status?: 'active' | 'inactive';
+  },
+): Promise<Client | null> {
+  const response = await apiRequest(`/clients/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(await getErrorMessage(response, 'Failed to update client'));
+
+  const data = await parseJsonResponse<{ client?: Client }>(response);
+  return data?.client || null;
+}
+
 export async function deleteClient(id: string): Promise<boolean> {
   const response = await apiRequest(`/clients/${id}`, {
     method: 'DELETE',

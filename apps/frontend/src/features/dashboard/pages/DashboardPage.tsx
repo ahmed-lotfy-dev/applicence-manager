@@ -65,6 +65,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     changeStatus,
     createNewClient,
     removeClient,
+    updateExistingClient,
     createNewInvoice,
     updateExistingInvoice,
     removeInvoice,
@@ -159,6 +160,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 isCreatingInvoice={isCreatingInvoice}
                 onCreateClient={createNewClient}
                 onRemoveClient={removeClient}
+                onUpdateClient={updateExistingClient}
                 onCreateInvoice={createNewInvoice}
                 onUpdateInvoice={updateExistingInvoice}
                 onRemoveInvoice={removeInvoice}
