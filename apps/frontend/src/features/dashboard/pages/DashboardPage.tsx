@@ -1,6 +1,9 @@
 import { lazy, Suspense, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { DashboardNav, type DashboardPage as DashboardPageType } from "../components/DashboardNav";
+import { useLocation, useSearchParams } from "react-router-dom";
+import {
+  DashboardNav,
+  type DashboardPage as DashboardPageType,
+} from "../components/DashboardNav";
 import { useDashboardData } from "../hooks/use-dashboard-data";
 import { authClient } from "../../../lib/auth-client";
 import type { ActivationFilter } from "../types/dashboard";
@@ -28,6 +31,10 @@ interface DashboardPageProps {
 
 export function DashboardPage({ onLogout }: DashboardPageProps) {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const urlActivationFilter = searchParams.get(
+    "filter",
+  ) as ActivationFilter | null;
   const { dir, t } = useI18n();
   const page: DashboardPageType = useMemo(() => {
     if (location.pathname.startsWith("/branding")) return "branding";
@@ -37,7 +44,12 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     if (location.pathname.startsWith("/licensing")) return "licensing";
     return "overview";
   }, [location.pathname]);
-  const [selectedTab, setSelectedTab] = useState<ActivationFilter>("all");
+  const [selectedTab, setSelectedTab] = useState<ActivationFilter>(
+    urlActivationFilter &&
+      ["all", "pending", "active", "revoked"].includes(urlActivationFilter)
+      ? urlActivationFilter
+      : "all",
+  );
   const {
     activations,
     licenses,
@@ -89,7 +101,9 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
 
   const filteredActivations = useMemo(() => {
     if (selectedTab === "all") return activations;
-    return activations.filter((activation) => activation.status === selectedTab);
+    return activations.filter(
+      (activation) => activation.status === selectedTab,
+    );
   }, [activations, selectedTab]);
 
   const handleLogout = async () => {
@@ -150,7 +164,9 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
               />
             )}
 
-            {(page === "branding" || page === "clients" || page === "invoices") && (
+            {(page === "branding" ||
+              page === "clients" ||
+              page === "invoices") && (
               <FreelanceOpsPanel
                 view={page}
                 error={error}
