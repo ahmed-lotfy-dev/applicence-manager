@@ -27,6 +27,11 @@ const LicensesPanel = lazy(async () => {
   return { default: module.LicensesPanel };
 });
 
+const SettingsPage = lazy(async () => {
+  const module = await import("./SettingsPage");
+  return { default: module.SettingsPage };
+});
+
 interface DashboardPageProps {
   onLogout: () => void;
 }
@@ -44,6 +49,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     if (location.pathname.startsWith("/invoices")) return "invoices";
     if (location.pathname.startsWith("/freelance")) return "branding";
     if (location.pathname.startsWith("/licensing")) return "licensing";
+    if (location.pathname.startsWith("/settings")) return "settings";
     return "overview";
   }, [location.pathname]);
   const [selectedTab, setSelectedTab] = useState<ActivationFilter>(
@@ -119,7 +125,9 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                     ? t("dashboard.page.clients.kicker")
                     : page === "invoices"
                       ? t("dashboard.page.invoices.kicker")
-                      : t("dashboard.page.branding.kicker")}
+                      : page === "settings"
+                        ? t("dashboard.page.settings.kicker")
+                        : t("dashboard.page.branding.kicker")}
             </p>
             <h1 className="text-4xl font-black tracking-tight text-text sm:text-5xl">
               {page === "overview"
@@ -130,7 +138,9 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                     ? t("dashboard.page.clients.title")
                     : page === "invoices"
                       ? t("dashboard.page.invoices.title")
-                      : t("dashboard.page.branding.title")}
+                      : page === "settings"
+                        ? t("dashboard.page.settings.title")
+                        : t("dashboard.page.branding.title")}
             </h1>
           </div>
           <Suspense fallback={pageLoadingFallback}>
@@ -182,6 +192,13 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 onActivationFilterChange={setSelectedTab}
                 onLogout={handleLogout}
                 activationError={error}
+              />
+            )}
+
+            {page === "settings" && (
+              <SettingsPage
+                freelancerProfile={freelancerProfile}
+                onSaveFreelancerProfile={saveFreelancerProfile}
               />
             )}
           </Suspense>

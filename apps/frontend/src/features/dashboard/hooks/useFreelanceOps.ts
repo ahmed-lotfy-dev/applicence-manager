@@ -300,9 +300,6 @@ export function useFreelanceOps(props: FreelanceOpsPanelProps) {
       addressLine1: toOptional(parsed.data.addressLine1),
       addressLine2: toOptional(parsed.data.addressLine2),
       taxId: toOptional(parsed.data.taxId),
-      defaultCurrency,
-      defaultInvoiceLanguage,
-      appLanguage: appLanguagePreference,
     });
     if (result) {
       setBrandingStatus({ tone: "success", message: t("branding.saved") });

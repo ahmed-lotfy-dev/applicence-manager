@@ -1,4 +1,3 @@
-import { Button } from "../../../shared/ui/button";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 
 interface DashboardHeaderProps {
@@ -6,7 +5,7 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ userEmail }: DashboardHeaderProps) {
-  const { locale, setLocale, t, dir } = useI18n();
+  const { t, dir } = useI18n();
   return (
     <header
       className={
@@ -41,27 +40,6 @@ export function DashboardHeader({ userEmail }: DashboardHeaderProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden items-center gap-2 rounded-full bg-bg-light px-2 py-2 sm:flex">
-            <span className={dir === "rtl" ? "pr-2 text-[11px] uppercase tracking-[0.14em] text-text-muted/70" : "pl-2 text-[11px] uppercase tracking-[0.14em] text-text-muted/70"}>{t("header.language")}</span>
-            <Button
-              type="button"
-              variant={locale === "en" ? "default" : "ghost"}
-              size="sm"
-              className="h-8 px-3 normal-case tracking-normal"
-              onClick={() => setLocale("en")}
-            >
-              {t("header.lang.en")}
-            </Button>
-            <Button
-              type="button"
-              variant={locale === "ar" ? "default" : "ghost"}
-              size="sm"
-              className="h-8 px-3 normal-case tracking-normal"
-              onClick={() => setLocale("ar")}
-            >
-              {t("header.lang.ar")}
-            </Button>
-          </div>
           <div className="hidden rounded-full bg-bg-light px-4 py-2 sm:block">
             <span className="text-sm font-medium text-text-muted">{userEmail}</span>
           </div>

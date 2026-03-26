@@ -2,9 +2,7 @@ import { Button } from "../../../shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
 import { Dialog } from "../../../shared/ui/dialog";
 import { Input } from "../../../shared/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../shared/ui/select";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
-import { CURRENCY_OPTIONS, type SupportedCurrency } from "../../onboarding/setup";
 import { useFreelanceOpsContext } from "../hooks/FreelanceOpsContext";
 
 export function BrandingSection() {
@@ -101,36 +99,6 @@ export function BrandingSection() {
           <Input placeholder={t('branding.placeholder.address1')} value={ops.profileAddress1} onChange={(e) => ops.setProfileAddress1(e.target.value)} />
           <Input placeholder={t('branding.placeholder.address2')} value={ops.profileAddress2} onChange={(e) => ops.setProfileAddress2(e.target.value)} />
           <Input placeholder={t('branding.placeholder.taxId')} value={ops.profileTaxId} onChange={(e) => ops.setProfileTaxId(e.target.value)} />
-          <Select value={ops.defaultCurrency} onValueChange={(v) => ops.setDefaultCurrency(v as SupportedCurrency)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CURRENCY_OPTIONS.map((currency) => (
-                <SelectItem key={currency.code} value={currency.code}>
-                  {currency.code} ({currency.symbol})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={ops.defaultInvoiceLanguage} onValueChange={(v) => ops.setDefaultInvoiceLanguage(v as "en" | "ar")}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="en">{t("branding.defaultInvoiceLanguage")} · {t("header.lang.en")}</SelectItem>
-              <SelectItem value="ar">{t("branding.defaultInvoiceLanguage")} · {t("header.lang.ar")}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={ops.appLanguagePreference} onValueChange={(v) => ops.setAppLanguagePreference(v as "en" | "ar")}>
-            <SelectTrigger className="md:col-span-2">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="en">{t("branding.appLanguage")} · {t("header.lang.en")}</SelectItem>
-              <SelectItem value="ar">{t("branding.appLanguage")} · {t("header.lang.ar")}</SelectItem>
-            </SelectContent>
-          </Select>
           <div className="md:col-span-2 flex items-center justify-between gap-3">
             <p className="text-xs text-slate-400">
               {ops.selectedLogoFile ? t('branding.logoSelected').replace('{fileName}', ops.selectedLogoFile.name) : t("branding.logoWillUploadOnSave")}
