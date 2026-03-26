@@ -109,7 +109,7 @@ export function LicensesInventoryCard() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 text-[11px] text-slate-400 hover:text-white"
+                            className="h-8 text-[11px] text-slate-400 hover:bg-primary/10 hover:text-primary"
                             onClick={() => state.setEditingLicense({
                               id: license.id,
                               maxActivations: String(license.maxActivations),

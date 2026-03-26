@@ -108,7 +108,7 @@ export function ClientsSection() {
                         <div className="flex justify-end gap-1">
                           {!client.isDeleted ? (
                             <>
-                              <Button variant="ghost" size="sm" className="h-8 text-slate-400 hover:text-white" onClick={() => ops.openEditClient(client)}>
+                              <Button variant="ghost" size="sm" className="h-8 text-slate-400 hover:bg-primary/10 hover:text-primary" onClick={() => ops.openEditClient(client)}>
                                 {t("licensing.edit")}
                               </Button>
                               <Button variant="ghost" size="sm" className="h-8 text-danger/70 hover:bg-danger/10 hover:text-danger" onClick={() => ops.setClientToArchive(client)}>

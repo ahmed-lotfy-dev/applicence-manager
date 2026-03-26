@@ -103,15 +103,15 @@ export function LicensesAppManagementCard() {
                 </div>
               </div>
               <div className="flex gap-2 border-t border-white/5 pt-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex-1 h-8 text-[11px] text-slate-400 hover:text-white"
-                  onClick={() => state.setEditingApp({ id: app.id, name: app.name, status: app.status })}
-                  disabled={appActionLoadingId === app.id}
-                >
-                  {t("licensing.edit")}
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 h-8 text-[11px] text-slate-400 hover:bg-primary/10 hover:text-primary"
+                    onClick={() => state.setEditingApp({ id: app.id, name: app.name, status: app.status })}
+                    disabled={appActionLoadingId === app.id}
+                  >
+                    {t("licensing.edit")}
+                  </Button>
                 <Button
                   variant="ghost"
                   size="sm"
