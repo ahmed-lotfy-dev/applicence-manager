@@ -3,8 +3,6 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    networks:
-      - app-network
     environment:
       NODE_ENV: production
       PORT: 8000
@@ -32,12 +30,6 @@ services:
       dockerfile: apps/frontend/Dockerfile
     depends_on:
       - backend
-    networks:
-      - app-network
     expose:
       - "80"
     restart: unless-stopped
-
-networks:
-  app-network:
-    driver: bridge
