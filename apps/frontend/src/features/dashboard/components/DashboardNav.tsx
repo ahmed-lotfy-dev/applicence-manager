@@ -83,17 +83,17 @@ function LogoutIcon() {
   );
 }
 
-const ITEMS: Array<{ id: DashboardPage; key: string; to: string; icon: ComponentType }> = [
-  { id: "overview", key: "nav.overview", to: "/overview", icon: OverviewIcon },
-  { id: "branding", key: "nav.branding", to: "/branding", icon: BrandingIcon },
-  { id: "clients", key: "nav.clients", to: "/clients", icon: ClientsIcon },
-  { id: "invoices", key: "nav.invoices", to: "/invoices", icon: InvoicesIcon },
-  { id: "licensing", key: "nav.licensing", to: "/licensing", icon: LicensingIcon },
-  { id: "settings", key: "nav.settings", to: "/settings", icon: SettingsIcon },
+const ITEMS: Array<{ id: DashboardPage; key: string; path: string; icon: ComponentType }> = [
+  { id: "overview", key: "nav.overview", path: "/overview", icon: OverviewIcon },
+  { id: "branding", key: "nav.branding", path: "/branding", icon: BrandingIcon },
+  { id: "clients", key: "nav.clients", path: "/clients", icon: ClientsIcon },
+  { id: "invoices", key: "nav.invoices", path: "/invoices", icon: InvoicesIcon },
+  { id: "licensing", key: "nav.licensing", path: "/licensing", icon: LicensingIcon },
+  { id: "settings", key: "nav.settings", path: "/settings", icon: SettingsIcon },
 ];
 
 export function DashboardNav({ page, onLogout }: DashboardNavProps) {
-  const { t, dir } = useI18n();
+  const { locale, t, dir } = useI18n();
   return (
     <aside
       className={
@@ -113,7 +113,7 @@ export function DashboardNav({ page, onLogout }: DashboardNavProps) {
             return (
               <NavLink
                 key={item.id}
-                to={item.to}
+                to={`/${locale}${item.path}`}
                 className={
                   active
                     ? "flex h-12 items-center gap-3 rounded-2xl bg-primary/10 px-4 text-sm font-semibold text-primary"

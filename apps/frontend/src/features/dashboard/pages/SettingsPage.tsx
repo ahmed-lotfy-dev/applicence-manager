@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../../../shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../shared/ui/select";
@@ -10,7 +11,7 @@ interface SettingsPageProps {
   freelancerProfile: FreelancerProfile | null;
   onSaveFreelancerProfile: (
     data: Partial<Pick<FreelancerProfile, "defaultCurrency" | "defaultInvoiceLanguage" | "appLanguage">>
-  ) => Promise<void>;
+  ) => Promise<FreelancerProfile | null>;
 }
 
 interface SaveStatus {
@@ -20,7 +21,9 @@ interface SaveStatus {
 }
 
 export function SettingsPage({ freelancerProfile, onSaveFreelancerProfile }: SettingsPageProps) {
-  const { t } = useI18n();
+  const { t, setLocale } = useI18n();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [currency, setCurrency] = useState<SupportedCurrency>(
     (freelancerProfile?.defaultCurrency as SupportedCurrency) ?? "USD"
@@ -80,6 +83,10 @@ export function SettingsPage({ freelancerProfile, onSaveFreelancerProfile }: Set
     setStatus((s) => ({ ...s, appLanguage: "saving" }));
     try {
       await onSaveFreelancerProfile({ appLanguage });
+      const currentLocale = location.pathname.split("/")[1];
+      const newPath = location.pathname.replace(`/${currentLocale}`, `/${appLanguage}`);
+      setLocale(appLanguage);
+      navigate(newPath, { replace: true });
       setStatus((s) => ({ ...s, appLanguage: "success" }));
       setTimeout(() => setStatus((s) => ({ ...s, appLanguage: "idle" })), 2000);
     } catch {

@@ -108,7 +108,7 @@ export function OnboardingPage({ profile, onSaveProfile, onUploadLogo, onComplet
     setLocale(appLanguage);
     setStatus({ tone: "success", message: t("onboarding.saved") });
     onComplete({ ...saved, logoUrl: saved.logoUrl || nextProfile?.logoUrl || null });
-    navigate("/overview", { replace: true });
+    navigate(`/${appLanguage}/overview`, { replace: true });
   };
 
   return (

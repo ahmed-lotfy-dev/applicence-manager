@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { DirectionProvider } from "../ui/direction";
 import { dictionaries, type Locale } from "./translations";
 
@@ -11,19 +11,31 @@ interface I18nContextValue {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
-function detectInitialLocale(): Locale {
-  const stored = localStorage.getItem("fawtarly_locale");
-  if (stored === "ar" || stored === "en") return stored;
-  const lang = navigator.language.toLowerCase();
-  return lang.startsWith("ar") ? "ar" : "en";
-}
-
-export function AppI18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(() => detectInitialLocale());
-  const dir: "ltr" | "rtl" = locale === "ar" ? "rtl" : "ltr";
+export function AppI18nProvider({ children, syncLocale }: { children: ReactNode; syncLocale?: Locale }) {
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    if (syncLocale === "ar" || syncLocale === "en") return syncLocale;
+    const stored = localStorage.getItem("fawtarly_locale");
+    if (stored === "ar" || stored === "en") return stored;
+    const lang = navigator.language.toLowerCase();
+    return lang.startsWith("ar") ? "ar" : "en";
+  });
 
   useEffect(() => {
-    localStorage.setItem("fawtarly_locale", locale);
+    if (syncLocale === "ar" || syncLocale === "en") {
+      setLocaleState(syncLocale);
+    }
+  }, [syncLocale]);
+
+  const dir: "ltr" | "rtl" = locale === "ar" ? "rtl" : "ltr";
+
+  const setLocale = useCallback((next: Locale) => {
+    setLocaleState(next);
+    localStorage.setItem("fawtarly_locale", next);
+    document.documentElement.lang = next;
+    document.documentElement.dir = next === "ar" ? "rtl" : "ltr";
+  }, []);
+
+  useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = dir;
   }, [dir, locale]);
@@ -35,7 +47,7 @@ export function AppI18nProvider({ children }: { children: ReactNode }) {
       setLocale,
       t: (key: string) => dictionaries[locale][key] || dictionaries.en[key] || key,
     }),
-    [dir, locale],
+    [dir, locale, setLocale],
   );
 
   return (

@@ -63,13 +63,19 @@ export function useProfileData(onUnauthorized: () => void) {
       addressLine1?: string;
       addressLine2?: string;
       taxId?: string;
-      defaultCurrency?: "USD" | "EUR" | "EGP" | "SAR" | "AED" | "GBP";
-      defaultInvoiceLanguage?: "en" | "ar";
-      appLanguage?: "en" | "ar";
+      defaultCurrency?: "USD" | "EUR" | "EGP" | "SAR" | "AED" | "GBP" | null;
+      defaultInvoiceLanguage?: "en" | "ar" | null;
+      appLanguage?: "en" | "ar" | null;
     }) => {
       setError("");
       try {
-        const profile = await saveProfileMutation.mutateAsync(input);
+        const apiInput = { ...input };
+        for (const key of Object.keys(apiInput) as Array<keyof typeof apiInput>) {
+          if (apiInput[key] === null) {
+            (apiInput as Record<string, unknown>)[key] = undefined;
+          }
+        }
+        const profile = await saveProfileMutation.mutateAsync(apiInput as Parameters<typeof updateFreelancerProfile>[0]);
         if (!profile) throw new Error("Profile save returned empty response.");
         queryClient.setQueryData(queryKeys.freelancerProfile, profile);
         await queryClient.invalidateQueries({

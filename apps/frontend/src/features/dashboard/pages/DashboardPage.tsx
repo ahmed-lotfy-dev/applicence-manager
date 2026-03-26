@@ -44,12 +44,13 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
   ) as ActivationFilter | null;
   const { dir, t } = useI18n();
   const page: DashboardPageType = useMemo(() => {
-    if (location.pathname.startsWith("/branding")) return "branding";
-    if (location.pathname.startsWith("/clients")) return "clients";
-    if (location.pathname.startsWith("/invoices")) return "invoices";
-    if (location.pathname.startsWith("/freelance")) return "branding";
-    if (location.pathname.startsWith("/licensing")) return "licensing";
-    if (location.pathname.startsWith("/settings")) return "settings";
+    const path = location.pathname.replace(/^\/(en|ar)/, "");
+    if (path.startsWith("/branding")) return "branding";
+    if (path.startsWith("/clients")) return "clients";
+    if (path.startsWith("/invoices")) return "invoices";
+    if (path.startsWith("/freelance")) return "branding";
+    if (path.startsWith("/licensing")) return "licensing";
+    if (path.startsWith("/settings")) return "settings";
     return "overview";
   }, [location.pathname]);
   const [selectedTab, setSelectedTab] = useState<ActivationFilter>(
