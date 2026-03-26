@@ -108,7 +108,7 @@ export function OverviewPage({
                 currency={currency}
                 showCurrency
                 size="sm"
-                className="mt-4 block text-warning"
+                className="mt-4 block text-danger"
               />
             </div>
           </CardContent>
