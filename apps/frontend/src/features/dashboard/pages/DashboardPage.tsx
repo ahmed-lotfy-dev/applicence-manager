@@ -98,8 +98,8 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
 
   return (
     <div className="min-h-screen w-full bg-bg">
-      <DashboardHeader userEmail={userEmail} onLogout={handleLogout} />
-      <DashboardNav page={page} />
+      <DashboardHeader userEmail={userEmail} />
+      <DashboardNav page={page} onLogout={handleLogout} />
 
       <main
         className={

@@ -88,11 +88,11 @@ export function OverviewPage({
                 currency={currency}
                 showCurrency
                 size="sm"
-                className="mt-4 block text-text"
-              />
-            </div>
-            <div className="rounded-[1.6rem] bg-bg-light p-6">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-text-muted/70">{t("overview.paidCashflow")}</p>
+              className="mt-4 block text-primary"
+            />
+          </div>
+          <div className="rounded-[1.6rem] bg-bg-light p-6">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-text-muted/70">{t("overview.paidCashflow")}</p>
               <StatNumber
                 value={billingStats.totalPaid}
                 currency={currency}

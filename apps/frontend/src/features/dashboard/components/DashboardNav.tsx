@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import { NavLink } from "react-router-dom";
+import { Button } from "../../../shared/ui/button";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 
 export type DashboardPage =
@@ -11,6 +12,7 @@ export type DashboardPage =
 
 interface DashboardNavProps {
   page: DashboardPage;
+  onLogout: () => void;
 }
 
 function OverviewIcon() {
@@ -63,6 +65,14 @@ function LicensingIcon() {
   );
 }
 
+function LogoutIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.5 2H8.6c-.4 0-.8.2-1.1.5-.3.3-.5.7-.5 1.1v12.8c0 .4.2.8.5 1.1.3.3.7.5 1.1.5h9.8c.4 0 .8-.2 1.1-.5.3-.3.5-.7.5-1.1V6.5L18.5 2M16 2v5h5" />
+    </svg>
+  );
+}
+
 const ITEMS: Array<{ id: DashboardPage; key: string; to: string; icon: ComponentType }> = [
   { id: "overview", key: "nav.overview", to: "/overview", icon: OverviewIcon },
   { id: "branding", key: "nav.branding", to: "/branding", icon: BrandingIcon },
@@ -71,7 +81,7 @@ const ITEMS: Array<{ id: DashboardPage; key: string; to: string; icon: Component
   { id: "licensing", key: "nav.licensing", to: "/licensing", icon: LicensingIcon },
 ];
 
-export function DashboardNav({ page }: DashboardNavProps) {
+export function DashboardNav({ page, onLogout }: DashboardNavProps) {
   const { t, dir } = useI18n();
   return (
     <aside
@@ -107,6 +117,19 @@ export function DashboardNav({ page }: DashboardNavProps) {
             );
           })}
       </nav>
+      <div className="mt-auto pt-6">
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={onLogout}
+          className="w-full justify-start gap-3 rounded-2xl px-4 normal-case tracking-normal"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-danger/10">
+            <LogoutIcon />
+          </span>
+          {t("header.logout")}
+        </Button>
+      </div>
     </aside>
   );
 }

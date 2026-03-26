@@ -3,10 +3,9 @@ import { useI18n } from "../../../shared/i18n/I18nProvider";
 
 interface DashboardHeaderProps {
   userEmail: string;
-  onLogout: () => void;
 }
 
-export function DashboardHeader({ userEmail, onLogout }: DashboardHeaderProps) {
+export function DashboardHeader({ userEmail }: DashboardHeaderProps) {
   const { locale, setLocale, t, dir } = useI18n();
   return (
     <header
@@ -66,14 +65,6 @@ export function DashboardHeader({ userEmail, onLogout }: DashboardHeaderProps) {
           <div className="hidden rounded-full bg-bg-light px-4 py-2 sm:block">
             <span className="text-sm font-medium text-text-muted">{userEmail}</span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onLogout}
-            className="rounded-full px-5 text-text hover:bg-white/5"
-          >
-            {t("header.logout")}
-          </Button>
         </div>
       </div>
     </header>
