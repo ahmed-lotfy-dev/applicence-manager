@@ -2,13 +2,13 @@ import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Button } from "../../../shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
 import { Table, TableWrapper, Td, Th } from "../../../shared/ui/table";
-import { useLicensingPanelContext } from "../hooks/LicensingPanelContext";
-import { Badge } from "../../../shared/ui/badge";
+import { useLicensingStore } from "../hooks/licensingStore";
+import { useLicensingDataContext } from "../hooks/LicensingDataContext";
 
 export function LicensesInventoryCard() {
   const { t } = useI18n();
-  const state = useLicensingPanelContext();
-  const { apps, licenses, licenseActionLoadingId } = state.props;
+  const state = useLicensingStore();
+  const { apps, licenses, licenseActionLoadingId, changeLicenseStatus } = useLicensingDataContext();
 
   return (
     <Card className="rounded-[1.5rem] bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
@@ -45,10 +45,10 @@ export function LicensesInventoryCard() {
               <thead>
                 <tr className="border-b border-white/10 bg-white/5 text-[11px] uppercase tracking-wider text-slate-500">
                   <Th className="px-6 py-4">{t("licensing.tableKey")}</Th>
-                  <Th className="px-6 py-4">{t("licensing.tableApp")}</Th>
-                  <Th className="px-6 py-4">{t("licensing.tableUsage")}</Th>
-                  <Th className="px-6 py-4">{t("licensing.tableStatus")}</Th>
-                  <Th className="px-6 py-4 text-right">{t("licensing.tableActions")}</Th>
+                  <Th className="px-6 py-4">{t("licensing.table.app")}</Th>
+                  <Th className="px-6 py-4">{t("licensing.table.usage")}</Th>
+                  <Th className="px-6 py-4">{t("licensing.table.status")}</Th>
+                  <Th className="px-6 py-4 text-right">{t("licensing.table.actions")}</Th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -72,12 +72,11 @@ export function LicensesInventoryCard() {
                       <Td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="h-1.5 w-16 overflow-hidden rounded-full bg-white/5">
-                            <div 
-                              className={`h-full bg-primary transition-all duration-500 ${
-                                (license.activeActivations / (license.maxActivations || 1)) >= 1 ? 'bg-amber-400' : ''
-                              }`}
+                            <div
+                              className={`h-full bg-primary transition-all duration-500 ${(license.activeActivations / (license.maxActivations || 1)) >= 1 ? 'bg-amber-400' : ''
+                                }`}
                               style={{ width: `${Math.min(100, (license.activeActivations / (license.maxActivations || 1)) * 100)}%` }}
-                             />
+                            />
                           </div>
                           <span className="text-[10px] tabular-nums text-slate-400">
                             {license.activeActivations} / {license.maxActivations}
@@ -88,17 +87,16 @@ export function LicensesInventoryCard() {
                         <select
                           value={license.status}
                           disabled={licenseActionLoadingId === license.id}
-                          className={`rounded-md border-0 bg-transparent py-0.5 pl-0 pr-6 text-xs font-medium focus:ring-0 ${
-                            license.status === 'active' ? 'text-emerald-400' : 
-                            license.status === 'revoked' ? 'text-danger' : 'text-slate-400'
-                          }`}
+                          className={`rounded-md border-0 bg-transparent py-0.5 pl-0 pr-6 text-xs font-medium focus:ring-0 ${license.status === 'active' ? 'text-emerald-400' :
+                              license.status === 'revoked' ? 'text-danger' : 'text-slate-400'
+                            }`}
                           onChange={(e) => {
-                            const nextStatus = e.target.value as any;
-                             if (nextStatus === "revoked") {
-                               state.setLicenseToRevoke(license);
-                             } else {
-                               void state.onChangeLicenseStatus(license.id, nextStatus);
-                             }
+                            const nextStatus = e.target.value as "active" | "revoked";
+                            if (nextStatus === "revoked") {
+                              state.setLicenseToRevoke(license);
+                            } else {
+                              void changeLicenseStatus(license.id, nextStatus);
+                            }
                           }}
                         >
                           <option value="active">{t("licensing.status.active")}</option>
@@ -128,7 +126,7 @@ export function LicensesInventoryCard() {
                             onClick={() => state.setLicenseToDelete(license)}
                             disabled={licenseActionLoadingId === license.id}
                           >
-                             <TrashIcon className="h-4 w-4" />
+                            <TrashIcon className="h-4 w-4" />
                           </Button>
                         </div>
                       </Td>
@@ -146,13 +144,13 @@ export function LicensesInventoryCard() {
 
 function TrashIcon({ className }: { className?: string }) {
   return (
-    <svg 
-      className={className} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
       strokeLinejoin="round"
     >
       <path d="M3 6h18" />

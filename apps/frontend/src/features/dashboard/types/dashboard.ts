@@ -23,6 +23,10 @@ export interface Stats {
   active: number;
   pending: number;
   revoked: number;
+  totalApps?: number;
+  totalLicenses?: number;
+  totalActivations?: number;
+  activeKeysPercentage?: number;
 }
 
 export type ActivationFilter = "all" | "pending" | "active" | "revoked";

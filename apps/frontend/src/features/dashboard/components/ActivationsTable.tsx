@@ -3,14 +3,39 @@ import { Button } from "../../../shared/ui/button";
 import { Table, Td, Th } from "../../../shared/ui/table";
 import { Badge } from "../../../shared/ui/badge";
 
-import { useLicensingPanelContext } from "../hooks/LicensingPanelContext";
+import { useLicensingStore } from "../hooks/licensingStore";
+import { useLicensingDataContext } from "../hooks/LicensingDataContext";
+import type { ActivationFilter } from "../types/dashboard";
 
-export function ActivationsTable() {
+interface ActivationsTableProps {
+  activationFilter: ActivationFilter;
+}
+
+export function ActivationsTable({ activationFilter }: ActivationsTableProps) {
   const { t } = useI18n();
-  const state = useLicensingPanelContext();
-  const { activationActionLoadingId: actionLoadingId, loadingActivations: loading } = state.props;
+  const {
+    activations,
+    actionLoadingId,
+    changeStatus,
+    apps,
+    activationsQuery,
+  } = useLicensingDataContext();
+  const store = useLicensingStore();
+  const { activationQuery, openLockedLicenseFromActivation, onApproveActivation, setActivationToDelete } = store;
 
-  if (loading) {
+  const filteredActivations = activations.filter((activation) => {
+    const matchesTab =
+      activationFilter === "all" || activation.status === activationFilter;
+    const matchesQuery =
+      !activationQuery ||
+      activation.appName.toLowerCase().includes(activationQuery.toLowerCase()) ||
+      activation.machineId.toLowerCase().includes(activationQuery.toLowerCase()) ||
+      (activation.shopName?.toLowerCase().includes(activationQuery.toLowerCase()) ?? false) ||
+      (activation.phone?.toLowerCase().includes(activationQuery.toLowerCase()) ?? false);
+    return matchesTab && matchesQuery;
+  });
+
+  if (activationsQuery.isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
         <p className="text-sm text-slate-500">{t("licensing.loadingActivations")}</p>
@@ -22,23 +47,23 @@ export function ActivationsTable() {
     <Table>
       <thead>
         <tr className="border-b border-white/10 bg-white/5 text-[11px] uppercase tracking-wider text-slate-500">
-          <Th className="px-6 py-4">{t("licensing.tableApp")}</Th>
+          <Th className="px-6 py-4">{t("licensing.table.app")}</Th>
           <Th className="px-6 py-4">{t("licensing.tableMachine")}</Th>
           <Th className="px-6 py-4">{t("licensing.tableContact")}</Th>
-          <Th className="px-6 py-4">{t("licensing.tableStatus")}</Th>
+          <Th className="px-6 py-4">{t("licensing.table.status")}</Th>
           <Th className="px-6 py-4">{t("licensing.tableDate")}</Th>
-          <Th className="px-6 py-4 text-right">{t("licensing.tableActions")}</Th>
+          <Th className="px-6 py-4 text-right">{t("licensing.table.actions")}</Th>
         </tr>
       </thead>
       <tbody className="divide-y divide-white/5">
-        {state.filteredActivations.length === 0 ? (
+        {filteredActivations.length === 0 ? (
           <tr>
             <Td colSpan={6} className="py-12 text-center text-slate-500">
               {t("licensing.noActivations")}
             </Td>
           </tr>
         ) : (
-          state.filteredActivations.map((activation) => (
+          filteredActivations.map((activation) => (
             <tr key={activation.id} className="group hover:bg-white/5 transition-colors">
               <Td className="px-6 py-4 font-medium text-white text-xs">
                 {activation.appName}
@@ -55,9 +80,9 @@ export function ActivationsTable() {
                 </div>
               </Td>
               <Td className="px-6 py-4">
-                <Badge 
+                <Badge
                   variant={
-                    activation.status === 'active' ? 'success' : 
+                    activation.status === 'active' ? 'success' :
                     activation.status === 'pending' ? 'warning' : 'danger'
                   }
                   className="rounded-full px-2 py-0 text-[10px]"
@@ -74,7 +99,7 @@ export function ActivationsTable() {
                     <Button
                       size="sm"
                       className="h-8 text-[11px] bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
-                      onClick={() => state.onApproveActivation(activation.id)}
+                      onClick={() => void onApproveActivation(changeStatus)(activation.id)}
                       disabled={actionLoadingId === activation.id}
                     >
                       {t("licensing.approve")}
@@ -85,7 +110,7 @@ export function ActivationsTable() {
                        variant="ghost"
                        size="sm"
                        className="h-8 text-[11px] text-primary"
-                       onClick={() => state.openLockedLicenseFromActivation(activation)}
+                       onClick={() => openLockedLicenseFromActivation(activation, apps)}
                      >
                        {t("licensing.generateKey")}
                      </Button>
@@ -94,7 +119,7 @@ export function ActivationsTable() {
                     variant="ghost"
                     size="sm"
                     className="h-8 text-[11px] text-danger/70 hover:bg-danger/10"
-                    onClick={() => state.setActivationToDelete(activation)}
+                    onClick={() => setActivationToDelete(activation)}
                     disabled={actionLoadingId === activation.id}
                   >
                     {t("licensing.delete")}

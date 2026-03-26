@@ -25,7 +25,7 @@ export function useDashboardData(onUnauthorized: () => void) {
   const queryErrors = useMemo(
     () =>
       [
-        licensing.licensingQuery?.error,
+        licensing.licensesQuery?.error,
         licensing.statsQuery?.error,
         licensing.appsQuery?.error,
         licensing.activationsQuery?.error,

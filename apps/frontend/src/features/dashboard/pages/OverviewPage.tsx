@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
+import { StatNumber } from "../../../shared/ui/stat-number";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 import type { BillingStats } from "../types/dashboard";
-import { formatCurrencyCents } from "../../../shared/lib/currency";
 
 interface OverviewPageProps {
   billingStats: BillingStats;
@@ -19,7 +19,6 @@ export function OverviewPage({
   const { t } = useI18n();
   const asCount = (value: number) =>
     new Intl.NumberFormat("en-US").format(value);
-  const asMoney = (cents: number) => formatCurrencyCents(cents, currency);
 
   return (
     <section className="space-y-8">
@@ -28,8 +27,8 @@ export function OverviewPage({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-text-muted">{t("overview.clients")}</CardTitle>
           </CardHeader>
-          <CardContent className="pt-0">
-            <p className="metric-value text-4xl font-black text-text">{asCount(clientsCount)}</p>
+            <CardContent className="pt-0">
+            <p className="metric-value text-xl font-bold text-text">{asCount(clientsCount)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -37,7 +36,7 @@ export function OverviewPage({
             <CardTitle className="text-sm text-text-muted">{t("overview.invoices")}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <p className="metric-value text-4xl font-black text-text">{asCount(invoicesCount)}</p>
+            <p className="metric-value text-xl font-bold text-text">{asCount(invoicesCount)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -45,9 +44,13 @@ export function OverviewPage({
             <CardTitle className="text-sm text-text-muted">{t("overview.paid")}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <p className="metric-value text-4xl font-black text-emerald-300">
-              {asMoney(billingStats.totalPaid)}
-            </p>
+            <StatNumber
+              value={billingStats.totalPaid}
+              currency={currency}
+              showCurrency
+              size="sm"
+              className="text-emerald-300"
+            />
           </CardContent>
         </Card>
         <Card>
@@ -55,9 +58,13 @@ export function OverviewPage({
             <CardTitle className="text-sm text-text-muted">{t("overview.outstanding")}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <p className="metric-value text-4xl font-black text-warning">
-              {asMoney(billingStats.totalOutstanding)}
-            </p>
+            <StatNumber
+              value={billingStats.totalOutstanding}
+              currency={currency}
+              showCurrency
+              size="sm"
+              className="text-danger"
+            />
           </CardContent>
         </Card>
       </div>
@@ -76,15 +83,33 @@ export function OverviewPage({
           <CardContent className="grid gap-4 md:grid-cols-3">
             <div className="rounded-[1.6rem] bg-bg-light p-6">
               <p className="text-[11px] uppercase tracking-[0.16em] text-text-muted/70">{t("overview.totalInvoiced")}</p>
-              <p className="metric-value mt-4 text-4xl font-black tracking-tight text-text">{asMoney(billingStats.totalInvoiced)}</p>
+              <StatNumber
+                value={billingStats.totalInvoiced}
+                currency={currency}
+                showCurrency
+                size="sm"
+                className="mt-4 block text-text"
+              />
             </div>
             <div className="rounded-[1.6rem] bg-bg-light p-6">
               <p className="text-[11px] uppercase tracking-[0.16em] text-text-muted/70">{t("overview.paidCashflow")}</p>
-              <p className="metric-value mt-4 text-4xl font-black tracking-tight text-emerald-300">{asMoney(billingStats.totalPaid)}</p>
+              <StatNumber
+                value={billingStats.totalPaid}
+                currency={currency}
+                showCurrency
+                size="sm"
+                className="mt-4 block text-emerald-300"
+              />
             </div>
             <div className="rounded-[1.6rem] bg-bg-light p-6">
               <p className="text-[11px] uppercase tracking-[0.16em] text-text-muted/70">{t("overview.outstanding")}</p>
-              <p className="metric-value mt-4 text-4xl font-black tracking-tight text-warning">{asMoney(billingStats.totalOutstanding)}</p>
+              <StatNumber
+                value={billingStats.totalOutstanding}
+                currency={currency}
+                showCurrency
+                size="sm"
+                className="mt-4 block text-warning"
+              />
             </div>
           </CardContent>
         </Card>

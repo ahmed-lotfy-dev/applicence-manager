@@ -1,14 +1,50 @@
+import { useMemo } from "react";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Button } from "../../../shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/ui/card";
 import { Input } from "../../../shared/ui/input";
-import { useLicensingPanelContext } from "../hooks/LicensingPanelContext";
+import { useLicensingStore } from "../hooks/licensingStore";
+import { useLicensingDataContext } from "../hooks/LicensingDataContext";
+import type { AppSummary } from "./LicensesPanel.types";
 
 export function LicensesAppManagementCard() {
   const { t } = useI18n();
-  const state = useLicensingPanelContext();
-  const { apps, isCreatingApp, appActionLoadingId, onFilterChange, filterValue } = state.props;
-  const displayApps = state.filteredApps ?? apps;
+  const state = useLicensingStore();
+  const { apps, licenses, isCreatingApp, appActionLoadingId, createNewApp } = useLicensingDataContext();
+
+  const displayApps = useMemo(
+    () =>
+      apps.filter((app) =>
+        app.name.toLowerCase().includes(state.appFilter.toLowerCase()),
+      ),
+    [apps, state.appFilter],
+  );
+
+  const summaries = useMemo<AppSummary[]>(() => {
+    const map = new Map<string, AppSummary>();
+    for (const license of licenses) {
+      const existing = map.get(license.appName) ?? {
+        appName: license.appName,
+        licenses: 0,
+        activeActivations: 0,
+        maxActivations: 0,
+      };
+      existing.licenses += 1;
+      existing.activeActivations += license.activeActivations;
+      existing.maxActivations += license.maxActivations;
+      map.set(license.appName, existing);
+    }
+    return Array.from(map.values());
+  }, [licenses]);
+
+  const handleCreateApp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!state.newAppName.trim()) return;
+    const result = await createNewApp(state.newAppName.trim());
+    if (result) {
+      state.setNewAppName("");
+    }
+  };
 
   return (
     <Card className="rounded-[1.5rem] bg-white/5 border-white/5 shadow-soft ring-1 ring-white/5">
@@ -25,14 +61,14 @@ export function LicensesAppManagementCard() {
           <div className="w-full md:w-64">
             <Input
               placeholder={t("licensing.searchPlaceholder")}
-              value={filterValue}
-              onChange={(e) => onFilterChange(e.target.value)}
+              value={state.appFilter}
+              onChange={(e) => state.setAppFilter(e.target.value)}
             />
           </div>
         </div>
       </CardHeader>
       <CardContent className="px-8 py-6">
-        <form className="mb-6 flex gap-2" onSubmit={state.handleCreateApp}>
+        <form className="mb-6 flex gap-2" onSubmit={handleCreateApp}>
           <Input
             placeholder={t("licensing.newAppNamePlaceholder")}
             value={state.newAppName}
@@ -59,11 +95,11 @@ export function LicensesAppManagementCard() {
                 </div>
                 <div className="flex gap-4">
                    <div className="text-xs text-slate-400">
-                     <span className="font-mono text-white">{state.summaries[app.id]?.total ?? 0}</span> {t("licensing.licenses")}
-                   </div>
-                   <div className="text-xs text-slate-400">
-                     <span className="font-mono text-emerald-400">{state.summaries[app.id]?.active ?? 0}</span> {t("licensing.active")}
-                   </div>
+                      <span className="font-mono text-white">{summaries.find(s => s.appName === app.name)?.licenses ?? 0}</span> {t("licensing.licenses")}
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      <span className="font-mono text-emerald-400">{summaries.find(s => s.appName === app.name)?.activeActivations ?? 0}</span> {t("licensing.active")}
+                    </div>
                 </div>
               </div>
               <div className="flex gap-2 border-t border-white/5 pt-4">
@@ -71,7 +107,7 @@ export function LicensesAppManagementCard() {
                   variant="ghost"
                   size="sm"
                   className="flex-1 h-8 text-[11px] text-slate-400 hover:text-white"
-                  onClick={() => state.setEditingApp(app)}
+                  onClick={() => state.setEditingApp({ id: app.id, name: app.name, status: app.status })}
                   disabled={appActionLoadingId === app.id}
                 >
                   {t("licensing.edit")}
@@ -96,14 +132,16 @@ export function LicensesAppManagementCard() {
 
 function TrashIcon({ className }: { className?: string }) {
   return (
-    <svg 
-      className={className} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
       strokeLinejoin="round"
+      className={className}
     >
       <path d="M3 6h18" />
       <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />

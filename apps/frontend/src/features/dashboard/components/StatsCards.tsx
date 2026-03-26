@@ -1,10 +1,9 @@
 import { useI18n } from "../../../shared/i18n/I18nProvider";
-import { useLicensingPanelContext } from "../hooks/LicensingPanelContext";
+import { useLicensingDataContext } from "../hooks/LicensingDataContext";
 
 export function StatsCards() {
   const { t } = useI18n();
-  const state = useLicensingPanelContext();
-  const { stats } = state.props;
+  const { stats } = useLicensingDataContext();
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

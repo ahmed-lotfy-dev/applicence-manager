@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { useFreelanceOps } from "./useFreelanceOps";
 import type { FreelanceOpsPanelProps } from "../components/FreelanceOpsPanel.types";
 
@@ -6,12 +6,12 @@ type FreelanceOpsContextType = ReturnType<typeof useFreelanceOps>;
 
 const FreelanceOpsContext = createContext<FreelanceOpsContextType | null>(null);
 
-export function FreelanceOpsProvider({ 
-  children, 
-  props 
-}: { 
-  children: ReactNode; 
-  props: FreelanceOpsPanelProps 
+export function FreelanceOpsProvider({
+  children,
+  props
+}: {
+  children: ReactNode;
+  props: FreelanceOpsPanelProps
 }) {
   const ops = useFreelanceOps(props);
   return (

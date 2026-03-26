@@ -6,7 +6,6 @@ import {
   updateFreelancerProfile,
   uploadFreelancerLogo,
 } from "../../../lib/api-client";
-import type { FreelancerProfile } from "../types/dashboard";
 
 class UnauthorizedError extends Error {
   constructor() {

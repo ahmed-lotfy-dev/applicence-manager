@@ -1,15 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
-import type {
-  Client,
-  FreelancerProfile,
-  Invoice,
-  InvoicePdfJob,
-} from "../types/dashboard";
+import type { Client, Invoice } from "../types/dashboard";
 import { z } from "zod";
 import type { SupportedCurrency } from "../../onboarding/setup";
-import type { FreelanceOpsPanelProps } from "./FreelanceOpsPanel.types";
+import type { FreelanceOpsPanelProps } from "../components/FreelanceOpsPanel.types";
 
 const brandingSchema = z.object({
   businessName: z
@@ -403,7 +398,7 @@ export function useFreelanceOps(props: FreelanceOpsPanelProps) {
       tone: "error",
       message:
         result.error ===
-        "This client has receipts or invoice history and can only be archived."
+          "This client has receipts or invoice history and can only be archived."
           ? t("clients.deleteBlocked")
           : result.error || t("clients.deleteBlocked"),
     });
@@ -616,7 +611,7 @@ export function useFreelanceOps(props: FreelanceOpsPanelProps) {
     );
     setDefaultInvoiceLanguage(
       freelancerProfile?.defaultInvoiceLanguage ||
-        (locale === "ar" ? "ar" : "en"),
+      (locale === "ar" ? "ar" : "en"),
     );
     setAppLanguagePreference(
       freelancerProfile?.appLanguage || (locale === "ar" ? "ar" : "en"),
@@ -658,9 +653,10 @@ export function useFreelanceOps(props: FreelanceOpsPanelProps) {
     profileAddress2, setProfileAddress2,
     profileTaxId, setProfileTaxId,
     isBrandingModalOpen, setIsBrandingModalOpen,
+    selectedLogoFile,
     logoPreviewUrl,
     localPreviewUrl,
-    
+
     // Status States
     brandingStatus,
     invoiceCreateStatus,
@@ -668,17 +664,24 @@ export function useFreelanceOps(props: FreelanceOpsPanelProps) {
     invoiceRowStatus,
     isSavingBranding,
     isUploadingLogo,
-    
+
     // Loading States
     sendingInvoiceEmailId,
-    
+    isCreatingClient: props.isCreatingClient,
+    isCreatingInvoice: props.isCreatingInvoice,
+
+    // From props
+    freelancerProfile,
+    billingStats: props.billingStats,
+    nextInvoiceNo,
+
     // Filter & Derived States
     clientFilter, setClientFilter,
     invoiceFilter, setInvoiceFilter,
     filteredClients,
     sortedInvoices,
     activeClients,
-    
+
     // Modals
     clientToArchive, setClientToArchive,
     clientToEdit, setClientToEdit,
@@ -687,7 +690,7 @@ export function useFreelanceOps(props: FreelanceOpsPanelProps) {
     invoiceToArchive, setInvoiceToArchive,
     invoiceToRestore, setInvoiceToRestore,
     invoiceToDelete, setInvoiceToDelete,
-    
+
     // Edit Fields
     editClientName, setEditClientName,
     editClientEmail, setEditClientEmail,
@@ -695,7 +698,7 @@ export function useFreelanceOps(props: FreelanceOpsPanelProps) {
     invoiceStatusMap, setInvoiceStatusMap,
     invoiceTotalMap, setInvoiceTotalMap,
     invoicePaidMap, setInvoicePaidMap,
-    
+
     // Handlers
     handleBrandingSubmit,
     handleLogoSelect,

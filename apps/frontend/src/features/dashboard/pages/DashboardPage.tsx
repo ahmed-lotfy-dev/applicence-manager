@@ -1,11 +1,13 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   DashboardNav,
   type DashboardPage as DashboardPageType,
 } from "../components/DashboardNav";
 import { useDashboardData } from "../hooks/use-dashboard-data";
 import { authClient } from "../../../lib/auth-client";
+import { fetchNextInvoiceNo } from "../../../lib/api/invoices";
 import type { ActivationFilter } from "../types/dashboard";
 import { DashboardHeader } from "../components/DashboardHeader";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
@@ -51,30 +53,16 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
       : "all",
   );
   const {
-    activations,
-    licenses,
-    apps,
     clients,
     invoices,
     freelancerProfile,
     invoicePdfJobs,
     getInvoicePdfUrl,
     billingStats,
-    stats,
     userEmail,
-    nextInvoiceNo,
-    loading,
     error,
-    actionLoadingId,
-    licenseActionLoadingId,
-    isCreatingLicense,
-    isCreatingApp,
     isCreatingClient,
     isCreatingInvoice,
-    appActionLoadingId,
-    licenseFilter,
-    setLicenseFilter,
-    changeStatus,
     createNewClient,
     hardDeleteClient,
     removeClient,
@@ -90,22 +78,12 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     queueInvoicePdfGeneration,
     refreshInvoicePdfJob,
     sendInvoiceToEmail,
-    createNewLicense,
-    createNewApp,
-    updateApp,
-    removeApp,
-    updateExistingLicense,
-    removeLicense,
-    changeLicenseStatus,
-    deleteActivation: deleteActivationFn,
   } = useDashboardData(onLogout);
 
-  const filteredActivations = useMemo(() => {
-    if (selectedTab === "all") return activations;
-    return activations.filter(
-      (activation) => activation.status === selectedTab,
-    );
-  }, [activations, selectedTab]);
+  const { data: nextInvoiceNo = "" } = useQuery({
+    queryKey: ["nextInvoiceNo"],
+    queryFn: fetchNextInvoiceNo,
+  });
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -177,7 +155,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 invoicePdfJobs={invoicePdfJobs}
                 getInvoicePdfUrl={getInvoicePdfUrl}
                 billingStats={billingStats}
-                nextInvoiceNo={nextInvoiceNo}
+                nextInvoiceNo={nextInvoiceNo ?? ""}
                 isCreatingClient={isCreatingClient}
                 isCreatingInvoice={isCreatingInvoice}
                 onCreateClient={createNewClient}
@@ -200,37 +178,10 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
 
             {page === "licensing" && (
               <LicensesPanel
-                licenses={licenses}
-                activations={filteredActivations}
-                apps={apps}
-                stats={stats}
-                filterValue={licenseFilter}
-                onFilterChange={setLicenseFilter}
                 activationFilter={selectedTab}
                 onActivationFilterChange={setSelectedTab}
-                onCreateApp={createNewApp}
-                onUpdateApp={updateApp}
-                onRemoveApp={removeApp}
-                onCreateLicense={createNewLicense}
-                onUpdateLicense={updateExistingLicense}
-                onRemoveLicense={removeLicense}
-                onChangeLicenseStatus={changeLicenseStatus}
-                isCreatingLicense={isCreatingLicense}
-                isCreatingApp={isCreatingApp}
-                appActionLoadingId={appActionLoadingId}
-                licenseActionLoadingId={licenseActionLoadingId}
-                activationActionLoadingId={actionLoadingId}
-                loadingActivations={loading}
+                onLogout={handleLogout}
                 activationError={error}
-                onApproveActivation={async (id) => {
-                  await changeStatus(id, "approve");
-                }}
-                onRevokeActivation={async (id) => {
-                  await changeStatus(id, "revoke");
-                }}
-                onDeleteActivation={async (id) => {
-                  await deleteActivationFn(id);
-                }}
               />
             )}
           </Suspense>

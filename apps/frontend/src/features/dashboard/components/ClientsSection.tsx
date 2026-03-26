@@ -33,14 +33,14 @@ export function ClientsSection() {
             value={ops.clientPhone}
             onChange={(e) => ops.setClientPhone(e.target.value)}
           />
-          <Button type="submit" disabled={ops.isCreatingLogo || !ops.clientName.trim()}>
+          <Button type="submit" disabled={ops.isCreatingClient || !ops.clientName.trim()}>
             {t("clients.add")}
           </Button>
         </form>
 
         <div className="flex justify-end">
           <div className="w-40">
-            <Select value={ops.clientFilter} onValueChange={ops.setClientFilter}>
+            <Select value={ops.clientFilter} onValueChange={(v) => ops.setClientFilter(v as "all" | "active" | "inactive" | "archived")}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -69,7 +69,7 @@ export function ClientsSection() {
                   <Th>{t("clients.tableName")}</Th>
                   <Th>{t("clients.tableContact")}</Th>
                   <Th>{t("clients.tableStatus")}</Th>
-                  <Th className="text-right">{t("licensing.tableActions")}</Th>
+                  <Th className="text-right">{t("licensing.table.actions")}</Th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">

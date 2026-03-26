@@ -37,7 +37,7 @@ export function FreelanceOpsDialogs() {
           <p className="text-sm text-slate-300">{t("clients.archiveConfirm")}</p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => ops.setClientToArchive(null)}>{t("licensing.cancel")}</Button>
-            <Button variant="danger" onClick={ops.handleArchiveClient}>{t("licensing.archive")}</Button>
+            <Button variant="destructive" onClick={ops.handleArchiveClient}>{t("licensing.archive")}</Button>
           </div>
         </div>
       </Dialog>
@@ -67,7 +67,7 @@ export function FreelanceOpsDialogs() {
           <p className="text-sm text-danger">{t("clients.deleteConfirm")}</p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => ops.setClientToDelete(null)}>{t("licensing.cancel")}</Button>
-            <Button variant="danger" onClick={ops.handleHardDeleteClient}>{t("licensing.delete")}</Button>
+            <Button variant="destructive" onClick={ops.handleHardDeleteClient}>{t("licensing.delete")}</Button>
           </div>
         </div>
       </Dialog>
@@ -82,7 +82,7 @@ export function FreelanceOpsDialogs() {
           <p className="text-sm text-slate-300">{t("invoice.archiveConfirm")}</p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => ops.setInvoiceToArchive(null)}>{t("licensing.cancel")}</Button>
-            <Button variant="danger" onClick={ops.handleArchiveInvoice}>{t("licensing.archive")}</Button>
+            <Button variant="destructive" onClick={ops.handleArchiveInvoice}>{t("licensing.archive")}</Button>
           </div>
         </div>
       </Dialog>
@@ -112,7 +112,7 @@ export function FreelanceOpsDialogs() {
           <p className="text-sm text-danger">{t("invoice.deleteConfirm")}</p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => ops.setInvoiceToDelete(null)}>{t("licensing.cancel")}</Button>
-            <Button variant="danger" onClick={ops.handleHardDeleteInvoice}>{t("licensing.delete")}</Button>
+            <Button variant="destructive" onClick={ops.handleHardDeleteInvoice}>{t("licensing.delete")}</Button>
           </div>
         </div>
       </Dialog>

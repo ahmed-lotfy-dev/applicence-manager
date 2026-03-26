@@ -8,7 +8,7 @@ import {
   restoreClient,
   updateClient,
 } from "../../../lib/api-client";
-import type { Client } from "../types/dashboard";
+
 
 class UnauthorizedError extends Error {
   constructor() {

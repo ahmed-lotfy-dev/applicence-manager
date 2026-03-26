@@ -15,12 +15,7 @@ import {
   updateLicense,
   updateManagedApp,
 } from "../../../lib/api-client";
-import type {
-  Activation,
-  License,
-  ManagedApp,
-  Stats,
-} from "../types/dashboard";
+
 
 class UnauthorizedError extends Error {
   constructor() {
@@ -291,7 +286,21 @@ export function useLicensingData(onUnauthorized: () => void) {
     activations: activationsQuery.data || [],
     licenses: licensesQuery.data || [],
     apps: appsQuery.data || [],
-    stats: statsQuery.data || { total: 0, active: 0, pending: 0, revoked: 0 },
+    stats: (() => {
+      const raw = statsQuery.data || { total: 0, active: 0, pending: 0, revoked: 0 };
+      const appsData = appsQuery.data || [];
+      const licensesData = licensesQuery.data || [];
+      return {
+        ...raw,
+        totalApps: appsData.length,
+        totalLicenses: licensesData.length,
+        totalActivations: raw.total,
+        activeKeysPercentage:
+          licensesData.length > 0
+            ? Math.round((licensesData.filter((l) => l.status === "active").length / licensesData.length) * 100)
+            : 0,
+      };
+    })(),
     loading:
       activationsQuery.isLoading ||
       statsQuery.isLoading ||

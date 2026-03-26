@@ -1,14 +1,14 @@
 import { Dialog } from "../../../shared/ui/dialog";
 import { Button } from "../../../shared/ui/button";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
-import type { LicensesPanelProps } from "./LicensesPanel.types";
+import type { Activation, ManagedApp, License } from "../types/dashboard";
 
 interface LicensingDialogsProps {
-  appToDelete: LicensesPanelProps["apps"][number] | null;
-  licenseToRevoke: LicensesPanelProps["licenses"][number] | null;
-  licenseToDelete: LicensesPanelProps["licenses"][number] | null;
-  activationToRevoke: LicensesPanelProps["activations"][number] | null;
-  activationToDelete: LicensesPanelProps["activations"][number] | null;
+  appToDelete: ManagedApp | null;
+  licenseToRevoke: License | null;
+  licenseToDelete: License | null;
+  activationToRevoke: Activation | null;
+  activationToDelete: Activation | null;
   appActionLoadingId: string | null;
   licenseActionLoadingId: string | null;
   activationActionLoadingId: string | null;

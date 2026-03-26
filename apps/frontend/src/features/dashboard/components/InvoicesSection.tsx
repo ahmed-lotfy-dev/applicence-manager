@@ -13,7 +13,7 @@ export function InvoicesSection() {
   const { t } = useI18n();
   const ops = useFreelanceOpsContext();
   const { billingStats } = ops;
-  const displayCurrency = ops.profile?.defaultCurrency || ops.defaultCurrency;
+  const displayCurrency = ops.freelancerProfile?.defaultCurrency || ops.defaultCurrency;
 
   return (
     <div className="space-y-4">
@@ -24,15 +24,15 @@ export function InvoicesSection() {
         <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.invoiced")}</p>
-            <p className="metric-value mt-2 text-2xl font-bold text-white">{formatCurrencyCents(billingStats.totalInvoiced, displayCurrency)}</p>
+            <p className="mt-2 truncate text-lg font-semibold text-white tabular-nums">{formatCurrencyCents(billingStats.totalInvoiced, displayCurrency)}</p>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.paid")}</p>
-            <p className="metric-value mt-2 text-2xl font-bold text-emerald-300">{formatCurrencyCents(billingStats.totalPaid, displayCurrency)}</p>
+            <p className="mt-2 truncate text-lg font-semibold text-emerald-300 tabular-nums">{formatCurrencyCents(billingStats.totalPaid, displayCurrency)}</p>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs uppercase tracking-widest text-slate-400">{t("freelance.outstanding")}</p>
-            <p className="metric-value mt-2 text-2xl font-bold text-amber-300">{formatCurrencyCents(billingStats.totalOutstanding, displayCurrency)}</p>
+            <p className="mt-2 truncate text-lg font-semibold text-amber-300 tabular-nums">{formatCurrencyCents(billingStats.totalOutstanding, displayCurrency)}</p>
           </div>
         </CardContent>
       </Card>
@@ -41,7 +41,7 @@ export function InvoicesSection() {
         <CardHeader className="flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg text-white">{t("invoice.title")}</CardTitle>
           <div className="w-36">
-            <Select value={ops.invoiceFilter} onValueChange={ops.setInvoiceFilter}>
+            <Select value={ops.invoiceFilter} onValueChange={(v) => ops.setInvoiceFilter(v as "all" | "active" | "archived")}>
               <SelectTrigger className="h-9">
                 <SelectValue />
               </SelectTrigger>
@@ -68,7 +68,7 @@ export function InvoicesSection() {
              <DatePicker value={ops.invoiceDueDate} onChange={ops.setInvoiceDueDate} />
              <div className="md:col-span-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <Select value={ops.invoiceLanguage} onValueChange={ops.setInvoiceLanguage}>
+                  <Select value={ops.invoiceLanguage} onValueChange={(v) => ops.setInvoiceLanguage(v as "en" | "ar")}>
                     <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="en">English</SelectItem>
@@ -119,9 +119,9 @@ export function InvoicesSection() {
                       </Td>
                       <Td className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="sm" className="h-7 text-xs opacity-0 group-hover:opacity-100" onClick={() => ops.handleInvoiceRowSave(inv)}>{t("licensing.save")}</Button>
-                          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => ops.handleSendInvoiceEmail(inv)} disabled={ops.sendingInvoiceEmailId === inv.id}>{t("invoice.send")}</Button>
-                          <Button variant="ghost" size="sm" className="h-7 text-xs text-danger/70" onClick={() => ops.setInvoiceToArchive(inv)}>{t("licensing.archive")}</Button>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs text-emerald-400" onClick={() => ops.handleInvoiceRowSave(inv)}>{t("licensing.save")}</Button>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs text-blue-400" onClick={() => ops.handleSendInvoiceEmail(inv)} disabled={ops.sendingInvoiceEmailId === inv.id}>{t("invoice.send")}</Button>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs text-orange-400" onClick={() => ops.setInvoiceToArchive(inv)}>{t("licensing.archive")}</Button>
                         </div>
                       </Td>
                     </tr>

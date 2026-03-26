@@ -300,5 +300,6 @@ export function useInvoicesData(onUnauthorized: () => void) {
     refreshInvoicePdfJob,
     sendInvoiceToEmail,
     invoicesQuery,
+    billingStatsQuery,
   };
 }
