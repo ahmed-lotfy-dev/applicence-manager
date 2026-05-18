@@ -32,6 +32,16 @@ export const auth = betterAuth({
   secret: betterAuthSecret,
   baseURL: betterAuthUrl.replace(/\/+$/, ""),
   trustedOrigins: [...trustedOrigins, betterAuthUrl.replace(/\/+$/, "")],
+  advanced: {
+    useSecureCookies: betterAuthUrl.startsWith("https://"),
+    crossSubDomainCookies: { enabled: false },
+    disableCSRFCheck: false,
+    generateId: false,
+    ipAddress: {
+      ipAddressHeaders: ["x-forwarded-for", "x-real-ip"],
+      trustProxyHeaders: true,
+    },
+  },
   database: pool,
   user: {
     modelName: "users",
