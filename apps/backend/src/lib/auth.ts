@@ -31,7 +31,7 @@ const githubClientSecret = optionalSecret(process.env.GITHUB_CLIENT_SECRET);
 export const auth = betterAuth({
   secret: betterAuthSecret,
   baseURL: betterAuthUrl.replace(/\/+$/, ""),
-  trustedOrigins,
+  trustedOrigins: [...trustedOrigins, betterAuthUrl.replace(/\/+$/, "")],
   database: pool,
   user: {
     modelName: "users",
