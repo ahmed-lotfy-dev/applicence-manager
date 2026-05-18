@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import * as bcrypt from "bcrypt";
 import { pool } from "../db/db";
+import { trustedOrigins } from "./env";
 
 function requireEnv(name: string, minLength = 1): string {
   const value = process.env[name]?.trim();
@@ -30,6 +31,7 @@ const githubClientSecret = optionalSecret(process.env.GITHUB_CLIENT_SECRET);
 export const auth = betterAuth({
   secret: betterAuthSecret,
   baseURL: betterAuthUrl.replace(/\/+$/, ""),
+  trustedOrigins,
   database: pool,
   user: {
     modelName: "users",
