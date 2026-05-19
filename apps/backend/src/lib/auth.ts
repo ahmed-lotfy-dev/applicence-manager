@@ -27,7 +27,12 @@ const githubClientSecret = optionalSecret(process.env.GITHUB_CLIENT_SECRET);
 export const auth = betterAuth({
   secret: betterAuthSecret,
   baseURL: betterAuthUrl.replace(/\/+$/, ""),
-  trustedOrigins: [...trustedOrigins, betterAuthUrl.replace(/\/+$/, "")],
+  trustedOrigins: [
+    ...trustedOrigins,
+    betterAuthUrl.replace(/\/+$/, ""),
+    "http://localhost:3000",
+    "https://*.ahmedlotfy.site",
+  ],
   advanced: {
     useSecureCookies: betterAuthUrl.startsWith("https://"),
     crossSubDomainCookies: { enabled: false },
