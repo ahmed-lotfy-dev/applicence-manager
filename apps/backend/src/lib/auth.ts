@@ -11,11 +11,7 @@ function requireEnv(name: string, minLength = 1): string {
   return value;
 }
 
-const betterAuthUrl =
-  process.env.BETTER_AUTH_URL?.trim() ||
-  process.env.FRONTEND_URL?.trim() ||
-  process.env.FRONTEND_ORIGIN?.trim() ||
-  "http://localhost:3000";
+const betterAuthUrl = process.env.BETTER_AUTH_URL?.trim() || "http://localhost:3000";
 const betterAuthSecret = requireEnv("BETTER_AUTH_SECRET", 32);
 
 function optionalSecret(value: string | undefined): string | undefined {
