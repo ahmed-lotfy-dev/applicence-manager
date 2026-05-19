@@ -2,11 +2,11 @@
   "name": "fawtarly-platform",
   "version": "0.1.0",
   "devDependencies": {
-    "@types/node": "^25.2.3",
-    "@types/pg": "^8.16.0",
-    "bun-types": "^1.3.9",
-    "drizzle-kit": "^0.31.9",
-    "typescript": "^5.9.3"
+    "@types/node": "^25.9.0",
+    "@types/pg": "^8.20.0",
+    "bun-types": "^1.3.14",
+    "drizzle-kit": "^0.31.10",
+    "typescript": "^6.0.3"
   },
   "packageManager": "bun@1.2.21",
   "private": true,
@@ -25,6 +25,6 @@
     "apps/*"
   ],
   "dependencies": {
-    "date-fns": "^4.1.0"
+    "date-fns": "^4.2.1"
   }
 }
