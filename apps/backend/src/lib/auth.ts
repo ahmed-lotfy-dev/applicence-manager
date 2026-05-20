@@ -12,6 +12,7 @@ function requireEnv(name: string, minLength = 1): string {
 }
 
 const betterAuthUrl = process.env.BETTER_AUTH_URL?.trim() || "http://localhost:3000";
+console.log(`[auth] BETTER_AUTH_URL resolved to: ${betterAuthUrl}`);
 const betterAuthSecret = requireEnv("BETTER_AUTH_SECRET", 32);
 
 function optionalSecret(value: string | undefined): string | undefined {
@@ -24,15 +25,43 @@ const googleClientSecret = optionalSecret(process.env.GOOGLE_CLIENT_SECRET);
 const githubClientId = optionalSecret(process.env.GITHUB_CLIENT_ID);
 const githubClientSecret = optionalSecret(process.env.GITHUB_CLIENT_SECRET);
 
+/**
+ * Expand trusted origins to include subdomain variants.
+ * Better-auth does exact string matching for trustedOrigins by default,
+ * but also supports wildcard patterns. We expand wildcards to explicit
+ * origins for maximum compatibility.
+ */
+function expandTrustedOrigins(origins: string[]): string[] {
+  const expanded = new Set<string>();
+  for (const origin of origins) {
+    expanded.add(origin);
+    // Expand wildcard subdomain patterns: "https://*.example.com" -> also add "https://example.com"
+    if (origin.includes("*.")) {
+      try {
+        const url = new URL(origin.replace("*.", ""));
+        expanded.add(`${url.protocol}//${url.host}`);
+      } catch {
+        // invalid URL pattern, keep as-is
+      }
+    }
+  }
+  return [...expanded];
+}
+
+// Build explicit trusted origins list (no bare globs — better-auth needs exact matches or proper wildcard patterns)
+const allTrustedOrigins = expandTrustedOrigins([
+  ...trustedOrigins,
+  betterAuthUrl.replace(/\/+$/, ""),
+  "http://localhost:3000",
+  "https://*.ahmedlotfy.site",
+]);
+
+console.log(`[auth] trustedOrigins: ${JSON.stringify(allTrustedOrigins)}`);
+
 export const auth = betterAuth({
   secret: betterAuthSecret,
   baseURL: betterAuthUrl.replace(/\/+$/, ""),
-  trustedOrigins: [
-    ...trustedOrigins,
-    betterAuthUrl.replace(/\/+$/, ""),
-    "http://localhost:3000",
-    "https://*.ahmedlotfy.site",
-  ],
+  trustedOrigins: allTrustedOrigins,
   advanced: {
     useSecureCookies: betterAuthUrl.startsWith("https://"),
     crossSubDomainCookies: { enabled: false },

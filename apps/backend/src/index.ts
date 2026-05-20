@@ -18,6 +18,31 @@ import { clientRoutes } from "./routes/clients";
 import { freelancerProfileRoutes } from "./routes/freelancer-profile";
 import { invoiceRoutes } from "./routes/invoices";
 
+/**
+ * Check if an origin matches a trusted origin pattern.
+ * Supports exact matches and wildcard subdomain patterns like "https://*.example.com".
+ */
+function isOriginTrusted(origin: string, trusted: string[]): boolean {
+  for (const pattern of trusted) {
+    if (pattern === origin) return true;
+    if (pattern.includes("*.")) {
+      try {
+        const patternUrl = new URL(pattern.replace("*.", ""));
+        const originUrl = new URL(origin);
+        if (originUrl.protocol !== patternUrl.protocol) continue;
+        const patternHost = patternUrl.hostname;
+        const originHost = originUrl.hostname;
+        if (originHost === patternHost || originHost.endsWith(`.${patternHost}`)) {
+          return true;
+        }
+      } catch {
+        // Invalid URL, skip
+      }
+    }
+  }
+  return false;
+}
+
 const app = new Elysia()
   .use(logger)
   .use(securityHeaders)
@@ -33,11 +58,10 @@ const app = new Elysia()
         const origin = request.headers.get("origin");
         if (!origin) return true;
         if (!isProduction) {
-          // In development, allow browser origins broadly to support localhost/LAN testing.
           if (origin.startsWith("http://") || origin.startsWith("https://")) return true;
-          return trustedOrigins.includes(origin);
+          return isOriginTrusted(origin, trustedOrigins);
         }
-        if (trustedOrigins.includes(origin)) return true;
+        if (isOriginTrusted(origin, trustedOrigins)) return true;
 
         // In production, also allow same-origin requests when proxied by the frontend host.
         const host = request.headers.get("host");
