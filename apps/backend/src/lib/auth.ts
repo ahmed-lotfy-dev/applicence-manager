@@ -1,7 +1,6 @@
 import { betterAuth } from "better-auth";
 import * as bcrypt from "bcrypt";
 import { pool } from "../db/db";
-import { trustedOrigins } from "./env";
 
 function requireEnv(name: string, minLength = 1): string {
   const value = process.env[name]?.trim();
@@ -11,9 +10,22 @@ function requireEnv(name: string, minLength = 1): string {
   return value;
 }
 
-const betterAuthUrl = process.env.BETTER_AUTH_URL?.trim() || "http://localhost:3000";
-console.log(`[auth] BETTER_AUTH_URL resolved to: ${betterAuthUrl}`);
 const betterAuthSecret = requireEnv("BETTER_AUTH_SECRET", 32);
+
+// ── Single source of truth: the public domain(s) ──
+// APP_DOMAIN can be a comma-separated list of domains.
+// Examples:
+//   APP_DOMAIN=https://activation.ahmedlotfy.site
+//   APP_DOMAIN=https://activation.ahmedlotfy.site,https://www.activation.ahmedlotfy.site
+const APP_DOMAIN = process.env.APP_DOMAIN?.trim() || process.env.BETTER_AUTH_URL?.trim() || "http://localhost:3000";
+
+const isDev = process.env.NODE_ENV !== "production";
+
+// Parse domains: comma-separated, trim whitespace
+const allowedHosts = APP_DOMAIN.split(",").map(d => d.trim()).filter(Boolean);
+
+console.log(`[auth] APP_DOMAIN = ${APP_DOMAIN}`);
+console.log(`[auth] allowedHosts = ${JSON.stringify(allowedHosts)}`);
 
 function optionalSecret(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
@@ -25,45 +37,45 @@ const googleClientSecret = optionalSecret(process.env.GOOGLE_CLIENT_SECRET);
 const githubClientId = optionalSecret(process.env.GITHUB_CLIENT_ID);
 const githubClientSecret = optionalSecret(process.env.GITHUB_CLIENT_SECRET);
 
-/**
- * Expand trusted origins to include subdomain variants.
- * Better-auth does exact string matching for trustedOrigins by default,
- * but also supports wildcard patterns. We expand wildcards to explicit
- * origins for maximum compatibility.
- */
-function expandTrustedOrigins(origins: string[]): string[] {
-  const expanded = new Set<string>();
-  for (const origin of origins) {
-    expanded.add(origin);
-    // Expand wildcard subdomain patterns: "https://*.example.com" -> also add "https://example.com"
-    if (origin.includes("*.")) {
-      try {
-        const url = new URL(origin.replace("*.", ""));
-        expanded.add(`${url.protocol}//${url.host}`);
-      } catch {
-        // invalid URL pattern, keep as-is
-      }
-    }
-  }
-  return [...expanded];
-}
-
-// Build explicit trusted origins list (no bare globs — better-auth needs exact matches or proper wildcard patterns)
-const allTrustedOrigins = expandTrustedOrigins([
-  ...trustedOrigins,
-  betterAuthUrl.replace(/\/+$/, ""),
-  "http://localhost:3000",
-  "https://*.ahmedlotfy.site",
-]);
-
-console.log(`[auth] trustedOrigins: ${JSON.stringify(allTrustedOrigins)}`);
+// Build the base origin for redirect URIs (first domain in the list)
+const primaryOrigin = allowedHosts[0].replace(/\/+$/, "");
 
 export const auth = betterAuth({
   secret: betterAuthSecret,
-  baseURL: betterAuthUrl.replace(/\/+$/, ""),
-  trustedOrigins: allTrustedOrigins,
+
+  // ── Dynamic base URL (official better-auth pattern) ──
+  baseURL: {
+    allowedHosts: [
+      ...allowedHosts,
+      // Always allow localhost in development
+      ...(isDev ? ["localhost:3000", "localhost:8000", "127.0.0.1:3000", "127.0.0.1:8000"] : []),
+    ],
+    protocol: isDev ? "http" : "https",
+  },
+
+  // ── Trusted origins as a function (official pattern) ──
+  trustedOrigins: async (request) => {
+    const origins = new Set<string>();
+    for (const host of allowedHosts) {
+      origins.add(host);
+      if (host.includes("*.")) {
+        try {
+          const url = new URL(host.replace("*.", ""));
+          origins.add(`${url.protocol}//${url.host}`);
+        } catch { /* skip invalid */ }
+      }
+    }
+    if (isDev) {
+      origins.add("http://localhost:3000");
+      origins.add("http://localhost:8000");
+      origins.add("http://127.0.0.1:3000");
+      origins.add("http://127.0.0.1:8000");
+    }
+    return [...origins];
+  },
+
   advanced: {
-    useSecureCookies: betterAuthUrl.startsWith("https://"),
+    useSecureCookies: !isDev,
     crossSubDomainCookies: { enabled: false },
     disableCSRFCheck: false,
     generateId: false,
@@ -72,6 +84,7 @@ export const auth = betterAuth({
       trustProxyHeaders: true,
     },
   },
+
   database: pool,
   user: {
     modelName: "users",
@@ -129,6 +142,7 @@ export const auth = betterAuth({
           google: {
             clientId: googleClientId,
             clientSecret: googleClientSecret,
+            redirectURI: `${primaryOrigin}/api/auth/callback/google`,
           },
         }
       : {}),
@@ -137,6 +151,7 @@ export const auth = betterAuth({
           github: {
             clientId: githubClientId,
             clientSecret: githubClientSecret,
+            redirectURI: `${primaryOrigin}/api/auth/callback/github`,
           },
         }
       : {}),

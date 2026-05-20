@@ -19,6 +19,11 @@ export default defineConfig(({ mode }) => {
           target: proxyTarget,
           changeOrigin: true,
         },
+        "/callback": {
+          target: proxyTarget,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/callback/, "/api/auth/callback"),
+        },
       },
     },
     preview: {
