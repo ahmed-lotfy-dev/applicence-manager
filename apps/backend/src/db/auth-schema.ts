@@ -222,6 +222,7 @@ export const invoices = pgTable(
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
     clientId: text("client_id").notNull(),
+    projectId: text("project_id"),
     invoiceNo: text("invoice_no").notNull(),
     status: text("status").notNull().default("draft"),
     currency: text("currency").notNull().default("USD"),
@@ -287,6 +288,67 @@ export const invoicePdfJobs = pgTable(
       table.invoiceId,
     ),
     invoicePdfJobsStatusIdx: index("invoice_pdf_jobs_status_idx").on(table.status),
+  }),
+);
+
+export const projects = pgTable(
+  "projects",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    clientId: text("client_id").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    projectType: text("project_type").notNull().default("standard"),
+    totalAmount: integer("total_amount").notNull().default(0),
+    status: text("status").notNull().default("draft"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    projectsUserStatusIdx: index("projects_user_status_idx").on(table.userId, table.status),
+    projectsUserClientIdx: index("projects_user_client_idx").on(table.userId, table.clientId),
+  }),
+);
+
+export const milestones = pgTable(
+  "milestones",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    amount: integer("amount").notNull().default(0),
+    dueDate: timestamp("due_date"),
+    invoiceId: text("invoice_id"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    milestonesProjectIdx: index("milestones_project_idx").on(table.projectId),
+    milestonesProjectInvoiceIdx: index("milestones_project_invoice_idx").on(table.projectId, table.invoiceId),
+  }),
+);
+
+export const payments = pgTable(
+  "payments",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    invoiceId: text("invoice_id").notNull(),
+    amount: integer("amount").notNull().default(0),
+    paymentMethod: text("payment_method"),
+    paymentDate: timestamp("payment_date").defaultNow().notNull(),
+    notes: text("notes"),
+    receiptPdfUrl: text("receipt_pdf_url"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    paymentsUserIdx: index("payments_user_idx").on(table.userId),
+    paymentsInvoiceIdx: index("payments_invoice_idx").on(table.invoiceId),
   }),
 );
 

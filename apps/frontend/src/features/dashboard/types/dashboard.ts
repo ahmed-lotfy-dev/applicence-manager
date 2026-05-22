@@ -71,7 +71,9 @@ export interface Invoice {
   id: string;
   userId: string;
   clientId: string;
+  projectId?: string | null;
   clientName?: string | null;
+  projectName?: string | null;
   clientIsDeleted?: boolean | null;
   isDeleted: boolean;
   invoiceNo: string;
@@ -110,6 +112,58 @@ export interface FreelancerProfile {
   appLanguage?: "en" | "ar" | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Project {
+  id: string;
+  userId: string;
+  clientId: string;
+  clientName: string;
+  name: string;
+  description: string | null;
+  projectType: "milestone" | "standard";
+  totalAmount: number;
+  status: "draft" | "active" | "completed" | "cancelled";
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  totalInvoiced: number;
+  totalPaid: number;
+  remaining: number;
+}
+
+export interface Milestone {
+  id: string;
+  projectId: string;
+  name: string;
+  description: string | null;
+  amount: number;
+  dueDate: string | null;
+  invoiceId: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Payment {
+  id: string;
+  userId: string;
+  invoiceId: string;
+  amount: number;
+  paymentMethod: string | null;
+  paymentDate: string;
+  notes: string | null;
+  receiptPdfUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectStats {
+  totalProjects: number;
+  activeProjects: number;
+  totalContractValue: number;
+  totalPaid: number;
+  totalOutstanding: number;
 }
 
 export interface InvoicePdfJob {

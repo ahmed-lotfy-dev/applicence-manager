@@ -10,6 +10,7 @@ import { authClient } from "../../../lib/auth-client";
 import { fetchNextInvoiceNo } from "../../../lib/api/invoices";
 import type { ActivationFilter } from "../types/dashboard";
 import { DashboardHeader } from "../components/DashboardHeader";
+import { SkeletonCard } from "../../../shared/ui/skeleton";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 
 const OverviewPage = lazy(async () => {
@@ -32,6 +33,11 @@ const SettingsPage = lazy(async () => {
   return { default: module.SettingsPage };
 });
 
+const ProjectsSection = lazy(async () => {
+  const module = await import("../components/ProjectsSection");
+  return { default: module.ProjectsSection };
+});
+
 interface DashboardPageProps {
   onLogout: () => void;
 }
@@ -45,6 +51,8 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
   const { dir, t } = useI18n();
   const page: DashboardPageType = useMemo(() => {
     const path = location.pathname.replace(/^\/(en|ar)/, "");
+    if (path.startsWith("/projects/")) return "project-detail";
+    if (path.startsWith("/projects")) return "projects";
     if (path.startsWith("/branding")) return "branding";
     if (path.startsWith("/clients")) return "clients";
     if (path.startsWith("/invoices")) return "invoices";
@@ -53,6 +61,12 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     if (path.startsWith("/settings")) return "settings";
     return "overview";
   }, [location.pathname]);
+
+  const projectId = useMemo(() => {
+    if (page !== "project-detail") return null;
+    const match = location.pathname.match(/projects\/([^/]+)/);
+    return match ? match[1] : null;
+  }, [location.pathname, page]);
   const [selectedTab, setSelectedTab] = useState<ActivationFilter>(
     urlActivationFilter &&
       ["all", "pending", "active", "revoked"].includes(urlActivationFilter)
@@ -97,11 +111,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     onLogout();
   };
 
-  const pageLoadingFallback = (
-    <div className="rounded-[2rem] surface-panel p-6 text-sm text-text-muted">
-      {t("dashboard.loadingSection")}
-    </div>
-  );
+  const pageLoadingFallback = <SkeletonCard className="w-full" />;
 
   return (
     <div className="min-h-screen w-full bg-bg">
@@ -122,26 +132,32 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 ? t("dashboard.page.overview.kicker")
                 : page === "licensing"
                   ? t("dashboard.page.licensing.kicker")
-                  : page === "clients"
-                    ? t("dashboard.page.clients.kicker")
-                    : page === "invoices"
-                      ? t("dashboard.page.invoices.kicker")
-                      : page === "settings"
-                        ? t("dashboard.page.settings.kicker")
-                        : t("dashboard.page.branding.kicker")}
+                  : page === "projects"
+                    ? t("projects.kicker")
+                    : page === "clients"
+                      ? t("dashboard.page.clients.kicker")
+                      : page === "invoices"
+                        ? t("dashboard.page.invoices.kicker")
+                        : page === "settings"
+                          ? t("dashboard.page.settings.kicker")
+                          : t("dashboard.page.branding.kicker")}
             </p>
             <h1 className="text-4xl font-black tracking-tight text-text sm:text-5xl">
               {page === "overview"
                 ? t("dashboard.page.overview.title")
                 : page === "licensing"
                   ? t("dashboard.page.licensing.title")
-                  : page === "clients"
-                    ? t("dashboard.page.clients.title")
-                    : page === "invoices"
-                      ? t("dashboard.page.invoices.title")
-                      : page === "settings"
-                        ? t("dashboard.page.settings.title")
-                        : t("dashboard.page.branding.title")}
+                  : page === "project-detail"
+                    ? t("projects.detail")
+                    : page === "projects"
+                      ? t("projects.title")
+                      : page === "clients"
+                        ? t("dashboard.page.clients.title")
+                        : page === "invoices"
+                          ? t("dashboard.page.invoices.title")
+                          : page === "settings"
+                            ? t("dashboard.page.settings.title")
+                            : t("dashboard.page.branding.title")}
             </h1>
           </div>
           <Suspense fallback={pageLoadingFallback}>
@@ -185,6 +201,14 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 onRefreshInvoicePdfJob={refreshInvoicePdfJob}
                 onSendInvoiceEmail={sendInvoiceToEmail}
               />
+            )}
+
+            {page === "projects" && (
+              <ProjectsSection />
+            )}
+
+            {page === "project-detail" && (
+              <ProjectsSection projectId={projectId ?? undefined} />
             )}
 
             {page === "licensing" && (

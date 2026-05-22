@@ -2,6 +2,7 @@ import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { Button } from "../../../shared/ui/button";
 import { Table, Td, Th } from "../../../shared/ui/table";
 import { Badge } from "../../../shared/ui/badge";
+import { SkeletonTable } from "../../../shared/ui/skeleton";
 
 import { useLicensingStore } from "../hooks/licensingStore";
 import { useLicensingDataContext } from "../hooks/LicensingDataContext";
@@ -36,11 +37,7 @@ export function ActivationsTable({ activationFilter }: ActivationsTableProps) {
   });
 
   if (activationsQuery.isLoading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <p className="text-sm text-slate-500">{t("licensing.loadingActivations")}</p>
-      </div>
-    );
+    return <SkeletonTable rows={5} />;
   }
 
   return (

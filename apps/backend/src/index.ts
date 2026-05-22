@@ -17,6 +17,10 @@ import { appCatalogRoutes } from "./routes/apps";
 import { clientRoutes } from "./routes/clients";
 import { freelancerProfileRoutes } from "./routes/freelancer-profile";
 import { invoiceRoutes } from "./routes/invoices";
+import { dashboardRoutes } from "./routes/dashboard";
+import { projectRoutes } from "./routes/projects";
+import { paymentRoutes } from "./routes/payments";
+import { startInvoicePdfWorker } from "./workers/invoice-pdf-worker";
 
 const app = new Elysia()
   .use(logger)
@@ -78,11 +82,18 @@ const app = new Elysia()
   .use(clientRoutes)
   .use(freelancerProfileRoutes)
   .use(invoiceRoutes)
+  .use(projectRoutes)
+  .use(paymentRoutes)
+  .use(dashboardRoutes)
   .use(licenseAdminRoutes)
   .use(licensePublicRoutes);
 
 async function startServer() {
   await initializeDatabase();
+
+  startInvoicePdfWorker().catch((error) => {
+    console.error("❌ Invoice PDF worker failed:", error);
+  });
 
   const port = Number(process.env.PORT || 8000);
   app.listen(port);

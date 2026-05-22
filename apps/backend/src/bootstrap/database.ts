@@ -1,4 +1,6 @@
+import path from "node:path";
 import { and, eq, sql } from "drizzle-orm";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import * as bcrypt from "bcrypt";
 import { db } from "../db/db";
 import { accounts, users } from "../db/auth-schema";
@@ -141,6 +143,8 @@ async function ensureActivationApp(userId: string) {
 
 export async function initializeDatabase() {
   try {
+    const migrationsFolder = path.join(process.cwd(), "drizzle");
+    await migrate(db, { migrationsFolder });
     await ensureBetterAuthSchema();
     const adminUser = await seedAdminUser();
     if (adminUser) {

@@ -31,6 +31,8 @@ function DashboardRoutes({ onLogout }: { onLogout: () => void }) {
         <Route path="freelance" element={<Navigate to={`/${validLocale}/branding`} replace />} />
         <Route path="branding" element={<DashboardPage onLogout={onLogout} />} />
         <Route path="clients" element={<DashboardPage onLogout={onLogout} />} />
+        <Route path="projects" element={<DashboardPage onLogout={onLogout} />} />
+        <Route path="projects/:projectId" element={<DashboardPage onLogout={onLogout} />} />
         <Route path="invoices" element={<DashboardPage onLogout={onLogout} />} />
         <Route path="licensing" element={<DashboardPage onLogout={onLogout} />} />
         <Route path="settings" element={<DashboardPage onLogout={onLogout} />} />
@@ -76,48 +78,27 @@ function OnboardingRoutes({
 function AppInner() {
   const { setLocale } = useI18n();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [ready, setReady] = useState(false);
   const [profile, setProfile] = useState<FreelancerProfile | null>(null);
-  const [isProfileLoading, setIsProfileLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const init = async () => {
       const session = await authClient.getSession();
-      setIsAuthenticated(session.authenticated);
-      setIsLoading(false);
+      if (session.authenticated) {
+        setIsAuthenticated(true);
+        const nextProfile = await fetchFreelancerProfile();
+        setProfile(nextProfile);
+        if (nextProfile?.appLanguage) {
+          setLocale(nextProfile.appLanguage);
+        }
+      }
+      setReady(true);
     };
 
-    void checkAuth();
-  }, []);
+    void init();
+  }, [setLocale]);
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (!isAuthenticated) {
-        setProfile(null);
-        setIsProfileLoading(false);
-        return;
-      }
-      setIsProfileLoading(true);
-      const nextProfile = await fetchFreelancerProfile();
-      setProfile(nextProfile);
-      if (nextProfile?.appLanguage) {
-        setLocale(nextProfile.appLanguage);
-      }
-      setIsProfileLoading(false);
-    };
-
-    void loadProfile();
-  }, [isAuthenticated, setLocale]);
-
-  if (isLoading || (isAuthenticated && isProfileLoading)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-bg">
-        <div className="rounded-full surface-elevated px-5 py-3 text-text-muted font-medium tracking-[0.22em] uppercase text-[11px] animate-pulse">
-          Loading...
-        </div>
-      </div>
-    );
-  }
+  if (!ready) return null;
 
   if (!isAuthenticated) {
     return <LoginPage onLogin={() => setIsAuthenticated(true)} />;

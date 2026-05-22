@@ -1,6 +1,7 @@
 import { and, asc, eq, sql, sum } from "drizzle-orm";
 import { db } from "../db/db";
-import { clients, freelancerProfiles, invoices } from "../db/auth-schema";
+import { clients, freelancerProfiles, invoices, projects } from "../db/auth-schema";
+import { toAmountCents, extractNumericSuffix } from "./utils";
 
 export type InvoiceStatus =
   | "draft"
@@ -16,7 +17,9 @@ export async function listInvoices(userId: string) {
       id: invoices.id,
       userId: invoices.userId,
       clientId: invoices.clientId,
+      projectId: invoices.projectId,
       clientName: clients.name,
+      projectName: projects.name,
       clientIsDeleted: clients.isDeleted,
       invoiceNo: invoices.invoiceNo,
       status: invoices.status,
@@ -33,10 +36,19 @@ export async function listInvoices(userId: string) {
     })
     .from(invoices)
     .leftJoin(clients, eq(clients.id, invoices.clientId))
+    .leftJoin(projects, eq(projects.id, invoices.projectId))
     .where(eq(invoices.userId, userId))
     .orderBy(asc(invoices.createdAt));
 
   return rows;
+}
+
+export async function listInvoicesByProject(userId: string, projectId: string) {
+  return db
+    .select()
+    .from(invoices)
+    .where(and(eq(invoices.userId, userId), eq(invoices.projectId, projectId), eq(invoices.isDeleted, false)))
+    .orderBy(asc(invoices.createdAt));
 }
 
 export async function getInvoiceById(userId: string, id: string) {
@@ -45,20 +57,6 @@ export async function getInvoiceById(userId: string, id: string) {
     .from(invoices)
     .where(and(eq(invoices.userId, userId), eq(invoices.id, id)));
   return invoice ?? null;
-}
-
-function toAmountCents(value: number): number {
-  if (!Number.isFinite(value) || value < 0) return 0;
-  return Math.round(value * 100);
-}
-
-function extractNumericSuffix(invoiceNo: string): number | null {
-  const trimmed = invoiceNo.trim();
-  if (!trimmed) return null;
-  const match = trimmed.match(/(\d+)$/);
-  if (!match) return null;
-  const parsed = Number(match[1]);
-  return Number.isFinite(parsed) ? parsed : null;
 }
 
 export async function getNextInvoiceNo(userId: string): Promise<string> {
@@ -80,6 +78,7 @@ export async function createInvoice(
   userId: string,
   input: {
     clientId: string;
+    projectId?: string;
     invoiceNo?: string;
     totalAmount: number;
     paidAmount?: number;
@@ -105,6 +104,14 @@ export async function createInvoice(
     .where(and(eq(clients.userId, userId), eq(clients.id, clientId), eq(clients.isDeleted, false)));
   if (!client) return { ok: false as const, error: "Client not found" };
 
+  if (input.projectId) {
+    const [project] = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.userId, userId), eq(projects.id, input.projectId)));
+    if (!project) return { ok: false as const, error: "Project not found" };
+  }
+
   const invoiceNo = input.invoiceNo?.trim() || (await getNextInvoiceNo(userId));
   const [profile] = await db
     .select({
@@ -118,6 +125,7 @@ export async function createInvoice(
     id,
     userId,
     clientId,
+    projectId: input.projectId || null,
     invoiceNo,
     status: input.status || "draft",
     currency: (input.currency || profile?.defaultCurrency || "USD").trim().toUpperCase(),

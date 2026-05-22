@@ -57,6 +57,55 @@
       "when": 1774316400000,
       "tag": "0007_activation_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1774316401000,
+      "tag": "0008_invoices_soft_delete",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1774316402000,
+      "tag": "0009_freelancer_profile_defaults",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1774316403000,
+      "tag": "0010_activation_request_resolution",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1774316404000,
+      "tag": "0011_project_billing",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1774316405000,
+      "tag": "0012_project_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1747925100000,
+      "tag": "0013_projects_amount_base_units",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1747925400000,
+      "tag": "0014_cleanup_stale_pdf_jobs",
+      "breakpoints": true
     }
   ]
 }

@@ -4,3 +4,4 @@ export * from "./api/public-licensing";
 export * from "./api/clients";
 export * from "./api/invoices";
 export * from "./api/profile";
+export * from "./api/projects";

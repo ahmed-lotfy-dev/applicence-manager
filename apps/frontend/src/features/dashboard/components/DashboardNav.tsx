@@ -8,6 +8,8 @@ export type DashboardPage =
   | "branding"
   | "clients"
   | "invoices"
+  | "projects"
+  | "project-detail"
   | "licensing"
   | "settings";
 
@@ -57,6 +59,17 @@ function InvoicesIcon() {
   );
 }
 
+function ProjectsIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5v-9Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 12 3 7.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 12v9" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 12l9-4.5" />
+    </svg>
+  );
+}
+
 function LicensingIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
@@ -87,6 +100,7 @@ const ITEMS: Array<{ id: DashboardPage; key: string; path: string; icon: Compone
   { id: "overview", key: "nav.overview", path: "/overview", icon: OverviewIcon },
   { id: "branding", key: "nav.branding", path: "/branding", icon: BrandingIcon },
   { id: "clients", key: "nav.clients", path: "/clients", icon: ClientsIcon },
+  { id: "projects", key: "nav.projects", path: "/projects", icon: ProjectsIcon },
   { id: "invoices", key: "nav.invoices", path: "/invoices", icon: InvoicesIcon },
   { id: "licensing", key: "nav.licensing", path: "/licensing", icon: LicensingIcon },
   { id: "settings", key: "nav.settings", path: "/settings", icon: SettingsIcon },

@@ -94,21 +94,29 @@ export function InvoicesSection() {
               <Table>
                 <thead>
                   <tr className="border-b border-white/10 bg-white/5 text-[11px] uppercase tracking-wider text-slate-500">
-                    <Th className="w-24">No.</Th>
+                    <Th className="w-20">No.</Th>
                     <Th>Client</Th>
-                    <Th className="w-28">Total</Th>
-                    <Th className="w-28">Paid</Th>
-                    <Th className="w-32">Status</Th>
+                    <Th className="w-32">Project</Th>
+                    <Th className="w-24">Total</Th>
+                    <Th className="w-24">Paid</Th>
+                    <Th className="w-28">Issued</Th>
+                    <Th className="w-28">Status</Th>
                     <Th className="text-right">Actions</Th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {ops.sortedInvoices.map(inv => (
+                  {ops.sortedInvoices.map(inv => {
+                    const issuedDate = inv.issuedAt
+                      ? new Date(inv.issuedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+                      : "-";
+                    return (
                     <tr key={inv.id} className="hover:bg-white/5 transition-colors group">
                       <Td className="text-xs font-mono text-slate-300">{inv.invoiceNo}</Td>
                       <Td className="text-sm text-white">{inv.clientName}</Td>
+                      <Td className="text-xs text-slate-400">{inv.projectName || "-"}</Td>
                       <Td><Input className="h-8 py-1 text-xs" value={ops.invoiceTotalMap[inv.id] ?? (inv.totalAmount/100)} onChange={e => ops.setInvoiceTotalMap(prev => ({ ...prev, [inv.id]: e.target.value }))} /></Td>
                       <Td><Input className="h-8 py-1 text-xs" value={ops.invoicePaidMap[inv.id] ?? (inv.paidAmount/100)} onChange={e => ops.setInvoicePaidMap(prev => ({ ...prev, [inv.id]: e.target.value }))} /></Td>
+                      <Td className="text-xs text-slate-400">{issuedDate}</Td>
                       <Td>
                         <Select value={ops.invoiceStatusMap[inv.id] ?? inv.status} onValueChange={v => ops.setInvoiceStatusMap(prev => ({ ...prev, [inv.id]: v as Invoice["status"] }))}>
                           <SelectTrigger className="h-8 py-0 select-trigger-compact"><SelectValue /></SelectTrigger>
@@ -122,10 +130,12 @@ export function InvoicesSection() {
                           <Button variant="ghost" size="sm" className="h-7 text-xs text-emerald-400" onClick={() => ops.handleInvoiceRowSave(inv)}>{t("licensing.save")}</Button>
                           <Button variant="ghost" size="sm" className="h-7 text-xs text-blue-400" onClick={() => ops.handleSendInvoiceEmail(inv)} disabled={ops.sendingInvoiceEmailId === inv.id}>{t("invoice.send")}</Button>
                           <Button variant="ghost" size="sm" className="h-7 text-xs text-orange-400" onClick={() => ops.setInvoiceToArchive(inv)}>{t("licensing.archive")}</Button>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs text-red-400" onClick={() => ops.setInvoiceToDelete(inv)}>Delete</Button>
                         </div>
                       </Td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </Table>
             </TableWrapper>

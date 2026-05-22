@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, lt } from "drizzle-orm";
 import { db } from "../db/db";
 import { clients, freelancerProfiles, invoicePdfJobs, invoices } from "../db/auth-schema";
 
@@ -46,7 +46,25 @@ export async function getInvoicePdfJobById(id: string) {
   return job ?? null;
 }
 
+const MAX_PROCESSING_SECONDS = 60;
+
 export async function claimNextPendingPdfJob() {
+  const staleThreshold = new Date(Date.now() - MAX_PROCESSING_SECONDS * 1000);
+
+  await db
+    .update(invoicePdfJobs)
+    .set({
+      status: "failed",
+      errorMessage: "Job timed out (stale processing)",
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(invoicePdfJobs.status, "processing"),
+        lt(invoicePdfJobs.updatedAt, staleThreshold),
+      ),
+    );
+
   const pendingRows = await db
     .select()
     .from(invoicePdfJobs)

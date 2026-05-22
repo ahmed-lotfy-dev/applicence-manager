@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   archiveClient,
   createClient,
@@ -49,6 +49,12 @@ export function useClientsData(onUnauthorized: () => void) {
     queryKey: queryKeys.clients,
     queryFn: async () => requireAuthValue(await fetchClients()),
   });
+
+  useEffect(() => {
+    if (clientsQuery.error instanceof UnauthorizedError) {
+      onUnauthorized();
+    }
+  }, [clientsQuery.error, onUnauthorized]);
 
   const createClientMutation = useMutation({ mutationFn: createClient });
 

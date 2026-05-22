@@ -24,17 +24,25 @@ async function processOneJob() {
   }
 }
 
-async function startWorker() {
-  await initializeDatabase();
+export async function startInvoicePdfWorker() {
   console.log("🧾 Invoice PDF worker started");
 
   for (;;) {
-    await processOneJob();
+    try {
+      await processOneJob();
+    } catch (error) {
+      console.error("❌ Invoice PDF worker error:", error);
+    }
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
 }
 
-startWorker().catch((error) => {
-  console.error("❌ Invoice PDF worker failed to start:", error);
-  process.exit(1);
-});
+const isMainModule = import.meta.path === Bun.main;
+if (isMainModule) {
+  initializeDatabase()
+    .then(startInvoicePdfWorker)
+    .catch((error) => {
+      console.error("❌ Invoice PDF worker failed to start:", error);
+      process.exit(1);
+    });
+}
