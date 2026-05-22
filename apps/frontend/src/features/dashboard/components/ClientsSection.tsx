@@ -114,6 +114,9 @@ export function ClientsSection() {
                               <Button variant="ghost" size="sm" className="h-8 text-danger/70 hover:bg-danger/10 hover:text-danger" onClick={() => ops.setClientToArchive(client)}>
                                 {t("licensing.archive")}
                               </Button>
+                              <Button variant="ghost" size="sm" className="h-8 text-danger/70 hover:bg-danger/10 hover:text-danger" onClick={() => ops.setClientToDelete(client)}>
+                                {t("licensing.delete")}
+                              </Button>
                             </>
                           ) : (
                             <>
