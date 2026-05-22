@@ -7,7 +7,6 @@ import { Dialog } from "../../../shared/ui/dialog";
 import { Input } from "../../../shared/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../shared/ui/select";
 import { Table, TableWrapper, Td, Th } from "../../../shared/ui/table";
-import { DatePicker } from "../../../shared/ui/date-picker";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { formatCurrency, formatCurrencyCents } from "../../../shared/lib/currency";
 import {
@@ -297,10 +296,8 @@ function MilestoneRow({
 
 function ProjectDetail({
   projectId,
-  clients,
 }: {
   projectId: string;
-  clients: Client[];
 }) {
   const { t } = useI18n();
   function fmtDate(date: Date) {
@@ -768,7 +765,7 @@ export function ProjectsSection({ projectId }: { projectId?: string }) {
   };
 
   if (projectId) {
-    return <ProjectDetail projectId={projectId} clients={clients.clients} />;
+    return <ProjectDetail projectId={projectId} />;
   }
 
   if (isLoading) {
