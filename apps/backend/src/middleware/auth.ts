@@ -4,7 +4,6 @@ import { auth } from "../lib/auth";
 function isPublicPath(pathname: string): boolean {
   return (
     pathname.startsWith("/api/auth") ||
-    pathname === "/api/csrf" ||
     pathname === "/health" ||
     pathname === "/" ||
     pathname.startsWith("/docs") ||

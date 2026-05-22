@@ -54,23 +54,22 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setError('');
     setIsLoading(true);
 
-    try {
-      const result = await authClient.signIn(email, password);
-      if (result.error) {
-        setError(result.error || t('auth.invalidCredentials'));
-      } else if (result.success) {
-        onLogin();
-      }
-    } catch {
-      setError(t('auth.signInError'));
-    } finally {
+    const result = await authClient.signIn(email, password);
+    if (result.error) {
+      setError(result.error);
       setIsLoading(false);
+      return;
+    }
+
+    if (result.success) {
+      onLogin();
     }
   };
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     setError('');
     setSocialLoading(provider);
+
     const result = await authClient.signInSocial(provider);
     if (result.error) {
       setError(result.error);
@@ -88,7 +87,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           <p className="text-text-muted font-medium tracking-wide text-sm opacity-75">{t('auth.subtitle')}</p>
         </CardHeader>
         <CardContent className="p-8 space-y-8">
-          {error && <div className="mb-4 rounded-2xl border border-danger/20 bg-danger/10 p-4 text-sm text-danger">{error}</div>}
+          {error && (
+            <div className="rounded-2xl border border-danger/20 bg-danger/10 p-4 text-sm text-danger">
+              {error}
+            </div>
+          )}
 
           <div className="space-y-3">
             <Button
@@ -96,9 +99,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               variant="outline"
               className="relative w-full justify-center border-border/15 bg-bg-light text-text hover:bg-bg-card-high"
               disabled={isLoading || socialLoading !== null}
-              onClick={() => {
-                void handleSocialLogin('google');
-              }}
+              onClick={() => handleSocialLogin('google')}
             >
               <span className="absolute left-4 top-1/2 -translate-y-1/2">
                 <GoogleIcon />
@@ -110,9 +111,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               variant="outline"
               className="relative w-full justify-center border-border/15 bg-bg-light text-text hover:bg-bg-card-high"
               disabled={isLoading || socialLoading !== null}
-              onClick={() => {
-                void handleSocialLogin('github');
-              }}
+              onClick={() => handleSocialLogin('github')}
             >
               <span className="absolute left-4 top-1/2 -translate-y-1/2">
                 <GitHubIcon />
@@ -129,7 +128,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2.5">
-              <Label htmlFor="email" className="ml-1 text-text-muted font-semibold">{t('auth.email')}</Label>
+              <Label htmlFor="email" className="ml-1 text-text-muted font-semibold">
+                {t('auth.email')}
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -137,11 +138,14 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
                 required
+                autoComplete="email"
               />
             </div>
 
             <div className="space-y-2.5">
-              <Label htmlFor="password" className="ml-1 text-text-muted font-semibold">{t('auth.password')}</Label>
+              <Label htmlFor="password" className="ml-1 text-text-muted font-semibold">
+                {t('auth.password')}
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -149,6 +153,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
+                autoComplete="current-password"
               />
             </div>
 

@@ -9,6 +9,7 @@
     "build": "bun build src/index.ts --outdir dist --target bun",
     "start": "bun dist/index.js",
     "start:worker:pdf": "bun src/workers/invoice-pdf-worker.ts",
+    "seed:admin": "bun run seed-admin-credential.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

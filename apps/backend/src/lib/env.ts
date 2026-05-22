@@ -1,11 +1,3 @@
-function parseList(value?: string): string[] {
-  if (!value) return [];
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 function requireSecret(name: string, minLength: number): string {
   const value = process.env[name]?.trim();
   if (!value || value.length < minLength) {
@@ -25,8 +17,7 @@ function optionalTrim(value: string | undefined): string | null {
   return trimmed ? trimmed : null;
 }
 
-const frontendOriginsEnv = process.env.FRONTEND_URL || process.env.FRONTEND_ORIGIN;
-export const trustedOrigins = parseList(frontendOriginsEnv);
+
 export const isProduction = process.env.NODE_ENV === "production";
 export const jwtSecret = requireSecret("JWT_SECRET", 32);
 export const licenseTokenSecret = requireSecret("LICENSE_TOKEN_SECRET", 32);

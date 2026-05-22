@@ -13,18 +13,30 @@ async function ensureBetterAuthSchema() {
   `);
 
   const found = new Set(
-    rows.rows.map((row) => `${String(row.table_name)}.${String(row.column_name)}`),
+    rows.rows.map(
+      (row) => `${String(row.table_name)}.${String(row.column_name)}`,
+    ),
   );
 
   const required = [
+    "sessions.token",
+    "sessions.user_id",
+    "sessions.expires_at",
     "sessions.created_at",
     "sessions.updated_at",
     "sessions.ip_address",
     "sessions.user_agent",
+    "accounts.provider",
+    "accounts.provider_account_id",
+    "accounts.user_id",
     "accounts.password",
+    "accounts.access_token_expires_at",
+    "accounts.refresh_token_expires_at",
     "accounts.created_at",
     "accounts.updated_at",
-    "verification_tokens.id",
+    "verification_tokens.identifier",
+    "verification_tokens.token",
+    "verification_tokens.expires_at",
     "verification_tokens.created_at",
     "verification_tokens.updated_at",
   ];
@@ -43,11 +55,16 @@ async function seedAdminUser() {
   const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
 
   if (!adminEmail || (!adminPassword && !adminPasswordHash)) {
-    console.warn("⚠️  ADMIN_EMAIL and one of ADMIN_PASSWORD/ADMIN_PASSWORD_HASH must be set");
+    console.warn(
+      "⚠️  ADMIN_EMAIL and one of ADMIN_PASSWORD/ADMIN_PASSWORD_HASH must be set",
+    );
     return null;
   }
 
-  const existingUser = await db.select().from(users).where(eq(users.email, adminEmail));
+  const existingUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, adminEmail));
   const user =
     existingUser[0] ??
     (
@@ -66,26 +83,44 @@ async function seedAdminUser() {
 
   if (!user) return null;
 
-  const credentialAccount = await db
-    .select({ id: accounts.id })
+  const credentialAccounts = await db
+    .select()
     .from(accounts)
-    .where(and(eq(accounts.userId, user.id), eq(accounts.provider, "credential")));
+    .where(
+      and(eq(accounts.userId, user.id), eq(accounts.provider, "credential")),
+    );
 
-  if (credentialAccount.length === 0) {
-    const passwordHash = adminPassword
-      ? await bcrypt.hash(adminPassword, 10)
-      : adminPasswordHash!;
+  const passwordHash = adminPassword
+    ? await bcrypt.hash(adminPassword, 10)
+    : adminPasswordHash;
 
-    await db.insert(accounts).values({
-      id: crypto.randomUUID(),
-      userId: user.id,
-      provider: "credential",
-      providerAccountId: user.id,
-      password: passwordHash,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    console.log(`✅ Admin credentials ensured: ${adminEmail}`);
+  if (credentialAccounts.length === 0) {
+    if (!passwordHash) {
+      console.warn(
+        "⚠️  ADMIN_PASSWORD or ADMIN_PASSWORD_HASH is required to create admin credential login",
+      );
+    } else {
+      await db.insert(accounts).values({
+        id: crypto.randomUUID(),
+        userId: user.id,
+        provider: "credential",
+        providerAccountId: user.id,
+        password: passwordHash,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      console.log(`✅ Admin credentials ensured: ${adminEmail}`);
+    }
+  } else if (passwordHash) {
+    await db
+      .update(accounts)
+      .set({ password: passwordHash, updatedAt: new Date() })
+      .where(
+        and(eq(accounts.userId, user.id), eq(accounts.provider, "credential")),
+      );
+    console.log(`✅ Admin credential password updated: ${adminEmail}`);
+  } else {
+    console.log(`✅ Admin credential account exists: ${adminEmail}`);
   }
 
   return { id: user.id, email: user.email ?? adminEmail };

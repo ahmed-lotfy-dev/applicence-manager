@@ -1,25 +1,30 @@
 import { betterAuth } from "better-auth";
 import { pool } from "../db/db";
+import * as bcrypt from "bcrypt";
 
-console.log("Loading auth config...");
-console.log("GOOGLE_CLIENT_ID present:", !!process.env.GOOGLE_CLIENT_ID);
-console.log(
-  "GOOGLE_CLIENT_SECRET present:",
-  !!process.env.GOOGLE_CLIENT_SECRET,
-);
+const secret = process.env.BETTER_AUTH_SECRET?.trim();
+if (!secret) {
+  throw new Error(
+    "BETTER_AUTH_SECRET is not set. Generate one with: openssl rand -base64 32",
+  );
+}
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL,
+  secret,
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
 
   database: pool,
 
-  usePlural: true,
-
   emailAndPassword: {
     enabled: true,
+    password: {
+      hash: async (password) => bcrypt.hash(password, 10),
+      verify: async ({ hash, password }) => bcrypt.compare(password, hash),
+    },
   },
 
   user: {
+    modelName: "users",
     fields: {
       emailVerified: "email_verified",
       createdAt: "created_at",
@@ -28,6 +33,7 @@ export const auth = betterAuth({
   },
 
   session: {
+    modelName: "sessions",
     fields: {
       userId: "user_id",
       expiresAt: "expires_at",
@@ -39,6 +45,7 @@ export const auth = betterAuth({
   },
 
   account: {
+    modelName: "accounts",
     fields: {
       providerId: "provider",
       accountId: "provider_account_id",
@@ -75,4 +82,9 @@ export const auth = betterAuth({
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     },
   },
+
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://localhost:8000",
+  ],
 });

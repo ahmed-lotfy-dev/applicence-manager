@@ -1,5 +1,3 @@
-import { authClient } from "../auth-client";
-
 const RAW_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").trim();
 const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, "");
 
@@ -30,21 +28,8 @@ export async function getErrorMessage(
   return data?.error?.trim() || fallback;
 }
 
-export function isStateChangingMethod(method?: string): boolean {
-  const normalized = (method || "GET").toUpperCase();
-  return (
-    normalized === "POST" ||
-    normalized === "PUT" ||
-    normalized === "PATCH" ||
-    normalized === "DELETE"
-  );
-}
-
 export async function apiRequest(path: string, init?: RequestInit): Promise<Response> {
   const method = (init?.method || "GET").toUpperCase();
-  const csrfToken = isStateChangingMethod(method)
-    ? await authClient.getCsrfToken()
-    : null;
   const hasFormDataBody =
     typeof FormData !== "undefined" && init?.body instanceof FormData;
 
@@ -56,7 +41,6 @@ export async function apiRequest(path: string, init?: RequestInit): Promise<Resp
       ...(method !== "GET" && !hasFormDataBody
         ? { "Content-Type": "application/json" }
         : {}),
-      ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
       ...(init?.headers || {}),
     },
   });
