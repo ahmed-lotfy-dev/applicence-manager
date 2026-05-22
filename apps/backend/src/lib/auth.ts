@@ -9,9 +9,20 @@ if (!secret) {
   );
 }
 
+const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+
+const trustedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:8000",
+  baseURL,
+  ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS
+    ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",").map((s) => s.trim())
+    : []),
+];
+
 export const auth = betterAuth({
   secret,
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL,
 
   database: pool,
 
@@ -83,8 +94,5 @@ export const auth = betterAuth({
     },
   },
 
-  trustedOrigins: [
-    "http://localhost:3000",
-    "http://localhost:8000",
-  ],
+  trustedOrigins,
 });

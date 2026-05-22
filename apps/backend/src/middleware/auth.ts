@@ -16,10 +16,17 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onBeforeHa
     const pathname = new URL(request.url).pathname;
     if (isPublicPath(pathname)) return;
 
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-    if (!session?.user?.id) {
+    try {
+      const session = await auth.api.getSession({
+        headers: request.headers,
+      });
+      if (!session?.user?.id) {
+        set.status = 401;
+        return { error: "Unauthorized" };
+      }
+    } catch (err) {
+      const origin = request.headers.get("origin") || request.headers.get("referer") || "unknown";
+      console.error(`[auth] getSession failed for ${request.method} ${pathname} origin=${origin}:`, err);
       set.status = 401;
       return { error: "Unauthorized" };
     }
