@@ -23,8 +23,10 @@ services:
       - "8000"
     restart: unless-stopped
     networks:
-      - dokploy-network
-      - default
+      dokploy-network:
+        aliases:
+          - applicence-backend
+      default:
 
   frontend:
     build:
