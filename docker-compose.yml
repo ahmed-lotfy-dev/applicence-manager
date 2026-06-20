@@ -18,7 +18,7 @@ services:
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       LICENSE_TOKEN_SECRET: ${LICENSE_TOKEN_SECRET:?LICENSE_TOKEN_SECRET is required}
-      DB_SSL_MODE: ${DB_SSL_MODE:-require}
+      DB_SSL_MODE: ${DB_SSL_MODE:-disable}
     expose:
       - "8000"
     restart: unless-stopped
