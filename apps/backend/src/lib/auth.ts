@@ -73,6 +73,7 @@ export const auth = betterAuth({
   verification: {
     modelName: "verification_tokens",
     fields: {
+      identifier: "identifier",
       value: "token",
       expiresAt: "expires_at",
       createdAt: "created_at",

@@ -1,0 +1,932 @@
+{
+  "/mnt/hdd/projects/desktop/app-licensing/package.json": {
+    "mtime": 1779182253.8907194,
+    "ast_hash": "11782b10c18423ec5408e293e83997ce",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/check-schema.ts": {
+    "mtime": 1779355746.0673294,
+    "ast_hash": "3c0589f0c8a38ac0cef78a97e80904ac",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/check-user.ts": {
+    "mtime": 1779357322.9799535,
+    "ast_hash": "4271ea6719de75b8d563b2b2c2e1fe18",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle.config.ts": {
+    "mtime": 1771018162.4906993,
+    "ast_hash": "c1fd232d89c23cd198d20deb0e6df537",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/index.ts": {
+    "mtime": 1771018010.4696453,
+    "ast_hash": "30dc1c8733140d067c74eedf5f32fe87",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/package.json": {
+    "mtime": 1779453757.3828256,
+    "ast_hash": "68a2f39edcd7c10542c8387930ef057d",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/test-env.ts": {
+    "mtime": 1779356540.5698264,
+    "ast_hash": "e34902500a059cf4a27ba385f47ebd75",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/tsconfig.json": {
+    "mtime": 1771018010.469697,
+    "ast_hash": "cdac2d015ffcddaf6c236f0cfec5879a",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0000_core_auth_activation.sql": {
+    "mtime": 1772047016.7956846,
+    "ast_hash": "44b1fc35525c8e5f8fc9c5b6c2caafe4",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0001_licensing_user_scope.sql": {
+    "mtime": 1772047037.4381323,
+    "ast_hash": "c1eee266afbdce9b6e912c1cf7c5ec54",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0002_freelancer_billing_pdf.sql": {
+    "mtime": 1772047055.6527672,
+    "ast_hash": "348ee63a2cb4673c5ecdc7baf631e12d",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0003_logo_object_key.sql": {
+    "mtime": 1772052612.5388727,
+    "ast_hash": "4c6d61669c00be151a286a8b26984749",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0004_invoice_language.sql": {
+    "mtime": 1772060404.5747874,
+    "ast_hash": "e6155112fc25f198d9eea1a2517d1bf0",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0005_clients_soft_delete.sql": {
+    "mtime": 1774356302.0774343,
+    "ast_hash": "6848cd793eb30a3695f3cfc9859141b9",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0006_better_auth_core.sql": {
+    "mtime": 1774357951.8808248,
+    "ast_hash": "744f77a0a459ba4f996b748f0f0611d5",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0007_activation_requests.sql": {
+    "mtime": 1774363325.2924933,
+    "ast_hash": "f43689245212cbafef4e6e12a3c46498",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0008_invoices_soft_delete.sql": {
+    "mtime": 1774438968.4383588,
+    "ast_hash": "6924bdea4e61529fa0b69f68f8a9cb8f",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0009_freelancer_profile_defaults.sql": {
+    "mtime": 1774448898.9341507,
+    "ast_hash": "ff1cbc343d6c905b395d1ef7da491b5b",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0010_activation_request_resolution.sql": {
+    "mtime": 1774450986.4724035,
+    "ast_hash": "90bdf2027f4a1b4471a0427114e9911f",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0011_project_billing.sql": {
+    "mtime": 1779449441.5592773,
+    "ast_hash": "07bff9bef947692273ac60603f1e7e89",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0012_project_type.sql": {
+    "mtime": 1779450631.7108748,
+    "ast_hash": "c045fd41c0903900fc85e636fe81cc85",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0013_projects_amount_base_units.sql": {
+    "mtime": 1779451863.686301,
+    "ast_hash": "d55a904d4579d598db6f408f1a3c6423",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/0014_cleanup_stale_pdf_jobs.sql": {
+    "mtime": 1779453689.2948787,
+    "ast_hash": "0381c927c4fc1725c6ca9521452f7e40",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/meta/0015_snapshot.json": {
+    "mtime": 1779454090.6076894,
+    "ast_hash": "5501c07534c4f250d8b1829de158410a",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/drizzle/meta/_journal.json": {
+    "mtime": 1779454154.6712415,
+    "ast_hash": "7a9f5654ebb37c5c5ef0f507ee59215b",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/diagnose-db.ts": {
+    "mtime": 1774454761.0268383,
+    "ast_hash": "e42b53e6822c5f9b8f9cdbe3d6fec4d5",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/index.ts": {
+    "mtime": 1779452961.755571,
+    "ast_hash": "ed2d48973cf66140cdbb41f2042e275c",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/bootstrap/database.ts": {
+    "mtime": 1779454045.3619716,
+    "ast_hash": "cf963c63428ba8b1d0f93151d17e156a",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/db/auth-schema.ts": {
+    "mtime": 1779450627.407565,
+    "ast_hash": "0f39ad377d376f34ae5fcb7333d3c77f",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/db/db.ts": {
+    "mtime": 1774357951.8749483,
+    "ast_hash": "8f498d9f2127da86237ce915bdbf3c69",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/lib/auth.ts": {
+    "mtime": 1779455604.14158,
+    "ast_hash": "f6a5fedc68389115d3de353cec8266d3",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/lib/env.ts": {
+    "mtime": 1779354533.4879699,
+    "ast_hash": "2c50167a068ecbeefe2654943d5ccfea",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/lib/http.ts": {
+    "mtime": 1771138602.614858,
+    "ast_hash": "b0f11738e3b69f6a650547412879e8e4",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/lib/jwt.ts": {
+    "mtime": 1771138467.3946142,
+    "ast_hash": "41078e0c04baa437497a92593a484f82",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/lib/request-auth.ts": {
+    "mtime": 1774357951.876166,
+    "ast_hash": "8c05b317cac6aba292208287fa20ca3c",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/middleware/auth.ts": {
+    "mtime": 1779455548.8685756,
+    "ast_hash": "1cf1dfc91f3aa0e8b0dd1d3afc275dbe",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/middleware/logger.ts": {
+    "mtime": 1771018092.8243885,
+    "ast_hash": "7f157da16f42f3a083f778d2d5449656",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/middleware/rate-limit.ts": {
+    "mtime": 1771138549.719448,
+    "ast_hash": "1b192074642e29b6231a508183c852f8",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/middleware/security-headers.ts": {
+    "mtime": 1771018095.9619668,
+    "ast_hash": "fb6933ede54a8c56cad85eeb60126fc3",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/routes/activations.ts": {
+    "mtime": 1774455992.0593228,
+    "ast_hash": "88dea9dedef7527e79bbc6863864e727",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/routes/apps.ts": {
+    "mtime": 1772045220.5706818,
+    "ast_hash": "998e48395ba4a0711c9f77f1845e3852",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/routes/auth.ts": {
+    "mtime": 1779446581.1542242,
+    "ast_hash": "86cddb6a3e86f17afa896dd2b8b80278",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/routes/clients.ts": {
+    "mtime": 1774437789.1871548,
+    "ast_hash": "f28690c389231e1c171a6e1a45f58730",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/routes/dashboard.ts": {
+    "mtime": 1779449571.2892954,
+    "ast_hash": "eddaea7bd459f26b5e59f16121cb5abc",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/routes/freelancer-profile.ts": {
+    "mtime": 1774448898.934645,
+    "ast_hash": "afe34dcc0559444db4ff11dc76b446c3",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/routes/health.ts": {
+    "mtime": 1772053775.010435,
+    "ast_hash": "badbdaf49cdb37c9999ffe302f48eee6",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/routes/invoices.ts": {
+    "mtime": 1774442283.4308944,
+    "ast_hash": "e101dac1a0c70dc6080aa15930a56b7f",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/routes/license-public.ts": {
+    "mtime": 1774455203.0785446,
+    "ast_hash": "a697e16cd178909e3c0e9e59b052161e",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/routes/licenses.ts": {
+    "mtime": 1772045339.829916,
+    "ast_hash": "5aeb0b78f20cff5e372ff77cee90c598",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/routes/payments.ts": {
+    "mtime": 1779453238.8308208,
+    "ast_hash": "90e4d3e3aba66b5636fe0f6ac3d1280d",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/routes/projects.ts": {
+    "mtime": 1779450718.1107337,
+    "ast_hash": "6670371c426f0d5ed7a7d36a2a066492",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/activation-requests.ts": {
+    "mtime": 1774456022.9647799,
+    "ast_hash": "deaae7d4de68fb67d13b834c7dc226fc",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/apps.ts": {
+    "mtime": 1774455212.1979058,
+    "ast_hash": "054fd72f0bf460a894044633e1d83085",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/clients.ts": {
+    "mtime": 1774437883.0401077,
+    "ast_hash": "a844831da1fcfeb98c5b79684faf82cd",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/freelancer-logo.ts": {
+    "mtime": 1772052674.3631134,
+    "ast_hash": "11c067aeff5ee58637223909bb28b4fe",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/freelancer-profile.ts": {
+    "mtime": 1774448898.9343953,
+    "ast_hash": "1101b6aec770662fff57c7b7902372ff",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/invoice-email.ts": {
+    "mtime": 1774447607.0807552,
+    "ast_hash": "e153c657bc89adcadd6fdf9dce441d91",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/invoice-pdf-jobs.ts": {
+    "mtime": 1779452948.316863,
+    "ast_hash": "0b264c4febbeea4c7e1b5f704d6eeb91",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/invoice-pdf-renderer.ts": {
+    "mtime": 1774442137.276993,
+    "ast_hash": "2e2d0853c5547fddc0df711f6ecb74c3",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/invoices.ts": {
+    "mtime": 1779449536.9975288,
+    "ast_hash": "eb1c4be16221f4a260311cb27638b761",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/licensing.ts": {
+    "mtime": 1774363007.1658883,
+    "ast_hash": "bd91f3a00f4d1643b3b5419472024fd5",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/milestones.ts": {
+    "mtime": 1779453043.5955012,
+    "ast_hash": "df6787889e059bc706ef5adb8d901deb",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/payment-pdf-renderer.ts": {
+    "mtime": 1779453159.7478676,
+    "ast_hash": "66f5c65757c35a5991e1c97108f6ac19",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/payments.ts": {
+    "mtime": 1779453266.5930297,
+    "ast_hash": "3a1ec8393ef36e700b1d94c9d8cb234a",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/projects.ts": {
+    "mtime": 1779453054.1916885,
+    "ast_hash": "9e19fe44af3d627ee8be4cc87b15efad",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/utils.ts": {
+    "mtime": 1779449509.1415732,
+    "ast_hash": "348ed27a0f81eab3c337e23d2e73d659",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/images/image-processor.ts": {
+    "mtime": 1774435590.4962647,
+    "ast_hash": "312e78ecbd0d6f0713a644c29ec49a5a",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/images/sharp-image-processor.ts": {
+    "mtime": 1774435590.4994495,
+    "ast_hash": "edede149cc3820a2e8b4be2e95d3ebb3",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/storage/object-storage.ts": {
+    "mtime": 1774432196.6789129,
+    "ast_hash": "d4d504e3e2bdfe581811343fa67eefa7",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/services/storage/r2-object-storage.ts": {
+    "mtime": 1774432212.0407815,
+    "ast_hash": "f2a7fc990cbcad10e37e420dd2fc8910",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/workers/invoice-pdf-worker.ts": {
+    "mtime": 1779452957.8730998,
+    "ast_hash": "a9e9c5bd0b2f86e2119fe5231423db76",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/eslint.config.js": {
+    "mtime": 1774473017.2001698,
+    "ast_hash": "f8d584a7ff212ccdafb545c69909879c",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/package.json": {
+    "mtime": 1774477965.732878,
+    "ast_hash": "2b899b149ead6a9758d82aefc48dcf4f",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/tsconfig.app.json": {
+    "mtime": 1771137586.9319167,
+    "ast_hash": "0df0db1e1557a14b4aeb3b18f2c1c697",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/tsconfig.json": {
+    "mtime": 1771018027.7540884,
+    "ast_hash": "a3d39fa780ebff65444de257f291ce6c",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/tsconfig.node.json": {
+    "mtime": 1771137588.0479257,
+    "ast_hash": "21e21a39cbe721c26bcf3cd887cfefbc",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/vite.config.ts": {
+    "mtime": 1779187289.2882438,
+    "ast_hash": "a7121a36440314a5e3c1cfbbf9892842",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/App.tsx": {
+    "mtime": 1779454845.625555,
+    "ast_hash": "8db697489e98509cd7cdd0c8b356ebd9",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/main.tsx": {
+    "mtime": 1774486590.8916936,
+    "ast_hash": "62282fe973cc3983b49941637ffdce46",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/app/providers/QueryProvider.tsx": {
+    "mtime": 1772054213.7835357,
+    "ast_hash": "cdbd304cfa2e7895e8251410d84480f8",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/auth/components/LoginPage.tsx": {
+    "mtime": 1779446657.3432257,
+    "ast_hash": "961b0310020f9363dd2aa8899bcdd670",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/auth/components/ProtectedRoute.tsx": {
+    "mtime": 1772054638.5980604,
+    "ast_hash": "82683851ecede3b6c04d055191140c29",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/ActivationsTable.tsx": {
+    "mtime": 1779454558.6507158,
+    "ast_hash": "56d1557f31fd05a8678b23496509f5bd",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/BrandingSection.tsx": {
+    "mtime": 1774485622.307839,
+    "ast_hash": "d67c56efef6916c18af282e6501f76dc",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/ClientsSection.tsx": {
+    "mtime": 1779455370.776679,
+    "ast_hash": "ee3cdc72630f8c4cc68761701bf14bb2",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/DashboardHeader.tsx": {
+    "mtime": 1774485589.9772904,
+    "ast_hash": "d20853ac0a699471ab38d3b8c3f0c445",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/DashboardNav.tsx": {
+    "mtime": 1779449762.054251,
+    "ast_hash": "80920a2572ac3ca75245e05e91e9f43e",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/FilterTabs.tsx": {
+    "mtime": 1774459096.3588655,
+    "ast_hash": "18b11511a6e89e0cd67b43212365f617",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/FreelanceOpsDialogs.tsx": {
+    "mtime": 1774473938.5082834,
+    "ast_hash": "0b5984b408394dead57103bcaa1b90e3",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/FreelanceOpsPanel.tsx": {
+    "mtime": 1774459096.360345,
+    "ast_hash": "f31c666b0c3fe465e2715f286329f7ac",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/FreelanceOpsPanel.types.ts": {
+    "mtime": 1774459096.3606887,
+    "ast_hash": "031e06a2c1dcbdb5d7debdbc3895644d",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/InvoicesSection.tsx": {
+    "mtime": 1779452673.8755767,
+    "ast_hash": "ec55185bb5e6301e0485ac3edfb89046",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/LicensesAppManagementCard.tsx": {
+    "mtime": 1774483859.5688188,
+    "ast_hash": "39b30e298ab336a563f2760b3850730c",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/LicensesCreateDialog.tsx": {
+    "mtime": 1774459096.3635995,
+    "ast_hash": "a53a0af2d3836300fae247b8a3fe6ada",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/LicensesCreateLockedDialog.tsx": {
+    "mtime": 1774459096.363999,
+    "ast_hash": "5fcefef64e0217fb0745a76fda87fefc",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/LicensesEditAppDialog.tsx": {
+    "mtime": 1774459096.3655765,
+    "ast_hash": "ccfe0454e2133a5541ed2a1db4a57ac4",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/LicensesEditLicenseDialog.tsx": {
+    "mtime": 1774459096.366117,
+    "ast_hash": "c0964c48344c395df0c60f650d5fe1c6",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/LicensesInventoryCard.tsx": {
+    "mtime": 1774483866.509498,
+    "ast_hash": "5d27f154481536848ad21a4e9cb66730",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/LicensesPanel.selectStyle.ts": {
+    "mtime": 1772054638.6119795,
+    "ast_hash": "e494ed88f625bacc478b73268f9927bc",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/LicensesPanel.tsx": {
+    "mtime": 1774481790.5192876,
+    "ast_hash": "bfb9a9071aa18a512a38591591836bff",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/LicensesPanel.types.ts": {
+    "mtime": 1774479279.1187475,
+    "ast_hash": "a9460fc25daa39ba963e8f8bb66e151a",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/LicensingDialogs.tsx": {
+    "mtime": 1774479797.840199,
+    "ast_hash": "9c4ca1bb0daf4e719e5492c9f6e41cb4",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/ProjectsSection.tsx": {
+    "mtime": 1779455115.2482355,
+    "ast_hash": "814258a4e04ec65603dadc6bc1928b77",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/components/StatsCards.tsx": {
+    "mtime": 1774478842.8254373,
+    "ast_hash": "01d0d76f2918dac1eebec195d56f424b",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/hooks/FreelanceOpsContext.tsx": {
+    "mtime": 1774474427.4248343,
+    "ast_hash": "af048f70f4b35c06f127ddc8855f23df",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/hooks/LicensingDataContext.tsx": {
+    "mtime": 1774478137.8395948,
+    "ast_hash": "e93e8932d9b10c3b8b894214560c5bc2",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/hooks/licensingStore.ts": {
+    "mtime": 1774481779.190001,
+    "ast_hash": "921ca94a888996dfb0eb32aef9f611de",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/hooks/use-clients-data.ts": {
+    "mtime": 1779451547.9367447,
+    "ast_hash": "80e46e225f3d7767ef91d6ed64fddaed",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/hooks/use-dashboard-data.ts": {
+    "mtime": 1774473349.9495633,
+    "ast_hash": "2028c6637edb45a7429984ec82d5de45",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/hooks/use-invoices-data.ts": {
+    "mtime": 1774480721.1956913,
+    "ast_hash": "6a74cdd404f2464cfa5be99bb5dad7b7",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/hooks/use-licensing-data.ts": {
+    "mtime": 1774483191.1531389,
+    "ast_hash": "93bf3f184e3dca94175ba0a1f9b4f4b0",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/hooks/use-profile-data.ts": {
+    "mtime": 1774486682.6441386,
+    "ast_hash": "defe1da7004bc20c306451747213c314",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/hooks/useFreelanceBranding.ts": {
+    "mtime": 1774473825.051316,
+    "ast_hash": "7bad5d4a6303982e9f0959308fc438fb",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/hooks/useFreelanceClients.ts": {
+    "mtime": 1774473847.4721956,
+    "ast_hash": "753bc153d81f5cccd20595f7f2315e5d",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/hooks/useFreelanceInvoices.ts": {
+    "mtime": 1774480738.9365087,
+    "ast_hash": "a5b44fcee07677fd91d442be8d597861",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/hooks/useFreelanceOps.ts": {
+    "mtime": 1774485636.6559708,
+    "ast_hash": "01d7caf5d7e0886a9dee7e5fbcfda840",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/pages/ActivationsPage.tsx": {
+    "mtime": 1774480711.881523,
+    "ast_hash": "5e5eeb5dd650a8b5dd71555c4c47b6dc",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/pages/DashboardPage.tsx": {
+    "mtime": 1779454499.456998,
+    "ast_hash": "69ba378f5d5f1f4ad5ea60c696025a0c",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/pages/OverviewPage.tsx": {
+    "mtime": 1774483531.5989509,
+    "ast_hash": "daeb4c6165a8f88563206469ec58f176",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/pages/SettingsPage.tsx": {
+    "mtime": 1774486592.2793012,
+    "ast_hash": "6160ed792dbd3c29a6ba0e568c3c96e7",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/dashboard/types/dashboard.ts": {
+    "mtime": 1779450725.2607028,
+    "ast_hash": "12d7ffd5b90f53b903601b05daea4456",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/onboarding/OnboardingPage.tsx": {
+    "mtime": 1774486445.4103546,
+    "ast_hash": "710bec9ff81c140b446668f99415013e",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/features/onboarding/setup.ts": {
+    "mtime": 1774449007.5088184,
+    "ast_hash": "528ef7840813d9fe0a0d3beb74073725",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/lib/api-client.ts": {
+    "mtime": 1779449719.0263288,
+    "ast_hash": "5e3672914f71780e12fa83b76c070110",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/lib/auth-client.ts": {
+    "mtime": 1779447664.8341806,
+    "ast_hash": "32145d61f861f35726b9099fe82d8eb4",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/lib/utils.ts": {
+    "mtime": 1771034313.429602,
+    "ast_hash": "17047248a75301753af85a34ea043bea",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/lib/api/base.ts": {
+    "mtime": 1779447675.7272189,
+    "ast_hash": "350bba1a191af15f52cd49e3ff6c4609",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/lib/api/clients.ts": {
+    "mtime": 1774459096.372575,
+    "ast_hash": "bf944f1d8a0c1da6c78f2d05e7ab5281",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/lib/api/invoices.ts": {
+    "mtime": 1774459096.3727589,
+    "ast_hash": "3b68a07c23df15560e4242b1b651e213",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/lib/api/licensing.ts": {
+    "mtime": 1774459096.373557,
+    "ast_hash": "cae46f70a801713a1e1fb4948cf27ba0",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/lib/api/profile.ts": {
+    "mtime": 1774459096.374027,
+    "ast_hash": "a8ca014599bc6849f7a4b9b2425b9b47",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/lib/api/projects.ts": {
+    "mtime": 1779453380.287591,
+    "ast_hash": "9656c9a08a448951bef0056755b50ef2",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/lib/api/public-licensing.ts": {
+    "mtime": 1774459096.3742595,
+    "ast_hash": "01ad47f160fa834688f86709371f4a79",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/i18n/I18nProvider.tsx": {
+    "mtime": 1774486329.6063855,
+    "ast_hash": "52779e8935f1c8309d4a04c4662949b9",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/i18n/translations.ts": {
+    "mtime": 1779450195.169824,
+    "ast_hash": "68ab8a5737af72da98a23e3eb4d80e44",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/lib/currency.ts": {
+    "mtime": 1779451422.3249044,
+    "ast_hash": "681fa9a0a44445e74977605c4187f577",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/badge.tsx": {
+    "mtime": 1774433751.4128082,
+    "ast_hash": "6e599d7240c3dca013ece35613aa9dee",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/button.tsx": {
+    "mtime": 1774439358.0964339,
+    "ast_hash": "df2884c199574966d79a06b9b10a38c6",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/card.tsx": {
+    "mtime": 1774433712.415095,
+    "ast_hash": "650c094ce4a5297f8d35f267570b60a7",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/date-picker.tsx": {
+    "mtime": 1772058517.7831192,
+    "ast_hash": "32f42214c0e01011dc60cf18e4a33e59",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/dialog.tsx": {
+    "mtime": 1774433782.8615046,
+    "ast_hash": "7672ba30f104c70a5c24780c11ba0b7c",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/direction-provider.tsx": {
+    "mtime": 1772060269.8326051,
+    "ast_hash": "0108ec941777f3711c30f9c06140b86f",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/direction.tsx": {
+    "mtime": 1772060273.8346913,
+    "ast_hash": "9b71040e1356b92a0ee3eb2b7795a056",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/input.tsx": {
+    "mtime": 1774449738.7851183,
+    "ast_hash": "9ccf582f8b48c83212fc1b826928facf",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/label.tsx": {
+    "mtime": 1771034332.5368042,
+    "ast_hash": "ab9a81df0f116c5dbb3ab9bd88987667",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/select.tsx": {
+    "mtime": 1774433736.9197788,
+    "ast_hash": "416f717b9b1ae857dcffea0e61dc5d6c",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/skeleton.tsx": {
+    "mtime": 1779454538.2934268,
+    "ast_hash": "b4bb7104d534c33dacb19b9660a40239",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/stat-number.tsx": {
+    "mtime": 1774482554.535372,
+    "ast_hash": "33ec074d3c8822681b3cb030a544e9a1",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/shared/ui/table.tsx": {
+    "mtime": 1774451842.273738,
+    "ast_hash": "ed358daa863b0777cd4ff4690646da5f",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docker-compose.yml": {
+    "mtime": 1779354612.9992948,
+    "ast_hash": "e71fb4022c779d080d9e3353dc4be4c5",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/README.md": {
+    "mtime": 1774562068.5037482,
+    "ast_hash": "01fe93a714961a2cedaec6bd4ad046c8",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/CLAUDE.md": {
+    "mtime": 1771018010.4695842,
+    "ast_hash": "0ba813efb8143e5973ed9eeac7027c7d",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/README.md": {
+    "mtime": 1774357321.0055215,
+    "ast_hash": "28223b43af9826080d5eb61f8f691d9d",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/src/test-write.txt": {
+    "mtime": 1772043610.8727815,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/index.html": {
+    "mtime": 1772053751.4584558,
+    "ast_hash": "35d7a884a4e6b3722541176132fce64e",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/README.md": {
+    "mtime": 1771018027.7445118,
+    "ast_hash": "cac141da861c855e069a9c32557458ac",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/API.md": {
+    "mtime": 1774559338.0930197,
+    "ast_hash": "8faf6dda24e4996d2491a35293f3c6b7",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/ARCHITECTURE.md": {
+    "mtime": 1774562734.06173,
+    "ast_hash": "0c6a9524ca23df4337edbb2ae5d0e500",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/DEPLOYMENT.md": {
+    "mtime": 1774559449.8886,
+    "ast_hash": "9d3b5994986992c3451041a6051c0774",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/ERD.md": {
+    "mtime": 1774558579.5100682,
+    "ast_hash": "a3d1d377b030ac8435df19d684b74ab2",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/FEATURE_ANALYSIS.md": {
+    "mtime": 1774568426.6356041,
+    "ast_hash": "a1380b4ce2007aea61c99c575677cbb9",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/PRD.md": {
+    "mtime": 1774562515.0753813,
+    "ast_hash": "9acc9cd78170f167fd0c517213ed3723",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/design-mds/DESIGN.md": {
+    "mtime": 1774433232.0085523,
+    "ast_hash": "06c67e4edf452bf0be05670c3258baa4",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/design-mds/stitch/code.html": {
+    "mtime": 1774426140.0,
+    "ast_hash": "672fa114abfcf5101a54f2794486c4d5",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/design-mds/stitch/DESIGN.md": {
+    "mtime": 1774426140.0,
+    "ast_hash": "06c67e4edf452bf0be05670c3258baa4",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/portfolio/applicence-manager-case-study.md": {
+    "mtime": 1772053807.501806,
+    "ast_hash": "61587728e5abbbfd37370b9004187250",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/portfolio/applicence-manager-project.md": {
+    "mtime": 1772053803.0618348,
+    "ast_hash": "eadebd59c12fc40a6b12a4282948b396",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/superpowers/specs/2026-05-22-project-billing-design.md": {
+    "mtime": 1779449098.6564457,
+    "ast_hash": "a71fe3a701b147aeaf4912fa9c877d19",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/work-done/2026-02-25-freelancer-saas-brainstorm.md": {
+    "mtime": 1772053795.6172822,
+    "ast_hash": "f6636d12484fde4ecbbf93aad1594686",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/work-done/2026-02-25-progress-snapshot.md": {
+    "mtime": 1772053842.2972546,
+    "ast_hash": "3feb1eb34bfdbcde7d1042dc0064bdd1",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/work-done/README.md": {
+    "mtime": 1772044482.0417657,
+    "ast_hash": "c2ded521713faeec66dfabb9477fc1f6",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/work-done/01-multi-tenant-better-auth.md": {
+    "mtime": 1772044392.7665327,
+    "ast_hash": "b950c80712231e397b5ac9c50ef27a19",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/work-done/01-setup-commands.md": {
+    "mtime": 1772044403.0491085,
+    "ast_hash": "0dd8c83d1494f5b216f7347d3f4b4e3d",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/storage/invoices/385c0d2c-176d-4cb9-8998-ff7e40316262/71a4a2a7-4b81-4b1f-83b6-27ead004181e.pdf": {
+    "mtime": 1772141282.950573,
+    "ast_hash": "68bf836ba34ad2a30108b814b35f423a",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/storage/invoices/385c0d2c-176d-4cb9-8998-ff7e40316262/86835751-b78f-44f7-a2c8-ddfd2c4ca902.pdf": {
+    "mtime": 1774435878.6043022,
+    "ast_hash": "0b134c9752e50d551d2eeb572d2baeba",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/storage/invoices/385c0d2c-176d-4cb9-8998-ff7e40316262/949761a3-bf4a-4244-9e12-1bf5a483539d.pdf": {
+    "mtime": 1772059661.253751,
+    "ast_hash": "a7e0b0c865a9847172e8728a6b17ca75",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/storage/invoices/385c0d2c-176d-4cb9-8998-ff7e40316262/97d34dc8-9674-4fd1-935a-6fbb5d37d52c.pdf": {
+    "mtime": 1779178453.6126332,
+    "ast_hash": "8348f9369f8f2caa352d0805f1cae3f0",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/backend/storage/invoices/385c0d2c-176d-4cb9-8998-ff7e40316262/9b2a5d56-98b6-47d1-9e00-fae3c4092e73.pdf": {
+    "mtime": 1774440046.7726455,
+    "ast_hash": "dc1c6fe7384029b8b54bc57de06ba88b",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/public/logo.svg": {
+    "mtime": 1771137550.4281585,
+    "ast_hash": "5efc2e300d39afa4c7165372dc7adc02",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/public/vite.svg": {
+    "mtime": 1771018027.7451086,
+    "ast_hash": "8e3a10e157f75ada21ab742c022d5430",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/apps/frontend/src/assets/react.svg": {
+    "mtime": 1771018027.7536051,
+    "ast_hash": "f0402b67b6ce880f65666bb49e841696",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/design-mds/stitch/screen.png": {
+    "mtime": 1774426140.0,
+    "ast_hash": "a7f42a0b91d1e9e793416889b3a19062",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/screenshots/screencapture-activation-ahmedlotfy-site-2026-02-15-09_55_18.png": {
+    "mtime": 1771142133.15467,
+    "ast_hash": "eb9c32c5bf9f8824e8bbab4929240940",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/screenshots/screencapture-activation-ahmedlotfy-site-2026-02-15-09_55_42.png": {
+    "mtime": 1771142147.3855326,
+    "ast_hash": "1f7e0a87ea57244ea33eeb2f2eb9ee10",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/screenshots/screencapture-localhost-3000-2026-02-15-09_57_53.png": {
+    "mtime": 1771142277.905008,
+    "ast_hash": "4719b443fab7af2c84346962a9093788",
+    "semantic_hash": ""
+  },
+  "/mnt/hdd/projects/desktop/app-licensing/docs/screenshots/screencapture-localhost-3000-2026-02-15-09_58_04.png": {
+    "mtime": 1771142287.013103,
+    "ast_hash": "691040572bf727272c0d8e25803641de",
+    "semantic_hash": ""
+  }
+}
