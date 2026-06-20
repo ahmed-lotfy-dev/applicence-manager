@@ -22,6 +22,9 @@ services:
     expose:
       - "8000"
     restart: unless-stopped
+    networks:
+      - dokploy-network
+      - default
 
   frontend:
     build:
@@ -32,3 +35,10 @@ services:
     expose:
       - "80"
     restart: unless-stopped
+    networks:
+      - dokploy-network
+      - default
+
+networks:
+  dokploy-network:
+    external: true
